@@ -413,6 +413,84 @@ switch (cmd)
         }
         break;
     }
+    case "squad":
+    {
+        // squad <playerHex> : the player's team, contract, club teams and their player lists
+        ulong pl = Hex(args[1]);
+        ulong team = mem.Read<ulong>(pl + 0x130), con = mem.Read<ulong>(pl + 0x330);
+        ulong club = team == 0 ? 0 : mem.Read<ulong>(team + 0x30);
+        Console.WriteLine($"player {pl:X12} team {team:X12} club {club:X12} {ReadLenString(club + 0xC8)} contract {con:X12} id {mem.Read<uint>(pl + 0x290)} uid {mem.Read<uint>(pl + 0x294)}");
+        if (con != 0)
+            Console.WriteLine($"  contract owner {mem.Read<ulong>(con + 8):X12} (person {pl + 0x288:X12}) team {mem.Read<ulong>(con + 0x10):X12} senior {mem.Read<ulong>(con + 0x18):X12} job {mem.Read<byte>(con + 0x26)} status {mem.Read<byte>(con + 0x54)} no {mem.Read<byte>(con + 0x5D)} list {mem.Read<byte>(con + 0x57)} kind {mem.Read<byte>(con + 0xC3)}");
+        if (club == 0) break;
+        ulong teams = mem.Read<ulong>(club + 0x18);
+        for (int i = 0; i < 12; i++)
+        {
+            ulong t = mem.Read<ulong>(teams + (ulong)i * 8);
+            if (t == 0 || mem.Read<ulong>(t + 0x30) != club) break;
+            ulong b = mem.Read<ulong>(t + 0x38), e = mem.Read<ulong>(t + 0x40), c = mem.Read<ulong>(t + 0x48);
+            int idx = -1; for (ulong a = b; a < e; a += 8) if (mem.Read<ulong>(a) == pl) idx = (int)((a - b) / 8);
+            var tail = new byte[64]; mem.TryRead(c, tail);
+            Console.WriteLine($"  team[{i}] {t:X12} kind {mem.Read<byte>(t + 0x28)} players {(e - b) / 8} cap {(c - b) / 8} idx {idx} capt {mem.Read<ulong>(t + 0x88):X} vice {mem.Read<ulong>(t + 0x90):X} after-cap {Convert.ToHexString(tail, 0, 32)}");
+        }
+        break;
+    }
+    case "listroom":
+    {
+        // listroom <layout> : room in the senior teams' player lists (capacity, then allocator block slack)
+        var layout = SquadEditor.Core.Layout.GameLayout.Load(args[1]);
+        var session = new SquadEditor.Core.GameSession(mem, layout);
+        int[] sizes = { 144, 160, 192, 224, 256, 288, 320, 384, 448, 512 };
+        var hist = new SortedDictionary<int,int>(); var seen = new HashSet<ulong>(); int cap = 0, slack = 0, slackDirty = 0, none = 0, outside = 0;
+        foreach (var pl in session.GetCollectionItems("Players"))
+        {
+            ulong team = mem.Read<ulong>(pl + 0x130); if (team == 0) continue;
+            ulong club = mem.Read<ulong>(team + 0x30); if (club == 0) continue;
+            ulong st = mem.Read<ulong>(mem.Read<ulong>(club + 0x18)); if (!seen.Add(st)) continue;
+            ulong b = mem.Read<ulong>(st + 0x38), e = mem.Read<ulong>(st + 0x40), c = mem.Read<ulong>(st + 0x48);
+            if (c > e) { cap++; continue; }
+            ulong bytes = c - b;
+            if (bytes <= (ulong)sizes[0] || bytes > (ulong)sizes[^1]) { outside++; hist[(int)bytes / 8] = hist.GetValueOrDefault((int)bytes / 8) + 1; continue; }
+            ulong block = (ulong)sizes.First(x => (ulong)x >= bytes);
+            if (block == bytes) { none++; continue; }
+            var t = new byte[block - bytes]; mem.TryRead(c, t);
+            if (t.All(x => x == 0)) slack++; else slackDirty++;
+        }
+        Console.WriteLine($"senior teams {seen.Count}: below capacity {cap}, block slack {slack}, slack not zero {slackDirty}, exact block {none}, outside classes {outside}: {string.Join(" ", hist.Select(k => k.Key + ":" + k.Value))}");
+        break;
+    }
+    case "selections":
+    {
+        // selections : simatch::PREPARED_TACTICS_CREATOR_ARRAY objects, their list and 26 person-id slots
+        mem.TryGetModule("game_plugin.dll", out var gp);
+        ulong? vt = Rtti.FindVtable(mem, gp, ".?AVPREPARED_TACTICS_CREATOR_ARRAY@simatch@@");
+        Console.WriteLine($"vtable {(vt is null ? "none" : $"gp+{vt.Value - gp.Start:X}")}");
+        if (vt is null) break;
+        foreach (ulong o in ObjectScanner.FindObjects(mem, vt.Value, 10000))
+        {
+            ulong b = mem.Read<ulong>(o + 8), e = mem.Read<ulong>(o + 16), c = mem.Read<ulong>(o + 24);
+            var ids = Enumerable.Range(0, 26).Select(i => mem.Read<uint>(o + 0x28 + (ulong)i * 4)).ToArray();
+            Console.WriteLine($"{o:X12} list {b:X}/{(e - b) / 8}/{(c - b) / 8} flags {mem.Read<uint>(o + 0x20):X8} ids {string.Join(",", ids.Select(x => x == 0xFFFFFFFF ? "-" : x.ToString()))}");
+        }
+        break;
+    }
+    case "nametable":
+    {
+        // nametable <entryHex> : walk the name table around an entry (0x18 stride, consecutive ids)
+        ulong e = Hex(args[1]);
+        bool Ok(ulong a, out uint id) { id = 0; try { ulong sp = mem.Read<ulong>(a); id = mem.Read<uint>(a + 8); int l = mem.Read<int>(sp); return l > 0 && l < 200; } catch { return false; } }
+        Ok(e, out uint id0);
+        ulong lo = e, hi = e; uint idl = id0, idh = id0;
+        while (Ok(lo - 0x18, out uint i) && i == idl - 1) { lo -= 0x18; idl = i; }
+        while (Ok(hi + 0x18, out uint i) && i == idh + 1) { hi += 0x18; idh = i; }
+        Console.WriteLine($"{lo:X12}..{hi:X12} ids {idl}..{idh} count {(hi - lo) / 0x18 + 1}");
+        foreach (ulong a in new[] { lo, lo + 0x18, e, hi - 0x18, hi })
+        {
+            var b = new byte[0x18]; mem.TryRead(a, b);
+            Console.WriteLine($"  {a:X12} {ReadLenString(a)} | {Convert.ToHexString(b, 8, 16)}");
+        }
+        break;
+    }
     default:
         Console.WriteLine("unknown command");
         break;

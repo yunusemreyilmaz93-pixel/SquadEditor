@@ -13,6 +13,7 @@
 - **Oyuncular:** bütün teknik, zihinsel, fiziksel, kalecilik ve gizli özellikler, CA / PA, sahada mevki puanları, kondisyon, moral, değer, itibar (güncel, yerel, dünya), boy, doğum tarihi, maaş ve sözleşme bitişi.
 - **Personel:** menajer, antrenör, gözlemci, fizyoterapist ve diğerleri: antrenörlük, zihinsel, bilgi ve medikal özellikler, kişilik, CA / PA, itibar, görev, maaş ve sözleşme.
 - **Kulüpler:** A takım ve genç takımlara ayrılmış kadro, personel listesi, bakiye, transfer ve maaş bütçesi, bilet fiyatı, tesisler, stadyum, itibar ve taraftarlar.
+- **Oyuncu ve personelin adını değiştir, oyuncuyu başka kulübe taşı ya da serbest bırak** (A takıma bonservissiz, sözleşmesi aynı). Sadece oyunun kendi belleğinin izin verdiği yazılır: oyunda kayıtlı bir isim ya da eskisinin yerine yenisi.
 - **Her şeyi ara** (Ctrl+F). Aksan fark etmez: "fenerbahce" yazınca Fenerbahçe'yi bulur. Oyuncu, personel ve kulüpler sekmelerde açılır.
 - **Ön ayarlar** (Tam kondisyon ve moral, Wonderkid yap, Dünya yıldızı, Zengin patron, özellikleri fulle…): tek kayda ya da sağ tıkla kadroda seçtiğin bütün oyunculara.
 - **Geri alma:** her değişiklik Ctrl+Z ile geri alınır.
@@ -46,9 +47,8 @@ Tersine mühendislik notları: [docs/fm27-notes.md](docs/fm27-notes.md). Bazı a
 
 ## Yol haritası
 
-- Sakatlık ve ceza, isim değiştirme
+- Serbest oyuncu almak, personel taşımak, kiralık
 - Yarışmalar ve uluslar
-- Transfer ve kiralık (kulübe taşıma)
 
 Katkı her zaman açık: bir alan eklemenin ya da yamadan sonra düzeltmenin en kolay yolu `layouts/fm27.json` ile pull request açmak.
 

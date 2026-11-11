@@ -211,6 +211,51 @@ public sealed class PlayerPage : UserControl, IPage
 		return host;
 	}
 
+	/// <summary>Rename, move to another club, release.</summary>
+	private UIElement ActionsPanel()
+	{
+		var panel = new WrapPanel { Margin = new Thickness(14, 0, 14, 12) };
+		bool canWrite = !AppSettings.Current.ReadOnlyMode;
+		var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+		rename.Click += (_, _) =>
+		{
+			var dialog = new RenameWindow(_data, Address + 0x288, Name) { Owner = Window.GetWindow(this) };
+			if (dialog.ShowDialog() == true)
+			{
+				string old = Name;
+				RefreshValues();
+				RebuildHeader();
+				_data.Renamed(Address, Name);
+				_nav.SetStatus(Build.T($"{old} → {Name}. Ctrl+Z geri alır. Oyunda görmek için profili yeniden aç.", $"{old} → {Name}. Ctrl+Z undoes it. Reopen the profile in the game to see it."));
+			}
+		};
+		var move = new Button { Content = Build.T("Kulübe taşı", "Move to club"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+		move.Click += (_, _) =>
+		{
+			var dialog = new MoveWindow(_data, Address, Name) { Owner = Window.GetWindow(this) };
+			if (dialog.ShowDialog() == true && dialog.Done is { } done)
+			{
+				_data.PlayerMoved(Address, done.NewClub, done.NewTeam);
+				RefreshValues();
+				RebuildHeader();
+				_nav.SetStatus(done.Summary + Build.T(" Ctrl+Z geri alır.", " Ctrl+Z undoes it."));
+			}
+		};
+		panel.Children.Add(rename);
+		panel.Children.Add(move);
+		return panel;
+	}
+
+	private void RebuildHeader()
+	{
+		Name = _data.Read(Address, _data.PlayerDef, "Name");
+		Border fresh = BuildHeader();
+		DockPanel.SetDock(fresh, Dock.Top);
+		_root.Children.Remove(_header);
+		_root.Children.Insert(0, fresh);
+		_header = fresh;
+	}
+
 	private IEnumerable<EditField> Named(params string[] names) => names.Where(_f.ContainsKey).Select(n => _f[n]);
 
 	private UIElement Overview()
@@ -237,7 +282,8 @@ public sealed class PlayerPage : UserControl, IPage
 		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"))));
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))));
-		AddColumn(grid, 3, Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
+		AddColumn(grid, 3, Build.Card(Build.T("İşlemler", "Actions"), ActionsPanel()),
+			Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
 			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
 			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))),

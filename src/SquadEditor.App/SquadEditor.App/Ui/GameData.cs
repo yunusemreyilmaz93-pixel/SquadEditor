@@ -14,9 +14,9 @@ public sealed class PlayerRow
 	public ulong Address { get; init; }
 	public string Name { get; set; } = "";
 	public uint Uid { get; init; }
-	public ulong ClubAddress { get; init; }
-	public uint ClubUid { get; init; }
-	public string Club { get; init; } = "";
+	public ulong ClubAddress { get; set; }
+	public uint ClubUid { get; set; }
+	public string Club { get; set; } = "";
 	public string Nation { get; init; } = "";
 	public string Positions { get; init; } = "";
 	public string DateOfBirth { get; init; } = "";
@@ -28,11 +28,11 @@ public sealed class PlayerRow
 	public int Morale { get; init; }
 	public int Age { get; set; }
 	public DateTime? Born { get; init; }
-	public ulong TeamAddress { get; init; }
+	public ulong TeamAddress { get; set; }
 	public string Team { get; set; } = "";
 	public string Status { get; set; } = "";
-	public string ContractEnd { get; init; } = "";
-	public string Search { get; init; } = "";
+	public string ContractEnd { get; set; } = "";
+	public string Search { get; set; } = "";
 }
 
 public sealed class StaffRow
@@ -305,6 +305,36 @@ public sealed class GameData : IDisposable
 			ClubsByAddress = clubMap;
 			Squads = squads;
 		});
+	}
+
+	/// <summary>Brings the lists up to date after a move or release written by the editor.</summary>
+	public void PlayerMoved(ulong player, ulong club, ulong team)
+	{
+		PlayerRow? row = Players.FirstOrDefault(p => p.Address == player);
+		if (row == null)
+		{
+			return;
+		}
+		row.ClubAddress = club;
+		row.TeamAddress = team;
+		row.Club = ClubsByAddress.TryGetValue(club, out ClubRow? c) ? c.Name : "";
+		row.ClubUid = c?.Uid ?? 0;
+		row.Team = team != 0 ? Build.T("A Takım", "First team") : "";
+		if (club == 0)
+		{
+			row.ContractEnd = "";
+		}
+		Squads = Players.Where(p => p.ClubAddress != 0).ToLookup(p => p.ClubAddress);
+	}
+
+	/// <summary>Brings a renamed player's or member of staff's row up to date.</summary>
+	public void Renamed(ulong address, string name)
+	{
+		if (Players.FirstOrDefault(p => p.Address == address) is { } row)
+		{
+			row.Name = name;
+			row.Search = Normalize(name);
+		}
 	}
 
 	/// <summary>Case and accent insensitive form used for search ("Fenerbahçe" matches "fenerbahce").</summary>

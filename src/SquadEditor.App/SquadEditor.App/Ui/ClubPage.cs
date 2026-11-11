@@ -337,8 +337,13 @@ public sealed class StaffPage : UserControl, IPage
 {
 	private readonly Dictionary<string, EditField> _f;
 
+	private readonly GameData _data;
+	private readonly INavigator _nav;
+
 	public StaffPage(GameData data, StaffRow row, INavigator nav)
 	{
+		_data = data;
+		_nav = nav;
 		string lang = Loc.Instance.Language;
 		Row = row;
 		_f = data.StaffDef.Fields.Where(f => f.GroupKey != "Internal" && f.Concat.Count == 0)
@@ -409,7 +414,18 @@ public sealed class StaffPage : UserControl, IPage
 		var c2 = new StackPanel();
 		c2.Children.Add(Build.Card(Build.T("Yetenek ve itibar", "Ability & reputation"), Build.Rows(Named("CA", "PA", "Home Reputation", "Current Reputation", "World Reputation"))));
 		c2.Children.Add(Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "Job", "Wage", "Contract Expires"))));
-		c2.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(Named("First Name", "Last Name", "Unique ID", "Date of Birth", "Nation", "City of Birth"))));
+		var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(14, 0, 14, 12), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		rename.Click += (_, _) =>
+		{
+			var dialog = new RenameWindow(_data, Row.Address, Row.Name) { Owner = Window.GetWindow(this) };
+			if (dialog.ShowDialog() == true)
+			{
+				RefreshValues();
+				_nav.SetStatus(Build.T("Ad değiştirildi. Ctrl+Z geri alır.", "Renamed. Ctrl+Z undoes it."));
+			}
+		};
+		c2.Children.Add(Build.Card(Build.T("İşlemler", "Actions"), rename));
+		c2.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(Named("First Name", "Last Name", "Common Name", "Unique ID", "Date of Birth", "Nation", "City of Birth"))));
 		Grid.SetColumn(c1, 1);
 		Grid.SetColumn(c2, 2);
 		grid.Children.Add(c0);

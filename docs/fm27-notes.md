@@ -113,7 +113,40 @@ read back on our own save before it went into the layout:
   budget, +0x814 spending wage budget, +0x864 ticket price, +0x8A9 corporate facilities.
   Fenerbahçe: capacity 47,430 as in the game, founded 1907.
 
+## Names (renaming people)
+
+A person block (player +0x288; the staff entity address) holds the full name at +0x40 (FM string, often null)
+and pointers to name table entries at +0x50 first, +0x58 last, +0x60 common name (null for none).
+
+FM string block: u32 size asked for (length + 9), u32 (unknown, left alone), u32 holders, then the pointer's
+target: u32 length, UTF-8 text, NUL. "Kerem" (14 asked) and "Aktürkoğlu" (21) sit 32 bytes apart.
+
+Name table entries (24 bytes) live in a pool of game_plugin.dll statics, laid out like FMLibreEditor's object
+pools: +0x00 (begin, end, capacity) of chunk pointers, +0x18 first free slot, +0x20 u32 free, +0x24 u32 used,
++0x28 u32 slot size (0x18), +0x2C u32 slots of the first chunk, +0x30 of later chunks (10,000 each). Test save:
+107 chunks, 1,063,342 used, 6,658 free. Entry: +0x00 string, +0x08 u32 id (consecutive within a chunk),
++0x0C u16 nation (0xAD Turkey, 0xA5 Georgia), +0x0E u16 weight (Kerem 119, Aktürkoğlu 1; not the number of
+people using it). First, last and common names share one pool. Nations keep long lists of entry pointers.
+
+The editor (Ui/Names.cs) points the person at an existing entry with exactly the new text; failing that it
+writes the new text over the old string, only when no other person points at the entry (memory scan; runs of
+4+ entry pointers are nation lists), the string has one holder, and the new text keeps the block size
+(steps of 8 assumed). The full name gets the same swap of first/last word, or is set to null when it no
+longer fits. Checked in game: Kerem Aktürkoğlu → Kerem Yıldızoğlu.
+
+## Moving players (Ui/Transfers.cs)
+
+- Club +0x18 is a (begin, end, capacity) list of teams, senior first. Team +0x38 players list, +0x88/+0x90
+  captain/vice (person blocks). Person id (used by selections) at player +0x290.
+- Squad lists after a load are mostly full; the game grew Fenerbahçe's to 26/36 after transfers. Of 2,672
+  senior teams: 27 below capacity, 364 with zeroed room up to the allocator block (sizes 144..512 from
+  FMLibreEditor), 130 exactly full, the rest tiny squads of unplayed leagues. The editor refuses a full list
+  instead of allocating memory in the game.
+- simatch::PREPARED_TACTICS_CREATOR_ARRAY (vtable via RTTI): +0x08 list, +0x28 26 u32 person ids. 21 objects on
+  the test save, 9 holding Fenerbahçe's selection; a move out of the club empties his slot in those.
+- Checked in game: Kerem moved Fenerbahçe → Galatasaray.
+
 ## Open
 
-- Injuries and bans (records described by FMLibreEditor, not mapped here yet), renaming people (needs string allocation).
+- Signing free agents (needs a contract from the game's FULL_CONTRACT pool), moving staff (club department lists), loans.
 - Staff (`ACTUAL_NON_PLAYER`, primary vtable has COL offset 0x100), competitions, nations as entities.

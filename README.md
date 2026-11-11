@@ -13,6 +13,7 @@
 - **Players:** all technical, mental, physical, goalkeeping and hidden attributes, CA / PA, position ratings on a pitch, condition, morale, value, reputation (current, home, world), height, date of birth, wage and contract end.
 - **Staff:** managers, coaches, scouts, physios and the rest: coaching, mental, knowledge and medical attributes, personality, CA / PA, reputation, job, wage and contract.
 - **Clubs:** squad split into first team and youth teams, staff list, balance, transfer and wage budgets, ticket price, facilities, stadium, reputation and supporters.
+- **Rename players and staff, move a player to another club or release him** (free transfer to the senior team, his contract kept). Only what the game's own memory allows is written: a name the game already has, or a new one in place of the old.
 - **Search everything** (Ctrl+F) with accent-insensitive matching ("fenerbahce" finds Fenerbahçe). Open players, staff and clubs in tabs.
 - **Presets** (Heal and inspire, Wonderkid, World star, Rich owner, max attributes…) on one record or, with right-click, on every selected player of a squad.
 - **Undo** every change (Ctrl+Z).
@@ -51,9 +52,8 @@ dotnet publish src/SquadEditor.App/SquadEditor.csproj -c Release -r win-x64 --se
 
 ## Roadmap
 
-- Injuries and bans, renaming people
+- Signing free agents, moving staff, loans
 - Competitions and nations
-- Transfers and loans (move to club)
 
 Contributions are welcome: a pull request with an updated `layouts/fm27.json` is the easiest way to add a field or fix one after a game patch.
 
