@@ -79,7 +79,8 @@ public sealed class EditField : INotifyPropertyChanged
 		{
 			if (IsMoney && double.TryParse(_value, NumberStyles.Float, CultureInfo.InvariantCulture, out double gbp))
 			{
-				return Money.Format(gbp, IsWage);
+				// The game uses -1 for "not set" (e.g. no asking price).
+				return gbp < 0 && Def.Min < 0 && gbp == -1 ? Build.T("Belirlenmedi", "Not set") : Money.Format(gbp, IsWage);
 			}
 			if (Def.Options.TryGetValue(_value, out string? option))
 			{

@@ -176,6 +176,9 @@ public sealed class ClubPage : UserControl, IPage
 		grid.Columns.Add(Build.TemplateColumn(Build.T("Oyuncu", "Player"), "PlayerNameCell", "Name", 250));
 		grid.Columns.Add(Build.TextColumn(Build.T("Mevki", "Position"), "Positions", 105));
 		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 50));
+		var status = Build.TextColumn(Build.T("Durum", "Status"), "Status", 120);
+		status.Foreground = Build.Res("Danger");
+		grid.Columns.Add(status);
 		if (showClub)
 		{
 			grid.Columns.Add(Build.TemplateColumn(Build.T("Kulüp", "Club"), "PlayerClubCell", "Club", 190));
@@ -206,6 +209,33 @@ public sealed class ClubPage : UserControl, IPage
 			}
 		};
 		grid.ContextMenu = PresetMenu(data, "Player", () => grid.SelectedItems.OfType<PlayerRow>().Select(p => new BulkTarget(p.Address, p.Name)).ToList(), nav);
+		// Medical actions for the selection.
+		grid.ContextMenu.Items.Add(new Separator());
+		void Action(string tr, string en, Func<PlayerRow, bool> act)
+		{
+			var item = new MenuItem { Header = Build.T(tr, en), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+			item.Click += (_, _) =>
+			{
+				var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+				int done = 0;
+				using (data.Session.History.BeginBatch(Build.T(tr, en)))
+				{
+					foreach (PlayerRow row in rows)
+					{
+						if (act(row))
+						{
+							done++;
+							row.Status = Medical.Status(data.Memory, row.Address, data.GameDate);
+						}
+					}
+				}
+				grid.Items.Refresh();
+				nav.SetStatus(Build.T($"{tr}: {done} oyuncu.", $"{en}: {done} players."));
+			};
+			grid.ContextMenu.Items.Add(item);
+		}
+		Action("Seçilenleri iyileştir", "Heal selected", r => Medical.Heal(data, r.Address, r.Name));
+		Action("Seçilenlerin cezasını kaldır", "Lift bans of selected", r => Medical.LiftBans(data, r.Address, r.Name));
 		return grid;
 	}
 

@@ -164,6 +164,53 @@ public sealed class PlayerPage : UserControl, IPage
 		return group == "Positions" ? fields : fields.OrderBy(f => f.Label, StringComparer.Create(CultureInfo.GetCultureInfo(Loc.Instance.Language == "tr" ? "tr-TR" : "en-GB"), true));
 	}
 
+	/// <summary>Current injuries and bans with Heal / Lift buttons.</summary>
+	private UIElement MedicalPanel()
+	{
+		var host = new ContentControl();
+		void Fill()
+		{
+			var stack = new StackPanel { Margin = new Thickness(14, 0, 14, 12) };
+			var injuries = Medical.Injuries(_data.Memory, Address);
+			var bans = Medical.Bans(_data.Memory, Address);
+			if (injuries.Count == 0 && bans.Count == 0)
+			{
+				stack.Children.Add(Build.Text(Build.T("Sağlıklı, cezası yok.", "Fit, no bans."), 13, Build.Res("Positive")));
+			}
+			foreach (Injury i in injuries)
+			{
+				var t = Build.Text($"{i.Name}  ·  {i.ShortestDays}-{i.LongestDays} {Build.T("gün", "days")}" + (i.BackBy is { } back ? $"  ·  {Build.T("dönüş", "back")} {Dates.Show(back.ToString("dd.MM.yyyy"))}" : ""), 13, Build.Res("Danger"));
+				t.TextWrapping = TextWrapping.Wrap;
+				t.Margin = new Thickness(0, 0, 0, 4);
+				stack.Children.Add(t);
+			}
+			foreach (Ban b in bans)
+			{
+				stack.Children.Add(Build.Text(Build.T($"Ceza: {b.Matches} maç", $"Ban: {b.Matches} matches"), 13, Build.Res("Danger")));
+			}
+			var buttons = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
+			if (injuries.Count > 0)
+			{
+				var heal = new Button { Content = Build.T("İyileştir", "Heal"), Margin = new Thickness(0, 0, 6, 0), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+				heal.Click += (_, _) => { Medical.Heal(_data, Address, Name); _nav.SetStatus(Build.T($"{Name} iyileşti. Ctrl+Z geri alır.", $"{Name} healed. Ctrl+Z undoes it.")); Fill(); };
+				buttons.Children.Add(heal);
+			}
+			if (bans.Count > 0)
+			{
+				var lift = new Button { Content = Build.T("Cezayı kaldır", "Lift bans"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+				lift.Click += (_, _) => { Medical.LiftBans(_data, Address, Name); _nav.SetStatus(Build.T($"{Name} için ceza kaldırıldı.", $"Bans lifted for {Name}.")); Fill(); };
+				buttons.Children.Add(lift);
+			}
+			if (buttons.Children.Count > 0)
+			{
+				stack.Children.Add(buttons);
+			}
+			host.Content = stack;
+		}
+		Fill();
+		return host;
+	}
+
 	private IEnumerable<EditField> Named(params string[] names) => names.Where(_f.ContainsKey).Select(n => _f[n]);
 
 	private UIElement Overview()
@@ -191,6 +238,7 @@ public sealed class PlayerPage : UserControl, IPage
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))));
 		AddColumn(grid, 3, Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
+			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
 			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))),
 			Build.Card(Build.T("Mevki", "Position"), MiniPitch(250)));

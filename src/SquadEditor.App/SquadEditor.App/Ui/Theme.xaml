@@ -121,7 +121,6 @@
         <ControlTemplate TargetType="RadioButton">
           <Border x:Name="b" Background="Transparent" CornerRadius="7" Padding="12,8" Margin="8,1">
             <Grid>
-              <Border x:Name="mark" Width="3" HorizontalAlignment="Left" Margin="-12,2,0,2" CornerRadius="2" Background="{DynamicResource Accent}" Visibility="Collapsed"/>
               <ContentPresenter/>
             </Grid>
           </Border>
@@ -132,7 +131,6 @@
             </Trigger>
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="b" Property="Background" Value="{DynamicResource Selection}"/>
-              <Setter TargetName="mark" Property="Visibility" Value="Visible"/>
               <Setter Property="Foreground" Value="White"/>
             </Trigger>
           </ControlTemplate.Triggers>

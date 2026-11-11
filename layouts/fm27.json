@@ -2463,7 +2463,7 @@
       "Job": "Görev",
       "Value": "Değer",
       "Condition": "Kondisyon (%)",
-      "Morale": "Moral (0-20)",
+      "Morale": "Moral (1-20)",
       "Status": "Durum",
       "Reputation": "İtibar",
       "Current Reputation": "Güncel İtibar",

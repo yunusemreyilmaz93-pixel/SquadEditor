@@ -30,6 +30,7 @@ public sealed class PlayerRow
 	public DateTime? Born { get; init; }
 	public ulong TeamAddress { get; init; }
 	public string Team { get; set; } = "";
+	public string Status { get; set; } = "";
 	public string ContractEnd { get; init; } = "";
 	public string Search { get; init; } = "";
 }
@@ -222,6 +223,7 @@ public sealed class GameData : IDisposable
 			foreach (PlayerRow p in playerList)
 			{
 				p.Age = AgeOn(p.Born);
+				p.Status = Medical.Status(_reader.Memory, p.Address, GameDate);
 			}
 
 			progress?.Report("staff");

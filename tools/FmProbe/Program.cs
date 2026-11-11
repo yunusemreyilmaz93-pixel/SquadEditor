@@ -255,6 +255,27 @@ switch (cmd)
         }
         break;
     }
+    case "injuries":
+    {
+        // injuries <layout> [max] : players with a non-empty injury or absence list (read-only)
+        var layout = SquadEditor.Core.Layout.GameLayout.Load(args[1]);
+        var session = new SquadEditor.Core.GameSession(mem, layout);
+        var def = layout.GetEntity("Player");
+        int max = args.Length > 2 ? int.Parse(args[2]) : 20, shown = 0;
+        foreach (var a in session.GetCollectionItems("Players"))
+        {
+            ulong rec = mem.Read<ulong>(a + 0xF8);
+            if (rec == 0) continue;
+            ulong ib = mem.Read<ulong>(rec), ie = mem.Read<ulong>(rec + 8), ab = mem.Read<ulong>(rec + 0x18), ae = mem.Read<ulong>(rec + 0x20);
+            bool bans = false;
+            for (ulong e = ab; e < ae && e - ab < 32 * 50; e += 32) if (mem.Read<ushort>(e + 0x16) == 0xFFFF) bans = true;
+            if (ie == ib && !bans) continue;
+            string name = session.ReadField(a, def.Fields.First(f => f.Name == "Name"));
+            Console.WriteLine($"{a:X12} {name}: injuries {ie - ib} bytes at {ib:X12}, absences {(ae - ab) / 32}{(bans ? " (ban)" : "")} at {ab:X12}");
+            if (++shown >= max) break;
+        }
+        break;
+    }
     case "players":
     {
         // players <layout> [nameFilter] [field...] : read-only end-to-end test through GameSession
