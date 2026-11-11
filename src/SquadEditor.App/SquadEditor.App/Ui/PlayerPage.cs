@@ -191,7 +191,7 @@ public sealed class PlayerPage : UserControl, IPage
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))));
 		AddColumn(grid, 3, Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
-			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Morale", "Value"))),
+			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))),
 			Build.Card(Build.T("Mevki", "Position"), MiniPitch(250)));
 		return Build.Scroll(grid);
@@ -203,8 +203,10 @@ public sealed class PlayerPage : UserControl, IPage
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
 		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"),
-			Build.Rows(Named("First Name", "Last Name", "Full Name", "Unique ID", "Date of Birth", "Birth Year", "Nation", "City of Birth", "Height"))));
-		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Wage", "Contract Expires", "Value"))),
+			Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "Nation", "City of Birth", "Height"))),
+			Build.Card(Build.T("Kişilik (1-20)", "Personality (1-20)"), Build.Rows(Group("Personality"))),
+			Build.Card(Build.T("Milli takım", "International"), Build.Rows(Group("International"))));
+		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
 			Build.Card(Build.T("İtibar (0-10000)", "Reputation (0-10000)"), Build.Rows(Named("Current Reputation", "Home Reputation", "World Reputation"))),
 			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, RefreshValues, _nav));
 		return Build.Scroll(grid);

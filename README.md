@@ -11,7 +11,7 @@
 - **Zero setup.** Start the game and load a save: SquadEditor finds it and connects on its own. No layout files, no folders to pick.
 - **Logos and faces.** Your graphics packs in `Documents\Sports Interactive\Football Manager 27\graphics` are picked up automatically (the same folder the game uses). Another folder can be set in Settings.
 - **Players:** all technical, mental, physical, goalkeeping and hidden attributes, CA / PA, position ratings on a pitch, condition, morale, value, reputation (current, home, world), height, date of birth, wage and contract end.
-- **Staff:** managers, coaches, scouts, physios and the rest, with job, wage and contract.
+- **Staff:** managers, coaches, scouts, physios and the rest: coaching, mental, knowledge and medical attributes, personality, CA / PA, reputation, job, wage and contract.
 - **Clubs:** squad split into first team and youth teams, staff list, balance, transfer budget and wage budget.
 - **Search everything** (Ctrl+F) with accent-insensitive matching ("fenerbahce" finds Fenerbahçe). Open players, staff and clubs in tabs.
 - **Presets** (Heal and inspire, Wonderkid, World star, Rich owner, max attributes…) on one record or, with right-click, on every selected player of a squad.
@@ -38,7 +38,7 @@ The game's own screen may keep showing an old value for a profile that is alread
 
 SquadEditor reads and writes the game's memory (`ReadProcessMemory` / `WriteProcessMemory`). It does not use fixed addresses: game records are found through the classes the game itself defines (MSVC RTTI, e.g. `db::ACTUAL_PLAYER`), so it keeps working when the game moves things around in memory. Field offsets live in a JSON layout (`layouts/fm27.json`) that is built into the exe; a file with the same name in a `layouts` folder next to the exe overrides it.
 
-Reverse-engineering notes: [docs/fm27-notes.md](docs/fm27-notes.md). `tools/FmProbe` is the read-only memory explorer used to map the layout.
+Reverse-engineering notes: [docs/fm27-notes.md](docs/fm27-notes.md). Some field offsets were cross-checked with the FM27 research published by [FMLibreEditor](https://github.com/tozmoz/FMLibreEditor) and [fm-editor](https://github.com/barak14/fm-editor); thanks to their authors. No code from those projects is used. `tools/FmProbe` is the read-only memory explorer used to map the layout.
 
 ## Building
 

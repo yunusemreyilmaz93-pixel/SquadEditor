@@ -180,6 +180,10 @@ public partial class EditorWindow : Window, INavigator
 			{
 				OpenClub(club.Address);
 			}
+			else if (args[i] == "--staff" && data.Staff.Where(s => s.Search.Contains(q)).FirstOrDefault() is { } staff)
+			{
+				OpenStaff(staff.Address);
+			}
 			else if (args[i] == "--open" && data.Players.Where(p => p.Search.Contains(q)).OrderByDescending(p => p.CA).FirstOrDefault() is { } player)
 			{
 				OpenPlayer(player.Address);

@@ -1,3 +1,4 @@
+// Some offsets were cross-checked with the FM27 research of FMLibreEditor and fm-editor (both GPL-3.0); facts only, verified on our own reads.
 // Football Manager 27 (27.0.1) layout. Notes: docs/fm27-notes.md
 // Players are found by scanning for db::ACTUAL_PLAYER objects (vtable located through RTTI).
 // Paths are relative to the start of the ACTUAL_PLAYER object.
@@ -339,9 +340,21 @@
           "path": [
             "0x234"
           ],
-          "type": "u32",
+          "type": "i32",
           "min": 0,
-          "max": 1500000000,
+          "max": 300000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Asking Price",
+          "group": "Status",
+          "path": [
+            "0x238"
+          ],
+          "type": "i32",
+          "min": -1,
+          "max": 2000000000,
           "format": "money",
           "currency": "£"
         },
@@ -357,17 +370,38 @@
           "scale": 100
         },
         {
+          "name": "Match Sharpness",
+          "group": "Status",
+          "path": [
+            "0x258"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 100,
+          "scale": 100
+        },
+        {
+          "name": "Jadedness",
+          "group": "Status",
+          "path": [
+            "0x25A"
+          ],
+          "type": "i16",
+          "min": -500,
+          "max": 1000
+        },
+        {
           "name": "Morale",
           "group": "Status",
           "path": [
             "0x26C"
           ],
           "type": "u8",
-          "min": 0,
+          "min": 1,
           "max": 20
         },
         {
-          "name": "Current Reputation",
+          "name": "Home Reputation",
           "group": "Reputation",
           "path": [
             "0x25E"
@@ -377,7 +411,7 @@
           "max": 10000
         },
         {
-          "name": "Home Reputation",
+          "name": "Current Reputation",
           "group": "Reputation",
           "path": [
             "0x260"
@@ -395,6 +429,138 @@
           "type": "u16",
           "min": 0,
           "max": 10000
+        },
+        {
+          "name": "Common Name",
+          "group": "Personal",
+          "path": [
+            "0x2E8",
+            "0x0"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "International Caps",
+          "group": "International",
+          "path": [
+            "0x3BC"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 500
+        },
+        {
+          "name": "International Goals",
+          "group": "International",
+          "path": [
+            "0x3BE"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 500
+        },
+        {
+          "name": "U21 Caps",
+          "group": "International",
+          "path": [
+            "0x3C0"
+          ],
+          "type": "u8",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "U21 Goals",
+          "group": "International",
+          "path": [
+            "0x3C1"
+          ],
+          "type": "u8",
+          "min": 0,
+          "max": 255
+        },
+        {
+          "name": "Squad Number",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x5D"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 255
+        },
+        {
+          "name": "Squad Status",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x54"
+          ],
+          "type": "u8",
+          "min": 0,
+          "max": 20
+        },
+        {
+          "name": "Contract Type",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0xC3"
+          ],
+          "type": "u8",
+          "options": {
+            "0": "Part-Time",
+            "1": "Full-Time",
+            "2": "Amateur",
+            "3": "Youth",
+            "4": "Non-Contract",
+            "10": "Senior Minimum Salary",
+            "11": "Senior"
+          }
+        },
+        {
+          "name": "Loyalty Bonus",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x38"
+          ],
+          "type": "i32",
+          "min": 0,
+          "max": 50000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Contract Signed",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x44"
+          ],
+          "type": "dayYear"
+        },
+        {
+          "name": "Joined Club",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x4C"
+          ],
+          "type": "dayYear"
+        },
+        {
+          "name": "Contract Happiness",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x5A"
+          ],
+          "type": "i8",
+          "min": -100,
+          "max": 100
         },
         {
           "name": "Height",
@@ -425,6 +591,86 @@
           "type": "u16",
           "min": 1,
           "max": 200
+        },
+        {
+          "name": "Adaptability",
+          "group": "Personality",
+          "path": [
+            "0x2f8"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Ambition",
+          "group": "Personality",
+          "path": [
+            "0x2f9"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Loyalty",
+          "group": "Personality",
+          "path": [
+            "0x2fa"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Pressure",
+          "group": "Personality",
+          "path": [
+            "0x2fb"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Professionalism",
+          "group": "Personality",
+          "path": [
+            "0x2fc"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Sportsmanship",
+          "group": "Personality",
+          "path": [
+            "0x2fd"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Temperament",
+          "group": "Personality",
+          "path": [
+            "0x2fe"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Controversy",
+          "group": "Personality",
+          "path": [
+            "0x2ff"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
         },
         {
           "name": "GK",
@@ -706,8 +952,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Aerial Reach",
@@ -718,8 +963,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Command of Area",
@@ -730,8 +974,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Communication",
@@ -742,8 +985,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Kicking",
@@ -754,8 +996,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Throwing",
@@ -766,8 +1007,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Anticipation",
@@ -800,8 +1040,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Positioning",
@@ -823,8 +1062,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "First Touch",
@@ -934,8 +1172,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Rushing Out",
@@ -946,8 +1183,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Punching",
@@ -958,8 +1194,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Acceleration",
@@ -1047,8 +1282,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Balance",
@@ -1081,8 +1315,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Aggression",
@@ -1115,8 +1348,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Injury Proneness",
@@ -1127,8 +1359,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Versatility",
@@ -1139,8 +1370,7 @@
           "type": "u8",
           "min": 1,
           "max": 20,
-          "scale": 5,
-          "readOnly": true
+          "scale": 5
         },
         {
           "name": "Natural Fitness",
@@ -1252,6 +1482,241 @@
           "maxLength": 64
         },
         {
+          "name": "Reputation",
+          "group": "General",
+          "path": [
+            "0x18",
+            "0x0",
+            "0xA8"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 10000
+        },
+        {
+          "name": "Founded",
+          "group": "General",
+          "path": [
+            "0x100",
+            "0xD8"
+          ],
+          "type": "u16",
+          "min": 1800,
+          "max": 2100
+        },
+        {
+          "name": "Season Tickets",
+          "group": "General",
+          "path": [
+            "0x100",
+            "0xC0"
+          ],
+          "type": "u32",
+          "min": 0,
+          "max": 500000,
+          "format": "number"
+        },
+        {
+          "name": "Social Media Followers",
+          "group": "General",
+          "path": [
+            "0x100",
+            "0xF8"
+          ],
+          "type": "u32",
+          "min": 0,
+          "max": 2000000000,
+          "format": "number"
+        },
+        {
+          "name": "Training Facilities",
+          "group": "Facilities",
+          "path": [
+            "0x100",
+            "0x120"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Youth Facilities",
+          "group": "Facilities",
+          "path": [
+            "0x100",
+            "0x12B"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Youth Coaching",
+          "group": "Facilities",
+          "path": [
+            "0x100",
+            "0x12C"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Youth Recruitment",
+          "group": "Facilities",
+          "path": [
+            "0x100",
+            "0x12D"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Corporate Facilities",
+          "group": "Facilities",
+          "path": [
+            "0x150",
+            "0x8A9"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Stadium",
+          "group": "Stadium",
+          "path": [
+            "0x18",
+            "0x0",
+            "0x78",
+            "0x40"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 96
+        },
+        {
+          "name": "Capacity",
+          "group": "Stadium",
+          "path": [
+            "0x18",
+            "0x0",
+            "0x78",
+            "0x7C"
+          ],
+          "type": "u32",
+          "min": 0,
+          "max": 200000,
+          "format": "number"
+        },
+        {
+          "name": "Seating",
+          "group": "Stadium",
+          "path": [
+            "0x18",
+            "0x0",
+            "0x78",
+            "0x80"
+          ],
+          "type": "u32",
+          "min": 0,
+          "max": 200000,
+          "format": "number"
+        },
+        {
+          "name": "Expansion Capacity",
+          "group": "Stadium",
+          "path": [
+            "0x18",
+            "0x0",
+            "0x78",
+            "0x8C"
+          ],
+          "type": "u32",
+          "min": 0,
+          "max": 200000,
+          "format": "number"
+        },
+        {
+          "name": "Ticket Price",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x864"
+          ],
+          "type": "f32",
+          "min": 0,
+          "max": 10000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Supporter Loyalty",
+          "group": "Supporters",
+          "path": [
+            "0x100",
+            "0x114"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Supporter Passion",
+          "group": "Supporters",
+          "path": [
+            "0x100",
+            "0x115"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Supporter Patience",
+          "group": "Supporters",
+          "path": [
+            "0x100",
+            "0x116"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Supporter Affluence",
+          "group": "Supporters",
+          "path": [
+            "0x100",
+            "0x117"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Supporter Temperament",
+          "group": "Supporters",
+          "path": [
+            "0x100",
+            "0x118"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Supporter Expectations",
+          "group": "Supporters",
+          "path": [
+            "0x100",
+            "0x119"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
           "name": "Balance",
           "group": "Finances",
           "path": [
@@ -1292,7 +1757,7 @@
           "group": "Finances",
           "path": [
             "0x150",
-            "0x810"
+            "0x808"
           ],
           "type": "i32",
           "min": 0,
@@ -1301,14 +1766,15 @@
           "currency": "£"
         },
         {
-          "name": "Wage Spent",
+          "name": "Spending Wage Budget",
           "group": "Finances",
           "path": [
             "0x150",
-            "0x808"
+            "0x814"
           ],
           "type": "i32",
-          "readOnly": true,
+          "min": 0,
+          "max": 200000000,
           "format": "money",
           "currency": "£"
         }
@@ -1479,6 +1945,365 @@
             "0x48"
           ],
           "type": "dayYear"
+        },
+        {
+          "name": "CA",
+          "group": "Ability",
+          "path": [
+            "-0x26"
+          ],
+          "type": "u16",
+          "min": 1,
+          "max": 200
+        },
+        {
+          "name": "PA",
+          "group": "Ability",
+          "path": [
+            "-0x24"
+          ],
+          "type": "u16",
+          "min": 1,
+          "max": 200
+        },
+        {
+          "name": "Home Reputation",
+          "group": "Reputation",
+          "path": [
+            "-0x2C"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 10000
+        },
+        {
+          "name": "Current Reputation",
+          "group": "Reputation",
+          "path": [
+            "-0x2A"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 10000
+        },
+        {
+          "name": "World Reputation",
+          "group": "Reputation",
+          "path": [
+            "-0x28"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 10000
+        },
+        {
+          "name": "Working with Youngsters",
+          "group": "Coaching",
+          "path": [
+            "-0xE4"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Authority",
+          "group": "Mental",
+          "path": [
+            "-0xEC"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Attacking",
+          "group": "Coaching",
+          "path": [
+            "-0xCE"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Defending",
+          "group": "Coaching",
+          "path": [
+            "-0xCD"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Fitness",
+          "group": "Coaching",
+          "path": [
+            "-0xCC"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Goalkeeping",
+          "group": "Coaching",
+          "path": [
+            "-0xD5"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Possession",
+          "group": "Coaching",
+          "path": [
+            "-0xCB"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Tactical",
+          "group": "Coaching",
+          "path": [
+            "-0xC9"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Technical",
+          "group": "Coaching",
+          "path": [
+            "-0xCA"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Set Pieces",
+          "group": "Coaching",
+          "path": [
+            "-0xBD"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Determination",
+          "group": "Mental",
+          "path": [
+            "-0xE3"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Motivating",
+          "group": "Mental",
+          "path": [
+            "-0xD1"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Man Management",
+          "group": "Mental",
+          "path": [
+            "-0xD2"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Judging Player Ability",
+          "group": "Knowledge",
+          "path": [
+            "-0xD4"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Judging Player Potential",
+          "group": "Knowledge",
+          "path": [
+            "-0xD3"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Judging Staff Ability",
+          "group": "Knowledge",
+          "path": [
+            "-0xBE"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Negotiating",
+          "group": "Knowledge",
+          "path": [
+            "-0xBF"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Tactical Knowledge",
+          "group": "Knowledge",
+          "path": [
+            "-0xCF"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Data Analysis",
+          "group": "Knowledge",
+          "path": [
+            "-0xC4"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Physiotherapy",
+          "group": "Medical",
+          "path": [
+            "-0xD0"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Sports Science",
+          "group": "Medical",
+          "path": [
+            "-0xC1"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Adaptability",
+          "group": "Personality",
+          "path": [
+            "0x70"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Ambition",
+          "group": "Personality",
+          "path": [
+            "0x71"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Loyalty",
+          "group": "Personality",
+          "path": [
+            "0x72"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Pressure",
+          "group": "Personality",
+          "path": [
+            "0x73"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Professionalism",
+          "group": "Personality",
+          "path": [
+            "0x74"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Sportsmanship",
+          "group": "Personality",
+          "path": [
+            "0x75"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Temperament",
+          "group": "Personality",
+          "path": [
+            "0x76"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Controversy",
+          "group": "Personality",
+          "path": [
+            "0x77"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
         }
       ]
     }
@@ -1648,7 +2473,6 @@
       "Balance": "Denge",
       "Transfer Budget": "Transfer Bütçesi",
       "Wage Budget": "Maaş Bütçesi",
-      "Wage Spent": "Ödenen Maaş",
       "Coach": "Antrenör",
       "Director of Football": "Futbol Direktörü",
       "Physio": "Fizyoterapist",
@@ -1663,6 +2487,85 @@
       "Performance Analyst": "Performans Analisti",
       "Head of Youth Development": "Altyapı Sorumlusu",
       "Chairman": "Başkan",
+      "Adaptability": "Uyum Sağlama",
+      "Ambition": "Hırs",
+      "Loyalty": "Sadakat",
+      "Pressure": "Baskıya Dayanıklılık",
+      "Professionalism": "Profesyonellik",
+      "Sportsmanship": "Sportmenlik",
+      "Temperament": "Soğukkanlılık Mizacı",
+      "Controversy": "Tartışmacılık",
+      "Attacking": "Hücum",
+      "Defending": "Savunma",
+      "Fitness": "Kondisyon",
+      "Goalkeeping": "Kalecilik",
+      "Possession": "Topa Sahip Olma",
+      "Tactical": "Taktiksel",
+      "Technical": "Teknik",
+      "Set Pieces": "Duran Toplar",
+      "Determination": "Kararlılık",
+      "Motivating": "Motivasyon",
+      "Man Management": "Futbolcu İdare Kabiliyeti",
+      "Judging Player Ability": "Oyuncu Yeteneğini Değerlendirme",
+      "Judging Player Potential": "Oyuncu Potansiyelini Değerlendirme",
+      "Judging Staff Ability": "Personel Kalitesini Değerlendirme",
+      "Negotiating": "Pazarlık Kabiliyeti",
+      "Tactical Knowledge": "Taktiksel Bilgi Birikimi",
+      "Data Analysis": "Veri Analizi",
+      "Physiotherapy": "Fizyoterapi",
+      "Sports Science": "Spor Bilimi",
+      "Personality": "Kişilik",
+      "International": "Milli Takım",
+      "Ability": "Yetenek",
+      "Coaching": "Antrenörlük",
+      "Knowledge": "Bilgi Seviyesi",
+      "Medical": "Medikal",
+      "Facilities": "Tesisler",
+      "Stadium": "Stadyum",
+      "Supporters": "Taraftarlar",
+      "Working with Youngsters": "Gençlerle Çalışma",
+      "Authority": "Otorite",
+      "Asking Price": "İstenen Bonservis",
+      "Match Sharpness": "Maç Formu (%)",
+      "Jadedness": "Yorgunluk",
+      "Common Name": "Bilinen Adı",
+      "International Caps": "Milli Maç",
+      "International Goals": "Milli Gol",
+      "U21 Caps": "U21 Maç",
+      "U21 Goals": "U21 Gol",
+      "Squad Number": "Forma Numarası",
+      "Squad Status": "Kadro Statüsü",
+      "Contract Type": "Sözleşme Tipi",
+      "Loyalty Bonus": "Sadakat Primi",
+      "Contract Signed": "İmza Tarihi",
+      "Joined Club": "Kulübe Katılış",
+      "Contract Happiness": "Sözleşme Memnuniyeti",
+      "Part-Time": "Yarı Zamanlı",
+      "Full-Time": "Tam Zamanlı",
+      "Amateur": "Amatör",
+      "Youth": "Genç",
+      "Non-Contract": "Sözleşmesiz",
+      "Senior Minimum Salary": "Asgari Ücretli",
+      "Senior": "Profesyonel",
+      "Founded": "Kuruluş Yılı",
+      "Season Tickets": "Sezonluk Bilet",
+      "Social Media Followers": "Sosyal Medya Takipçisi",
+      "Training Facilities": "Antrenman Tesisleri",
+      "Youth Facilities": "Altyapı Tesisleri",
+      "Youth Coaching": "Akademi Antrenörlüğü",
+      "Youth Recruitment": "Altyapıya Oyuncu Alımı",
+      "Corporate Facilities": "Loca",
+      "Capacity": "Kapasite",
+      "Seating": "Koltuk Sayısı",
+      "Expansion Capacity": "Genişleme Kapasitesi",
+      "Ticket Price": "Bilet Fiyatı",
+      "Supporter Loyalty": "Sadakat",
+      "Supporter Passion": "Tutku",
+      "Supporter Patience": "Sabır",
+      "Supporter Affluence": "Gelir Düzeyi",
+      "Supporter Temperament": "Mizaç",
+      "Supporter Expectations": "Beklenti",
+      "Spending Wage Budget": "Kullanılabilir Maaş Bütçesi",
       "GK": "Kaleci",
       "SW": "Libero",
       "DL": "Sol Bek",
@@ -1680,10 +2583,8 @@
       "WBR": "Sağ Kanat Bek",
       "Personal": "Kişisel",
       "General": "Genel",
-      "Technical": "Teknik",
       "Mental": "Zihinsel",
       "Physical": "Fiziksel",
-      "Goalkeeping": "Kalecilik",
       "Hidden": "Gizli",
       "Feet": "Ayaklar",
       "Name": "İsim",
@@ -1695,11 +2596,9 @@
       "Height": "Boy",
       "CA": "Mevcut Yetenek",
       "PA": "Potansiyel Yetenek",
-      "Attacking": "Hücum",
       "Playmaking": "Oyun kurma",
       "Ball carrying": "Top taşıma",
       "Physical play": "Fizik",
-      "Defending": "Savunma",
       "Mentality": "Mentalite",
       "Heal and inspire": "Tam kondisyon ve moral",
       "Full condition and top morale.": "Kondisyonu ve morali en üste çıkarır.",
@@ -1769,7 +2668,6 @@
       "Injury Proneness": "Sakatlık Eğilimi",
       "Versatility": "Çok Yönlülük",
       "Natural Fitness": "Vücut Zindeliği",
-      "Determination": "Kararlılık",
       "Composure": "Soğukkanlılık",
       "Concentration": "Konsantrasyon"
     }

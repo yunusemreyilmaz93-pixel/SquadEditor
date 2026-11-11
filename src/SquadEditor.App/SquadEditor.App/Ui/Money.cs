@@ -48,7 +48,7 @@ public static class Money
 		_ => Build.T("/hf", "/week")
 	};
 
-	public static bool IsWage(string fieldName) => fieldName.Contains("Wage", StringComparison.Ordinal);
+	public static bool IsWage(string fieldName) => fieldName.Contains("Wage", StringComparison.Ordinal) || fieldName == "Loyalty Bonus";
 
 	/// <summary>Game value (GBP, weekly for wages) to the shown number.</summary>
 	public static double ToDisplay(double gbp, bool wage) => gbp * Rate * (wage ? WageFactor : 1.0);

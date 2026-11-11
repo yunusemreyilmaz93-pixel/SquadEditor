@@ -233,6 +233,28 @@ switch (cmd)
         Console.WriteLine($"done, {reported} hits");
         break;
     }
+    case "read":
+    {
+        // read <layout> <collection> <nameFilter> <field...> : any entity through GameSession (read-only)
+        var layout = SquadEditor.Core.Layout.GameLayout.Load(args[1]);
+        var session = new SquadEditor.Core.GameSession(mem, layout);
+        var col = layout.GetCollection(args[2]);
+        var def = layout.GetEntity(col.Entity);
+        foreach (var a in session.GetCollectionItems(args[2]))
+        {
+            string name;
+            try { name = session.ReadField(a, def.Fields.First(f => f.Name == def.DisplayField)); } catch { continue; }
+            if (!name.Equals(args[3], StringComparison.OrdinalIgnoreCase)) continue;
+            Console.WriteLine($"{a:X12} {name}");
+            foreach (var f in args.Skip(4))
+            {
+                string v;
+                try { v = session.ReadField(a, def.Fields.First(x => x.Name == f)); } catch (Exception e) { v = "!" + e.GetType().Name; }
+                Console.WriteLine($"   {f} = {v}");
+            }
+        }
+        break;
+    }
     case "players":
     {
         // players <layout> [nameFilter] [field...] : read-only end-to-end test through GameSession

@@ -39,7 +39,7 @@ public sealed class ClubPage : UserControl, IPage
 		Build.NavItem(menu, Build.T("Kadro", "Squad"), () => content.Content = Squad(), isChecked: true);
 		Build.NavItem(menu, Build.T("Personel", "Staff"), () => content.Content = StaffList());
 		Build.NavItem(menu, Build.T("Finans", "Finances"), () => content.Content = Finances());
-		Build.NavItem(menu, Build.T("Bilgi", "Information"), () => content.Content = Info());
+		Build.NavItem(menu, Build.T("Bilgi ve tesisler", "Info & facilities"), () => content.Content = Info());
 		_root.Children.Add(body);
 		Content = _root;
 		Background = Build.Res("Bg");
@@ -154,9 +154,19 @@ public sealed class ClubPage : UserControl, IPage
 
 	private UIElement Info()
 	{
-		var stack = new StackPanel { MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Left };
-		stack.Children.Add(Build.Card(Build.T("Genel", "General"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "General"))));
-		return Build.Scroll(stack);
+		var grid = new Grid();
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 380 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 380 });
+		var left = new StackPanel();
+		left.Children.Add(Build.Card(Build.T("Genel", "General"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "General"))));
+		left.Children.Add(Build.Card(Build.T("Taraftarlar (1-20)", "Supporters (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Supporters"))));
+		var right = new StackPanel();
+		right.Children.Add(Build.Card(Build.T("Tesisler (1-20)", "Facilities (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Facilities"))));
+		right.Children.Add(Build.Card(Build.T("Stadyum", "Stadium"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Stadium"))));
+		Grid.SetColumn(right, 1);
+		grid.Children.Add(left);
+		grid.Children.Add(right);
+		return Build.Scroll(grid);
 	}
 
 	/// <summary>Sortable player table shared by squads and the player browser. Multi-select + right-click applies presets.</summary>
@@ -356,13 +366,25 @@ public sealed class StaffPage : UserControl, IPage
 		var grid = new Grid();
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
-		var left = new StackPanel();
-		left.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(new[] { "First Name", "Last Name", "Unique ID", "Date of Birth", "Nation", "City of Birth" }.Where(_f.ContainsKey).Select(n => _f[n]))));
-		var right = new StackPanel();
-		right.Children.Add(Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(new[] { "Club", "Job", "Wage", "Contract Expires" }.Where(_f.ContainsKey).Select(n => _f[n]))));
-		Grid.SetColumn(right, 1);
-		grid.Children.Add(left);
-		grid.Children.Add(right);
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 300 });
+		IEnumerable<EditField> Group(string g) => _f.Values.Where(f => f.Def.GroupKey == g).OrderBy(f => f.Label, StringComparer.Create(System.Globalization.CultureInfo.GetCultureInfo(Loc.Instance.Language == "tr" ? "tr-TR" : "en-GB"), true));
+		IEnumerable<EditField> Named(params string[] names) => names.Where(_f.ContainsKey).Select(n => _f[n]);
+		var c0 = new StackPanel();
+		c0.Children.Add(Build.Card(Build.T("Antrenörlük", "Coaching"), Build.Rows(Group("Coaching"))));
+		c0.Children.Add(Build.Card(Build.T("Medikal", "Medical"), Build.Rows(Group("Medical"))));
+		var c1 = new StackPanel();
+		c1.Children.Add(Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"))));
+		c1.Children.Add(Build.Card(Build.T("Bilgi seviyesi", "Knowledge"), Build.Rows(Group("Knowledge"))));
+		c1.Children.Add(Build.Card(Build.T("Kişilik", "Personality"), Build.Rows(Group("Personality"))));
+		var c2 = new StackPanel();
+		c2.Children.Add(Build.Card(Build.T("Yetenek ve itibar", "Ability & reputation"), Build.Rows(Named("CA", "PA", "Home Reputation", "Current Reputation", "World Reputation"))));
+		c2.Children.Add(Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "Job", "Wage", "Contract Expires"))));
+		c2.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(Named("First Name", "Last Name", "Unique ID", "Date of Birth", "Nation", "City of Birth"))));
+		Grid.SetColumn(c1, 1);
+		Grid.SetColumn(c2, 2);
+		grid.Children.Add(c0);
+		grid.Children.Add(c1);
+		grid.Children.Add(c2);
 		return Build.Scroll(grid);
 	}
 }

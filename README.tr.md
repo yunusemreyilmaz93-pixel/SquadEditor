@@ -11,7 +11,7 @@
 - **Kurulum yok, ayar yok.** Oyunu aç, kaydını yükle: SquadEditor oyunu kendisi bulur ve bağlanır. Layout dosyası, klasör seçimi yok.
 - **Logo ve yüzler.** `Belgeler\Sports Interactive\Football Manager 27\graphics` klasöründeki paketlerin (oyunun kullandığı klasör) kendiliğinden okunur. İstersen Ayarlar'dan başka bir klasör seçebilirsin.
 - **Oyuncular:** bütün teknik, zihinsel, fiziksel, kalecilik ve gizli özellikler, CA / PA, sahada mevki puanları, kondisyon, moral, değer, itibar (güncel, yerel, dünya), boy, doğum tarihi, maaş ve sözleşme bitişi.
-- **Personel:** menajer, antrenör, gözlemci, fizyoterapist ve diğerleri; görev, maaş ve sözleşme.
+- **Personel:** menajer, antrenör, gözlemci, fizyoterapist ve diğerleri: antrenörlük, zihinsel, bilgi ve medikal özellikler, kişilik, CA / PA, itibar, görev, maaş ve sözleşme.
 - **Kulüpler:** A takım ve genç takımlara ayrılmış kadro, personel listesi, bakiye, transfer bütçesi ve maaş bütçesi.
 - **Her şeyi ara** (Ctrl+F). Aksan fark etmez: "fenerbahce" yazınca Fenerbahçe'yi bulur. Oyuncu, personel ve kulüpler sekmelerde açılır.
 - **Ön ayarlar** (Tam kondisyon ve moral, Wonderkid yap, Dünya yıldızı, Zengin patron, özellikleri fulle…): tek kayda ya da sağ tıkla kadroda seçtiğin bütün oyunculara.
@@ -38,7 +38,7 @@ Oyunun kendi ekranı, açık duran bir profilde eski değeri göstermeye devam e
 
 SquadEditor oyunun belleğini okur ve yazar (`ReadProcessMemory` / `WriteProcessMemory`). Sabit adres kullanmaz: oyun kayıtlarını oyunun kendi sınıfları üzerinden bulur (MSVC RTTI, ör. `db::ACTUAL_PLAYER`); oyun bellekte yer değiştirse de çalışmaya devam eder. Alanların yerleri exe'nin içine gömülü bir JSON layout dosyasındadır (`layouts/fm27.json`); exe'nin yanındaki `layouts` klasörüne aynı adla bir dosya koyarsan o kullanılır.
 
-Tersine mühendislik notları: [docs/fm27-notes.md](docs/fm27-notes.md). `tools/FmProbe`, layout'u çıkarmak için kullanılan salt okunur bellek aracı.
+Tersine mühendislik notları: [docs/fm27-notes.md](docs/fm27-notes.md). Bazı alanların yerleri [FMLibreEditor](https://github.com/tozmoz/FMLibreEditor) ve [fm-editor](https://github.com/barak14/fm-editor) projelerinin yayımladığı FM27 araştırmasıyla karşılaştırıldı; emeği geçenlere teşekkürler. Bu projelerden kod kullanılmadı. `tools/FmProbe`, layout'u çıkarmak için kullanılan salt okunur bellek aracı.
 
 ## Derleme
 

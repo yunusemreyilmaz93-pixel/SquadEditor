@@ -94,7 +94,26 @@ Dates `01 00 6C 07` (day 1, year 1900) mean empty.
 Writes land in the database (match engine and save use them), but the game's own screen keeps showing
 the old value for a profile that is already open. To check: reopen the player or press Continue.
 
+## Cross-checks with other FM27 research
+
+The FM27 notes of FMLibreEditor (https://github.com/tozmoz/FMLibreEditor, GPL-3.0) and fm-editor
+(https://github.com/barak14/fm-editor, GPL-3.0) were read for facts and each offset used here was
+read back on our own save before it went into the layout:
+
+- Player attributes: the same 54-byte order as mapped here (goalkeeping and hidden ones now writable).
+- Player: reputation is home +0x25E, current +0x260, world +0x262 (earlier notes here had the first
+  two swapped); match sharpness +0x258, jadedness +0x25A (i16), morale +0x26C (1..20), transfer value
+  +0x234, asking price +0x238, personality +0x2F8 (8 bytes), caps +0x3BC; contract squad number +0x5D,
+  squad status +0x54, type +0xC3, loyalty bonus +0x38, signed +0x44, joined +0x4C.
+- Staff (object start = person block - 0x100): attributes stored 0..100 at +0x1D..+0x43, working with
+  youngsters +0x1C and authority +0x14 as 1..20, CA/PA +0xDA/+0xDC, reputation +0xD4..+0xD8.
+  Haluk Kaplan's values match the bands the game shows (set pieces 1 "unsuited", attacking 7 "competent").
+- Club: +0x18 team list (first = senior team; team +0xA8 reputation, +0x78 stadium), +0x100 info record
+  (founded, season tickets, supporters, facilities +0x120/+0x12B/+0x12C/+0x12D), finance +0x808 wage
+  budget, +0x814 spending wage budget, +0x864 ticket price, +0x8A9 corporate facilities.
+  Fenerbahçe: capacity 47,430 as in the game, founded 1907.
+
 ## Open
 
-- Condition, morale, injury, value, reputation, squad number, club finances and facilities.
+- Injuries and bans (records described by FMLibreEditor, not mapped here yet), renaming people (needs string allocation).
 - Staff (`ACTUAL_NON_PLAYER`, primary vtable has COL offset 0x100), competitions, nations as entities.
