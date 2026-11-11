@@ -1,0 +1,1777 @@
+// Football Manager 27 (27.0.1) layout. Notes: docs/fm27-notes.md
+// Players are found by scanning for db::ACTUAL_PLAYER objects (vtable located through RTTI).
+// Paths are relative to the start of the ACTUAL_PLAYER object.
+{
+  "game": "Football Manager 27",
+  "gameVersion": "27.0.1",
+  "processName": "fm",
+  "module": "game_plugin.dll",
+  "anchors": [
+    {
+      "name": "StaffVtable",
+      "scope": "module",
+      "resolve": "rttiVtable",
+      "typeName": ".?AVACTUAL_NON_PLAYER@db@@",
+      "colOffset": 256
+    },
+    {
+      "name": "PlayerVtable",
+      "scope": "module",
+      "resolve": "rttiVtable",
+      "typeName": ".?AVACTUAL_PLAYER@db@@"
+    },
+    {
+      "name": "ClubVtable",
+      "scope": "module",
+      "resolve": "rttiVtable",
+      "typeName": ".?AVCLUB@db@@"
+    }
+  ],
+  "collections": [
+    {
+      "name": "Staff",
+      "entity": "Staff",
+      "anchor": "StaffVtable",
+      "scan": true,
+      "maxCount": 2000000
+    },
+    {
+      "name": "Players",
+      "entity": "Player",
+      "anchor": "PlayerVtable",
+      "scan": true,
+      "maxCount": 2000000
+    },
+    {
+      "name": "Clubs",
+      "entity": "Club",
+      "anchor": "ClubVtable",
+      "scan": true,
+      "maxCount": 500000
+    }
+  ],
+  "entities": [
+    {
+      "name": "Player",
+      "displayField": "Name",
+      "headerFields": [
+        "Club",
+        "Nation",
+        "CA",
+        "PA",
+        "Wage",
+        "Contract Expires"
+      ],
+      "listFields": [
+        "Club",
+        "CA",
+        "PA"
+      ],
+      "tableFields": [
+        "Club",
+        "League",
+        "Nation",
+        "Date of Birth",
+        "Height",
+        "CA",
+        "PA",
+        "Wage",
+        "Contract Expires",
+        "Crossing",
+        "Dribbling",
+        "Finishing",
+        "Heading",
+        "Long Shots",
+        "Marking",
+        "Passing",
+        "Penalty Taking",
+        "Tackling",
+        "First Touch",
+        "Technique",
+        "Corners",
+        "Long Throws",
+        "Free Kick Taking",
+        "Off the Ball",
+        "Vision",
+        "Anticipation",
+        "Decisions",
+        "Positioning",
+        "Flair",
+        "Teamwork",
+        "Work Rate",
+        "Leadership",
+        "Bravery",
+        "Aggression",
+        "Determination",
+        "Composure",
+        "Concentration",
+        "Acceleration",
+        "Strength",
+        "Stamina",
+        "Pace",
+        "Jumping Reach",
+        "Balance",
+        "Agility",
+        "Natural Fitness"
+      ],
+      "profile": [
+        {
+          "name": "Attacking",
+          "fields": [
+            "Finishing",
+            "Long Shots",
+            "Off the Ball",
+            "Composure",
+            "First Touch"
+          ]
+        },
+        {
+          "name": "Playmaking",
+          "fields": [
+            "Passing",
+            "Vision",
+            "Technique",
+            "Decisions"
+          ]
+        },
+        {
+          "name": "Ball carrying",
+          "fields": [
+            "Dribbling",
+            "Acceleration",
+            "Agility",
+            "Flair"
+          ]
+        },
+        {
+          "name": "Physical play",
+          "fields": [
+            "Pace",
+            "Strength",
+            "Stamina",
+            "Jumping Reach",
+            "Balance"
+          ]
+        },
+        {
+          "name": "Defending",
+          "fields": [
+            "Marking",
+            "Tackling",
+            "Positioning",
+            "Anticipation"
+          ]
+        },
+        {
+          "name": "Mentality",
+          "fields": [
+            "Concentration",
+            "Determination",
+            "Work Rate",
+            "Teamwork",
+            "Leadership"
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "name": "Name",
+          "group": "Personal",
+          "concat": [
+            "First Name",
+            "Last Name"
+          ],
+          "path": [
+            "0x2D8"
+          ],
+          "type": "lenUtf8Ptr"
+        },
+        {
+          "name": "First Name",
+          "group": "Personal",
+          "path": [
+            "0x2D8",
+            "0x0"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Last Name",
+          "group": "Personal",
+          "path": [
+            "0x2E0",
+            "0x0"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Full Name",
+          "group": "Personal",
+          "path": [
+            "0x2C8"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 96
+        },
+        {
+          "name": "Unique ID",
+          "group": "Personal",
+          "path": [
+            "0x294"
+          ],
+          "type": "u32",
+          "readOnly": true
+        },
+        {
+          "name": "Birth Year",
+          "group": "Personal",
+          "path": [
+            "0x312"
+          ],
+          "type": "u16",
+          "readOnly": true
+        },
+        {
+          "name": "Date of Birth",
+          "group": "Personal",
+          "path": [
+            "0x310"
+          ],
+          "type": "dayYear"
+        },
+        {
+          "name": "Nation",
+          "group": "Personal",
+          "path": [
+            "0x2F0",
+            "0x20"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "City of Birth",
+          "group": "Personal",
+          "path": [
+            "0x308",
+            "0x18"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Club Ref",
+          "group": "Internal",
+          "path": [
+            "0x130",
+            "0x30"
+          ],
+          "type": "u64",
+          "readOnly": true
+        },
+        {
+          "name": "Club",
+          "group": "Contract",
+          "path": [
+            "0x130",
+            "0x30",
+            "0xC8"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "League",
+          "group": "Contract",
+          "path": [
+            "0x130",
+            "0x50",
+            "0x48"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Wage",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x20"
+          ],
+          "type": "i32",
+          "min": 0,
+          "max": 50000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Contract Expires",
+          "group": "Contract",
+          "path": [
+            "0x330",
+            "0x48"
+          ],
+          "type": "dayYear"
+        },
+        {
+          "name": "Last Update",
+          "group": "Internal",
+          "path": [
+            "0x200"
+          ],
+          "type": "dayYear",
+          "readOnly": true
+        },
+        {
+          "name": "Team Ref",
+          "group": "Internal",
+          "path": [
+            "0x130"
+          ],
+          "type": "u64",
+          "readOnly": true
+        },
+        {
+          "name": "Value",
+          "group": "Status",
+          "path": [
+            "0x234"
+          ],
+          "type": "u32",
+          "min": 0,
+          "max": 1500000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Condition",
+          "group": "Status",
+          "path": [
+            "0x25C"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 100,
+          "scale": 100
+        },
+        {
+          "name": "Morale",
+          "group": "Status",
+          "path": [
+            "0x26C"
+          ],
+          "type": "u8",
+          "min": 0,
+          "max": 20
+        },
+        {
+          "name": "Current Reputation",
+          "group": "Reputation",
+          "path": [
+            "0x25E"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 10000
+        },
+        {
+          "name": "Home Reputation",
+          "group": "Reputation",
+          "path": [
+            "0x260"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 10000
+        },
+        {
+          "name": "World Reputation",
+          "group": "Reputation",
+          "path": [
+            "0x262"
+          ],
+          "type": "u16",
+          "min": 0,
+          "max": 10000
+        },
+        {
+          "name": "Height",
+          "group": "Personal",
+          "path": [
+            "0x22E"
+          ],
+          "type": "u16",
+          "min": 140,
+          "max": 215
+        },
+        {
+          "name": "CA",
+          "group": "General",
+          "path": [
+            "0x264"
+          ],
+          "type": "u16",
+          "min": 1,
+          "max": 200
+        },
+        {
+          "name": "PA",
+          "group": "General",
+          "path": [
+            "0x266"
+          ],
+          "type": "u16",
+          "min": 1,
+          "max": 200
+        },
+        {
+          "name": "GK",
+          "group": "Positions",
+          "path": [
+            "0x150"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "SW",
+          "group": "Positions",
+          "path": [
+            "0x151"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "DL",
+          "group": "Positions",
+          "path": [
+            "0x152"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "DC",
+          "group": "Positions",
+          "path": [
+            "0x153"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "DR",
+          "group": "Positions",
+          "path": [
+            "0x154"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "DM",
+          "group": "Positions",
+          "path": [
+            "0x155"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "ML",
+          "group": "Positions",
+          "path": [
+            "0x156"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "MC",
+          "group": "Positions",
+          "path": [
+            "0x157"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "MR",
+          "group": "Positions",
+          "path": [
+            "0x158"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "AML",
+          "group": "Positions",
+          "path": [
+            "0x159"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "AMC",
+          "group": "Positions",
+          "path": [
+            "0x15a"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "AMR",
+          "group": "Positions",
+          "path": [
+            "0x15b"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "ST",
+          "group": "Positions",
+          "path": [
+            "0x15c"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "WBL",
+          "group": "Positions",
+          "path": [
+            "0x15d"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "WBR",
+          "group": "Positions",
+          "path": [
+            "0x15e"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        },
+        {
+          "name": "Crossing",
+          "group": "Technical",
+          "path": [
+            "0x15f"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Dribbling",
+          "group": "Technical",
+          "path": [
+            "0x160"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Finishing",
+          "group": "Technical",
+          "path": [
+            "0x161"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Heading",
+          "group": "Technical",
+          "path": [
+            "0x162"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Long Shots",
+          "group": "Technical",
+          "path": [
+            "0x163"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Marking",
+          "group": "Technical",
+          "path": [
+            "0x164"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Off the Ball",
+          "group": "Mental",
+          "path": [
+            "0x165"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Passing",
+          "group": "Technical",
+          "path": [
+            "0x166"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Penalty Taking",
+          "group": "Technical",
+          "path": [
+            "0x167"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Tackling",
+          "group": "Technical",
+          "path": [
+            "0x168"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Vision",
+          "group": "Mental",
+          "path": [
+            "0x169"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Handling",
+          "group": "Goalkeeping",
+          "path": [
+            "0x16a"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Aerial Reach",
+          "group": "Goalkeeping",
+          "path": [
+            "0x16b"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Command of Area",
+          "group": "Goalkeeping",
+          "path": [
+            "0x16c"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Communication",
+          "group": "Goalkeeping",
+          "path": [
+            "0x16d"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Kicking",
+          "group": "Goalkeeping",
+          "path": [
+            "0x16e"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Throwing",
+          "group": "Goalkeeping",
+          "path": [
+            "0x16f"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Anticipation",
+          "group": "Mental",
+          "path": [
+            "0x170"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Decisions",
+          "group": "Mental",
+          "path": [
+            "0x171"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "One on Ones",
+          "group": "Goalkeeping",
+          "path": [
+            "0x172"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Positioning",
+          "group": "Mental",
+          "path": [
+            "0x173"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Reflexes",
+          "group": "Goalkeeping",
+          "path": [
+            "0x174"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "First Touch",
+          "group": "Technical",
+          "path": [
+            "0x175"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Technique",
+          "group": "Technical",
+          "path": [
+            "0x176"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Left Foot",
+          "group": "Feet",
+          "path": [
+            "0x177"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Right Foot",
+          "group": "Feet",
+          "path": [
+            "0x178"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Flair",
+          "group": "Mental",
+          "path": [
+            "0x179"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Corners",
+          "group": "Technical",
+          "path": [
+            "0x17a"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Teamwork",
+          "group": "Mental",
+          "path": [
+            "0x17b"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Work Rate",
+          "group": "Mental",
+          "path": [
+            "0x17c"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Long Throws",
+          "group": "Technical",
+          "path": [
+            "0x17d"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Eccentricity",
+          "group": "Goalkeeping",
+          "path": [
+            "0x17e"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Rushing Out",
+          "group": "Goalkeeping",
+          "path": [
+            "0x17f"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Punching",
+          "group": "Goalkeeping",
+          "path": [
+            "0x180"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Acceleration",
+          "group": "Physical",
+          "path": [
+            "0x181"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Free Kick Taking",
+          "group": "Technical",
+          "path": [
+            "0x182"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Strength",
+          "group": "Physical",
+          "path": [
+            "0x183"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Stamina",
+          "group": "Physical",
+          "path": [
+            "0x184"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Pace",
+          "group": "Physical",
+          "path": [
+            "0x185"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Jumping Reach",
+          "group": "Physical",
+          "path": [
+            "0x186"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Leadership",
+          "group": "Mental",
+          "path": [
+            "0x187"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Dirtiness",
+          "group": "Hidden",
+          "path": [
+            "0x188"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Balance",
+          "group": "Physical",
+          "path": [
+            "0x189"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Bravery",
+          "group": "Mental",
+          "path": [
+            "0x18a"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Consistency",
+          "group": "Hidden",
+          "path": [
+            "0x18b"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Aggression",
+          "group": "Mental",
+          "path": [
+            "0x18c"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Agility",
+          "group": "Physical",
+          "path": [
+            "0x18d"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Important Matches",
+          "group": "Hidden",
+          "path": [
+            "0x18e"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Injury Proneness",
+          "group": "Hidden",
+          "path": [
+            "0x18f"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Versatility",
+          "group": "Hidden",
+          "path": [
+            "0x190"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5,
+          "readOnly": true
+        },
+        {
+          "name": "Natural Fitness",
+          "group": "Physical",
+          "path": [
+            "0x191"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Determination",
+          "group": "Mental",
+          "path": [
+            "0x192"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Composure",
+          "group": "Mental",
+          "path": [
+            "0x193"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        },
+        {
+          "name": "Concentration",
+          "group": "Mental",
+          "path": [
+            "0x194"
+          ],
+          "type": "u8",
+          "min": 1,
+          "max": 20,
+          "scale": 5
+        }
+      ]
+    },
+    {
+      "name": "Club",
+      "displayField": "Name",
+      "headerFields": [
+        "Short Name",
+        "Nation"
+      ],
+      "listFields": [
+        "Nation"
+      ],
+      "tableFields": [
+        "Full Name",
+        "Short Name",
+        "Nation"
+      ],
+      "fields": [
+        {
+          "name": "Name",
+          "group": "General",
+          "path": [
+            "0xC8"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Unique ID",
+          "group": "General",
+          "path": [
+            "0xC"
+          ],
+          "type": "u32",
+          "readOnly": true
+        },
+        {
+          "name": "Full Name",
+          "group": "General",
+          "path": [
+            "0xC0"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 96
+        },
+        {
+          "name": "Short Name",
+          "group": "General",
+          "path": [
+            "0x100",
+            "0x0"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 8
+        },
+        {
+          "name": "Nation",
+          "group": "General",
+          "path": [
+            "0xD8",
+            "0x20"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Balance",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0xC"
+          ],
+          "type": "i32",
+          "min": -2000000000,
+          "max": 2000000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Transfer Budget",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x7C4"
+          ],
+          "mirrors": [
+            [
+              "0x150",
+              "0x7C8"
+            ],
+            [
+              "0x150",
+              "0x7D4"
+            ]
+          ],
+          "type": "i32",
+          "min": 0,
+          "max": 2000000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Wage Budget",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x810"
+          ],
+          "type": "i32",
+          "min": 0,
+          "max": 200000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Wage Spent",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x808"
+          ],
+          "type": "i32",
+          "readOnly": true,
+          "format": "money",
+          "currency": "£"
+        }
+      ]
+    },
+    {
+      "name": "Staff",
+      "displayField": "Name",
+      "headerFields": [
+        "Club",
+        "Job"
+      ],
+      "listFields": [
+        "Club",
+        "Job"
+      ],
+      "tableFields": [
+        "Club",
+        "Job",
+        "Nation",
+        "Date of Birth",
+        "Wage",
+        "Contract Expires"
+      ],
+      "fields": [
+        {
+          "name": "Name",
+          "group": "Personal",
+          "concat": [
+            "First Name",
+            "Last Name"
+          ],
+          "path": [
+            "0x50"
+          ],
+          "type": "lenUtf8Ptr"
+        },
+        {
+          "name": "First Name",
+          "group": "Personal",
+          "path": [
+            "0x50",
+            "0x0"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Last Name",
+          "group": "Personal",
+          "path": [
+            "0x58",
+            "0x0"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Unique ID",
+          "group": "Personal",
+          "path": [
+            "0xC"
+          ],
+          "type": "u32",
+          "readOnly": true
+        },
+        {
+          "name": "Date of Birth",
+          "group": "Personal",
+          "path": [
+            "0x88"
+          ],
+          "type": "dayYear"
+        },
+        {
+          "name": "Birth Year",
+          "group": "Personal",
+          "path": [
+            "0x8A"
+          ],
+          "type": "u16",
+          "readOnly": true
+        },
+        {
+          "name": "Nation",
+          "group": "Personal",
+          "path": [
+            "0x68",
+            "0x20"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "City of Birth",
+          "group": "Personal",
+          "path": [
+            "0x80",
+            "0x18"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Club Ref",
+          "group": "Internal",
+          "path": [
+            "-0xA0",
+            "0x30"
+          ],
+          "type": "u64",
+          "readOnly": true
+        },
+        {
+          "name": "Club",
+          "group": "Contract",
+          "path": [
+            "-0xA0",
+            "0x30",
+            "0xC8"
+          ],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Job",
+          "group": "Contract",
+          "path": [
+            "0xA8",
+            "0x26"
+          ],
+          "type": "u8",
+          "options": {
+            "2": "Coach",
+            "10": "Director of Football",
+            "12": "Physio",
+            "14": "Scout",
+            "20": "Assistant Manager",
+            "26": "Fitness Coach",
+            "34": "Goalkeeping Coach",
+            "38": "Head of Medical",
+            "46": "Doctor",
+            "50": "Head Physio",
+            "58": "Player Analyst",
+            "60": "Performance Analyst",
+            "64": "Head of Youth Development",
+            "70": "Chairman"
+          }
+        },
+        {
+          "name": "Wage",
+          "group": "Contract",
+          "path": [
+            "0xA8",
+            "0x20"
+          ],
+          "type": "i32",
+          "min": 0,
+          "max": 50000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Contract Expires",
+          "group": "Contract",
+          "path": [
+            "0xA8",
+            "0x48"
+          ],
+          "type": "dayYear"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Heal and inspire",
+      "entity": "Player",
+      "description": "Full condition and top morale.",
+      "actions": [
+        {
+          "field": "Condition",
+          "value": "max"
+        },
+        {
+          "field": "Morale",
+          "value": "max"
+        }
+      ]
+    },
+    {
+      "name": "Wonderkid",
+      "entity": "Player",
+      "description": "Potential 200 and +3 to technical, mental and physical attributes.",
+      "actions": [
+        {
+          "field": "PA",
+          "value": "max"
+        },
+        {
+          "group": "Technical",
+          "value": "+3"
+        },
+        {
+          "group": "Mental",
+          "value": "+3"
+        },
+        {
+          "group": "Physical",
+          "value": "+3"
+        }
+      ]
+    },
+    {
+      "name": "World star",
+      "entity": "Player",
+      "description": "Top reputation everywhere.",
+      "actions": [
+        {
+          "field": "Current Reputation",
+          "value": "max"
+        },
+        {
+          "field": "Home Reputation",
+          "value": "max"
+        },
+        {
+          "field": "World Reputation",
+          "value": "max"
+        }
+      ]
+    },
+    {
+      "name": "Rich owner",
+      "entity": "Club",
+      "description": "Adds 500M to the balance and 200M to the transfer budget.",
+      "actions": [
+        {
+          "field": "Balance",
+          "value": "+500000000"
+        },
+        {
+          "field": "Transfer Budget",
+          "value": "+200000000"
+        }
+      ]
+    },
+    {
+      "name": "Max potential",
+      "entity": "Player",
+      "description": "Sets potential ability to 200.",
+      "actions": [
+        {
+          "field": "PA",
+          "value": "max"
+        }
+      ]
+    },
+    {
+      "name": "Max technical",
+      "entity": "Player",
+      "description": "All technical attributes to 20.",
+      "actions": [
+        {
+          "group": "Technical",
+          "value": "max"
+        }
+      ]
+    },
+    {
+      "name": "Max mental",
+      "entity": "Player",
+      "description": "All mental attributes to 20.",
+      "actions": [
+        {
+          "group": "Mental",
+          "value": "max"
+        }
+      ]
+    },
+    {
+      "name": "Max physical",
+      "entity": "Player",
+      "description": "All physical attributes to 20.",
+      "actions": [
+        {
+          "group": "Physical",
+          "value": "max"
+        }
+      ]
+    },
+    {
+      "name": "Boost +2",
+      "entity": "Player",
+      "description": "+2 to every technical, mental and physical attribute.",
+      "actions": [
+        {
+          "group": "Technical",
+          "value": "+2"
+        },
+        {
+          "group": "Mental",
+          "value": "+2"
+        },
+        {
+          "group": "Physical",
+          "value": "+2"
+        }
+      ]
+    }
+  ],
+  "strings": {
+    "tr": {
+      "Players": "Oyuncular",
+      "Clubs": "Kulüpler",
+      "Club": "Kulüp",
+      "League": "Lig",
+      "Nation": "Uyruk",
+      "City of Birth": "Doğum Yeri",
+      "Date of Birth": "Doğum Tarihi",
+      "Wage": "Haftalık Maaş",
+      "Contract Expires": "Sözleşme Bitişi",
+      "Contract": "Sözleşme",
+      "Positions": "Mevkiler",
+      "Short Name": "Kısa Ad",
+      "Staff": "Personel",
+      "Job": "Görev",
+      "Value": "Değer",
+      "Condition": "Kondisyon (%)",
+      "Morale": "Moral (0-20)",
+      "Status": "Durum",
+      "Reputation": "İtibar",
+      "Current Reputation": "Güncel İtibar",
+      "Home Reputation": "Yerel İtibar",
+      "World Reputation": "Dünya İtibarı",
+      "Finances": "Finans",
+      "Balance": "Denge",
+      "Transfer Budget": "Transfer Bütçesi",
+      "Wage Budget": "Maaş Bütçesi",
+      "Wage Spent": "Ödenen Maaş",
+      "Coach": "Antrenör",
+      "Director of Football": "Futbol Direktörü",
+      "Physio": "Fizyoterapist",
+      "Scout": "Gözlemci",
+      "Assistant Manager": "Asistan Menajer",
+      "Fitness Coach": "Kondisyon Antrenörü",
+      "Goalkeeping Coach": "Kaleci Antrenörü",
+      "Head of Medical": "Sağlık Ekibi Sorumlusu",
+      "Doctor": "Doktor",
+      "Head Physio": "Baş Fizyoterapist",
+      "Player Analyst": "Oyuncu Analisti",
+      "Performance Analyst": "Performans Analisti",
+      "Head of Youth Development": "Altyapı Sorumlusu",
+      "Chairman": "Başkan",
+      "GK": "Kaleci",
+      "SW": "Libero",
+      "DL": "Sol Bek",
+      "DC": "Stoper",
+      "DR": "Sağ Bek",
+      "DM": "Defansif Orta Saha",
+      "ML": "Sol Orta Saha",
+      "MC": "Merkez Orta Saha",
+      "MR": "Sağ Orta Saha",
+      "AML": "Sol Kanat",
+      "AMC": "Ofansif Orta Saha",
+      "AMR": "Sağ Kanat",
+      "ST": "Forvet",
+      "WBL": "Sol Kanat Bek",
+      "WBR": "Sağ Kanat Bek",
+      "Personal": "Kişisel",
+      "General": "Genel",
+      "Technical": "Teknik",
+      "Mental": "Zihinsel",
+      "Physical": "Fiziksel",
+      "Goalkeeping": "Kalecilik",
+      "Hidden": "Gizli",
+      "Feet": "Ayaklar",
+      "Name": "İsim",
+      "First Name": "Ad",
+      "Last Name": "Soyad",
+      "Full Name": "Tam İsim",
+      "Unique ID": "Benzersiz Kimlik",
+      "Birth Year": "Doğum Yılı",
+      "Height": "Boy",
+      "CA": "Mevcut Yetenek",
+      "PA": "Potansiyel Yetenek",
+      "Attacking": "Hücum",
+      "Playmaking": "Oyun kurma",
+      "Ball carrying": "Top taşıma",
+      "Physical play": "Fizik",
+      "Defending": "Savunma",
+      "Mentality": "Mentalite",
+      "Heal and inspire": "Tam kondisyon ve moral",
+      "Full condition and top morale.": "Kondisyonu ve morali en üste çıkarır.",
+      "Wonderkid": "Wonderkid yap",
+      "Potential 200 and +3 to technical, mental and physical attributes.": "Potansiyel 200, teknik, zihinsel ve fiziksel özelliklere +3.",
+      "World star": "Dünya yıldızı",
+      "Top reputation everywhere.": "Her yerde en yüksek itibar.",
+      "Rich owner": "Zengin patron",
+      "Adds 500M to the balance and 200M to the transfer budget.": "Bakiyeye 500M, transfer bütçesine 200M ekler.",
+      "Max potential": "Maksimum potansiyel",
+      "Max technical": "Teknik tam",
+      "Max mental": "Zihinsel tam",
+      "Max physical": "Fiziksel tam",
+      "Boost +2": "Hepsine +2",
+      "Sets potential ability to 200.": "Potansiyel yeteneği 200 yapar.",
+      "All technical attributes to 20.": "Bütün teknik özellikleri 20 yapar.",
+      "All mental attributes to 20.": "Bütün zihinsel özellikleri 20 yapar.",
+      "All physical attributes to 20.": "Bütün fiziksel özellikleri 20 yapar.",
+      "+2 to every technical, mental and physical attribute.": "Teknik, zihinsel ve fiziksel her özelliğe +2.",
+      "Crossing": "Orta Yapma",
+      "Dribbling": "Dripling",
+      "Finishing": "Bitiricilik",
+      "Heading": "Kafa Vuruşu",
+      "Long Shots": "Uzaktan Şut",
+      "Marking": "Markaj",
+      "Off the Ball": "Topsuz Alan",
+      "Passing": "Pas",
+      "Penalty Taking": "Penaltı Kullanma",
+      "Tackling": "Top Kapma",
+      "Vision": "Vizyon",
+      "Handling": "Elle Kontrol",
+      "Aerial Reach": "Hava Topu Hakimiyeti",
+      "Command of Area": "Ceza Sahası Hakimiyeti",
+      "Communication": "İletişim",
+      "Kicking": "Vuruş",
+      "Throwing": "Atış",
+      "Anticipation": "Önsezi",
+      "Decisions": "Karar Alma",
+      "One on Ones": "Bire Bir",
+      "Positioning": "Pozisyon Alma",
+      "Reflexes": "Refleksler",
+      "First Touch": "İlk Kontrol",
+      "Technique": "Teknik",
+      "Left Foot": "Sol Ayak",
+      "Right Foot": "Sağ Ayak",
+      "Flair": "Özel Yetenek",
+      "Corners": "Korner",
+      "Teamwork": "Takım Oyunu",
+      "Work Rate": "Çalışkanlık",
+      "Long Throws": "Uzun Taç",
+      "Eccentricity": "Eksantriklik",
+      "Rushing Out": "Kaleyi Terk Etme",
+      "Punching": "Yumruklama Eğilimi",
+      "Acceleration": "Hızlanma",
+      "Free Kick Taking": "Serbest Vuruş Kullanma",
+      "Strength": "Güç",
+      "Stamina": "Dayanıklılık",
+      "Pace": "Hız",
+      "Jumping Reach": "Hava Topu Erişimi",
+      "Leadership": "Liderlik",
+      "Dirtiness": "Sertlik",
+      "Bravery": "Cesaret",
+      "Consistency": "İstikrar",
+      "Aggression": "Agresiflik",
+      "Agility": "Çeviklik",
+      "Important Matches": "Önemli Maçlar",
+      "Injury Proneness": "Sakatlık Eğilimi",
+      "Versatility": "Çok Yönlülük",
+      "Natural Fitness": "Vücut Zindeliği",
+      "Determination": "Kararlılık",
+      "Composure": "Soğukkanlılık",
+      "Concentration": "Konsantrasyon"
+    }
+  }
+}

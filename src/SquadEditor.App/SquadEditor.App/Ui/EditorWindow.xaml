@@ -1,0 +1,140 @@
+<Window x:Class="SquadEditor.App.Ui.EditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SquadEditor" Width="1480" Height="900" MinWidth="1180" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Bg}" Foreground="{StaticResource Text}"
+        FontFamily="{StaticResource UiFont}" FontSize="13"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="56"/>
+      <RowDefinition Height="40"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="28"/>
+    </Grid.RowDefinitions>
+
+    <!-- Top bar -->
+    <Border Background="{StaticResource Chrome}" BorderBrush="{StaticResource StrokeSoft}" BorderThickness="0,0,0,1">
+      <Grid Margin="16,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Width="30" Height="30" CornerRadius="8" Background="{StaticResource Accent}">
+            <TextBlock Text="SE" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <TextBlock Text="SquadEditor" FontSize="15" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <Grid Grid.Column="1" Width="460" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <TextBox x:Name="TopSearch" Style="{StaticResource SearchBox}" Height="34"
+                   TextChanged="TopSearch_TextChanged" PreviewKeyDown="TopSearch_PreviewKeyDown"/>
+          <TextBlock Text="⌕" FontSize="16" Foreground="{StaticResource Muted}" Margin="11,0,0,2" VerticalAlignment="Center" IsHitTestVisible="False"/>
+          <TextBlock x:Name="TopSearchHint" Text="Oyuncu veya kulüp ara…  (Ctrl+F)" Foreground="{StaticResource Faint}" Margin="34,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+          <Popup x:Name="SearchPopup" PlacementTarget="{Binding ElementName=TopSearch}" Placement="Bottom" StaysOpen="False"
+                 AllowsTransparency="True" Width="460" VerticalOffset="6">
+            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Stroke}" BorderThickness="1" CornerRadius="10" Padding="6">
+              <ListBox x:Name="SearchResults" Background="Transparent" BorderThickness="0" MaxHeight="460"
+                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                       MouseUp="SearchResults_MouseUp" PreviewKeyDown="SearchResults_PreviewKeyDown">
+                <ListBox.ItemContainerStyle>
+                  <Style TargetType="ListBoxItem">
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                          <Border x:Name="b" CornerRadius="7" Padding="8,6" Background="Transparent">
+                            <ContentPresenter/>
+                          </Border>
+                          <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                              <Setter TargetName="b" Property="Background" Value="{StaticResource CardHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                              <Setter TargetName="b" Property="Background" Value="{StaticResource Selection}"/>
+                            </Trigger>
+                          </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                      </Grid.ColumnDefinitions>
+                      <Border Width="32" Height="32" CornerRadius="{Binding Corner}" Background="{StaticResource AccentSoft}" ClipToBounds="True" HorizontalAlignment="Left">
+                        <Grid>
+                          <TextBlock Text="{Binding Initials}" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                          <Image Source="{Binding Image}" Stretch="UniformToFill"/>
+                        </Grid>
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" Foreground="{StaticResource Text}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource Muted}" FontSize="11.5" TextTrimming="CharacterEllipsis"/>
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{Binding Badge}" Foreground="{Binding BadgeBrush}" FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Border>
+          </Popup>
+        </Grid>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border x:Name="StatusPill" CornerRadius="14" Padding="12,5" Background="{StaticResource Panel}" BorderBrush="{StaticResource Stroke}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+              <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource Faint}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+              <TextBlock x:Name="StatusText" Text="Bağlı değil" FontSize="12" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+          <Button x:Name="UndoButton" Style="{StaticResource GhostButton}" Margin="10,0,0,0" Click="Undo_Click" ToolTip="Son değişikliği geri al (Ctrl+Z)">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="↶" FontSize="15" Margin="0,0,6,0"/>
+              <TextBlock x:Name="UndoText" Text="Geri al"/>
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource GhostButton}" Margin="4,0,0,0" Click="Settings_Click" ToolTip="Ayarlar">
+            <TextBlock Text="⚙" FontSize="16"/>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Open pages -->
+    <Border Grid.Row="1" Background="{StaticResource Chrome}" BorderBrush="{StaticResource StrokeSoft}" BorderThickness="0,0,0,1">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <StackPanel x:Name="TabStrip" Orientation="Horizontal" Margin="12,0"/>
+      </ScrollViewer>
+    </Border>
+
+    <ContentControl x:Name="Host" Grid.Row="2"/>
+
+    <!-- Waiting / loading screen -->
+    <Grid x:Name="Overlay" Grid.Row="1" Grid.RowSpan="2" Background="{StaticResource Bg}">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+        <Border Width="64" Height="64" CornerRadius="16" Background="{StaticResource Accent}" HorizontalAlignment="Center">
+          <TextBlock Text="SE" FontSize="24" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+        <TextBlock x:Name="OverlayTitle" Text="Football Manager bekleniyor" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,20,0,8"/>
+        <TextBlock x:Name="OverlayText" Text="Oyunu aç ve kaydını yükle. SquadEditor kendiliğinden bağlanır." Foreground="{StaticResource Muted}" TextWrapping="Wrap" TextAlignment="Center"/>
+        <ProgressBar x:Name="OverlayProgress" IsIndeterminate="True" Height="3" Margin="60,22,60,0" Background="{StaticResource Panel}" Foreground="{StaticResource Accent}" BorderThickness="0"/>
+      </StackPanel>
+    </Grid>
+
+    <!-- Status bar -->
+    <Border Grid.Row="3" Background="{StaticResource Chrome}" BorderBrush="{StaticResource StrokeSoft}" BorderThickness="0,1,0,0">
+      <DockPanel Margin="14,0">
+        <TextBlock x:Name="Counts" DockPanel.Dock="Right" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center"/>
+        <TextBlock x:Name="Message" Foreground="{StaticResource Muted}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+      </DockPanel>
+    </Border>
+  </Grid>
+</Window>
