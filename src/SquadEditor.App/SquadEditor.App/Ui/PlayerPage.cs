@@ -110,7 +110,7 @@ public sealed class PlayerPage : UserControl, IPage
 		string nation = _f["Nation"].Value;
 		string dob = _f["Date of Birth"].Value;
 		int age = _data.AgeOn(GameData.ParseDate(dob));
-		string ageText = age > 0 ? Build.T($"{age} yaşında ({dob})", $"{age} years old ({dob})") : "";
+		string ageText = age > 0 ? Build.T($"{age} yaşında ({Dates.Show(dob)})", $"{age} years old ({Dates.Show(dob)})") : "";
 		var line1 = Build.Text(string.Join("  ·  ", new[] { positions, nation, ageText }.Where(s => s.Length > 0)), 13, new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xFF, 0xFF)));
 		line1.Margin = new Thickness(0, 4, 0, 0);
 
@@ -152,7 +152,7 @@ public sealed class PlayerPage : UserControl, IPage
 		}
 		if (_f["Contract Expires"].Value.Length > 0)
 		{
-			pills.Add(Build.Pill(_f["Contract Expires"].Value, Build.T("Sözleşme bitişi", "Contract ends")));
+			pills.Add(Build.Pill(Dates.Show(_f["Contract Expires"].Value), Build.T("Sözleşme bitişi", "Contract ends")));
 		}
 		return Build.Header(Build.Avatar(Icon, Name, 92, round: true), Name, line1, line2, pills);
 	}

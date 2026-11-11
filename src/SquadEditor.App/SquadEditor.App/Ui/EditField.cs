@@ -21,7 +21,9 @@ public sealed class EditField : INotifyPropertyChanged
 	{
 		_data = data;
 		Entity = entity;
-		Def = def;
+		Original = def;
+		// "Attributes 1-100": edit the value as the game stores it (5-100) instead of 1-20.
+		Def = AppSettings.Current.Attributes100 && def.Scale.HasValue ? def.Unscaled() : def;
 		Label = label;
 		_labels = key => data.Layout.Text(Loc.Instance.Language, key);
 		Refresh();
@@ -34,10 +36,18 @@ public sealed class EditField : INotifyPropertyChanged
 
 	public ulong Entity { get; }
 	public FieldDef Def { get; }
+
+	/// <summary>The field as the layout defines it (before display preferences).</summary>
+	public FieldDef Original { get; }
 	public string Label { get; }
 	public string Key => Def.Name;
-	public bool IsReadOnly => !Def.IsWritable;
-	public bool IsAttribute => Def.Min == 1 && Def.Max == 20 && Def.Options.Count == 0;
+	public bool IsReadOnly => !Def.IsWritable || AppSettings.Current.ReadOnlyMode;
+	public bool IsAttribute => Original.Min == 1 && Original.Max == 20 && Original.Options.Count == 0;
+	public bool IsDate => Def.Type == FieldType.DayYear;
+	public bool IsHeight => Def.Name == "Height";
+
+	/// <summary>Attribute on the 1-20 scale whatever the display preference (for colours).</summary>
+	public int Rating => Def != Original && Original.Scale is double s ? (int)Math.Round(Number / s) : Number;
 	public bool IsNumeric => Def.IsNumeric;
 
 	public string Value
@@ -75,6 +85,15 @@ public sealed class EditField : INotifyPropertyChanged
 			{
 				return _labels(option);
 			}
+			if (IsDate)
+			{
+				return Dates.Show(_value);
+			}
+			if (IsHeight && AppSettings.Current.HeightUnit == "ftin" && Number > 0)
+			{
+				int inches = (int)Math.Round(Number / 2.54);
+				return $"{inches / 12}' {inches % 12}\"";
+			}
 			return DisplayFormat.Format(Def, _value, Loc.Instance.Language);
 		}
 	}
@@ -82,13 +101,13 @@ public sealed class EditField : INotifyPropertyChanged
 	/// <summary>The plain number the user edits (in their currency for money).</summary>
 	public string EditText => IsMoney && double.TryParse(_value, NumberStyles.Float, CultureInfo.InvariantCulture, out double gbp)
 		? Math.Round(Money.ToDisplay(gbp, IsWage)).ToString(CultureInfo.InvariantCulture)
-		: _value;
+		: IsDate ? Dates.Show(_value) : _value;
 
 	private readonly Func<string, string> _labels;
 
 	public int Number => int.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int n) ? n : 0;
 
-	public Brush ValueBrush => IsAttribute ? Colors.Attribute(Number) : Colors.Text;
+	public Brush ValueBrush => IsAttribute ? Colors.Attribute(Rating) : Colors.Text;
 
 	public string? Error
 	{
@@ -117,6 +136,19 @@ public sealed class EditField : INotifyPropertyChanged
 
 	public bool Commit(string text, string entityLabel)
 	{
+		if (AppSettings.Current.ReadOnlyMode)
+		{
+			return false;
+		}
+		if (IsDate && text.Trim() != EditText)
+		{
+			text = Dates.ToGame(text.Trim()) ?? text;
+		}
+		else if (IsDate)
+		{
+			Error = null;
+			return true;
+		}
 		if (IsMoney && text.Trim() != EditText)
 		{
 			string cleaned = text.Trim().Replace(" ", "").Replace("£", "").Replace("€", "").Replace("$", "").Replace("₺", "");

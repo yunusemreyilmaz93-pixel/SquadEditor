@@ -27,6 +27,40 @@ public sealed class AppSettings
 	/// <summary>"week", "month" or "year".</summary>
 	public string WagePeriod { get; set; } = "year";
 
+	/// <summary>Interface zoom, 0.9 to 1.3.</summary>
+	public double UiScale { get; set; } = 1.0;
+
+	/// <summary>Denser rows in lists and cards.</summary>
+	public bool Compact { get; set; }
+
+	/// <summary>Accent colour as #RRGGBB.</summary>
+	public string Accent { get; set; } = "#4F8CFF";
+
+	/// <summary>Show attributes on the game's internal 1-100 scale instead of 1-20.</summary>
+	public bool Attributes100 { get; set; }
+
+	/// <summary>"cm" or "ftin".</summary>
+	public string HeightUnit { get; set; } = "cm";
+
+	/// <summary>.NET date format used everywhere.</summary>
+	public string DateFormat { get; set; } = "dd.MM.yyyy";
+
+	/// <summary>Look only: nothing is written to the game.</summary>
+	public bool ReadOnlyMode { get; set; }
+
+	public bool ConfirmBulkEdits { get; set; } = true;
+
+	public bool LiveRefresh { get; set; } = true;
+
+	public int LiveRefreshMs { get; set; } = 1500;
+
+	public bool AutoConnect { get; set; } = true;
+
+	public bool RestoreTabs { get; set; } = true;
+
+	/// <summary>Tabs open at the last exit, by unique ID ("player:29179241").</summary>
+	public List<string> LastTabs { get; set; } = new List<string>();
+
 	private static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SquadEditor", "settings.json");
 
 	public static AppSettings Current { get; } = Load();

@@ -54,7 +54,7 @@ public static class Build
 	/// <summary>Label on the left, editable value on the right. Attributes get a compact coloured box.</summary>
 	public static FrameworkElement Row(EditField field)
 	{
-		var grid = new Grid { Margin = new Thickness(6, 0, 6, 0), Height = 30, Background = Brushes.Transparent };
+		var grid = new Grid { Margin = new Thickness(6, 0, 6, 0), Height = AppSettings.Current.Compact ? 25 : 30, Background = Brushes.Transparent };
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 		var label = Text(field.Label, 13, Res("Muted"));
@@ -243,6 +243,7 @@ public static class Build
 			{
 				Content = data.Layout.Text(lang, preset.Name),
 				ToolTip = preset.Description == null ? null : data.Layout.Text(lang, preset.Description),
+				IsEnabled = !AppSettings.Current.ReadOnlyMode,
 				Margin = new Thickness(4),
 				Padding = new Thickness(10, 5, 10, 5),
 				FontSize = 12
@@ -283,10 +284,16 @@ public static class Build
 
 	public static DataGridTextColumn TextColumn(string header, string path, double width = 0, string? format = null)
 	{
+		var binding = new Binding(path) { StringFormat = format };
+		if (path is "DateOfBirth" or "ContractEnd")
+		{
+			binding.Converter = (IValueConverter)Application.Current.Resources["DateText"];
+		}
 		return new DataGridTextColumn
 		{
 			Header = header,
-			Binding = new Binding(path) { StringFormat = format },
+			Binding = binding,
+			SortMemberPath = path is "DateOfBirth" ? "Born" : path,
 			Width = width <= 0 ? DataGridLength.Auto : new DataGridLength(width)
 		};
 	}

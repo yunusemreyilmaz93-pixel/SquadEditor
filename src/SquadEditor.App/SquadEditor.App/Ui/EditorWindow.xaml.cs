@@ -47,16 +47,32 @@ public partial class EditorWindow : Window, INavigator
 		Language = System.Windows.Markup.XmlLanguage.GetLanguage(Loc.Instance.Language == "tr" ? "tr-TR" : "en-GB");
 		TopSearchHint.Text = Build.T("Oyuncu veya kulüp ara…  (Ctrl+F)", "Search players or clubs…  (Ctrl+F)");
 		UndoText.Text = Build.T("Geri al", "Undo");
+		ConnectButton.Content = Build.T("Bağlan", "Connect");
+		ReadOnlyBadge.ToolTip = Build.T("Salt okunur mod: oyuna hiçbir şey yazılmaz", "Read-only mode: nothing is written to the game");
+		((TextBlock)ReadOnlyBadge.Child).Text = Build.T("🔒 Salt okunur", "🔒 Read-only");
 		UndoButton.ToolTip = Build.T("Son değişikliği geri al (Ctrl+Z)", "Undo the last change (Ctrl+Z)");
 		_graphics = ReloadGraphicsAsync();
+		ApplyPreferences();
 		_connectTimer.Tick += (_, _) => TryConnect();
 		_liveTimer.Tick += (_, _) => LiveRefresh();
 		_freezeTimer.Tick += (_, _) => _data?.Session.Freezer.Tick(_data.Memory);
 		_searchTimer.Tick += (_, _) => { _searchTimer.Stop(); RunSearch(); };
 		EditField.Written += (_, f) => UpdateCounts();
 		SourceInitialized += (_, _) => DarkTitleBar();
-		Loaded += (_, _) => { ShowWaiting(); TryConnect(); _connectTimer.Start(); };
-		Closed += (_, _) => _data?.Dispose();
+		Loaded += (_, _) =>
+		{
+			ShowWaiting();
+			if (AppSettings.Current.AutoConnect)
+			{
+				TryConnect();
+				_connectTimer.Start();
+			}
+		};
+		Closed += (_, _) =>
+		{
+			RememberTabs();
+			_data?.Dispose();
+		};
 		InputBindings.Add(new KeyBinding(new RelayCommand(() => { TopSearch.Focus(); TopSearch.SelectAll(); }), Key.F, ModifierKeys.Control));
 		InputBindings.Add(new KeyBinding(new RelayCommand(Undo), Key.Z, ModifierKeys.Control));
 		InputBindings.Add(new KeyBinding(new RelayCommand(() => { if (_current != null && _current.Key != "home") ClosePage(_current); }), Key.W, ModifierKeys.Control));
@@ -128,9 +144,17 @@ public partial class EditorWindow : Window, INavigator
 			UpdateCounts();
 			SetStatus(Build.T($"Bağlandı. {data.Players.Count:N0} oyuncu, {data.Staff.Count:N0} personel ve {data.Clubs.Count:N0} kulüp {watch.Elapsed.TotalSeconds:0.0} saniyede okundu.",
 				$"Connected. {data.Players.Count:N0} players, {data.Staff.Count:N0} staff and {data.Clubs.Count:N0} clubs read in {watch.Elapsed.TotalSeconds:0.0} s."));
-			_liveTimer.Start();
+			if (AppSettings.Current.LiveRefresh)
+			{
+				_liveTimer.Start();
+			}
 			_freezeTimer.Start();
+			RestoreTabs(data);
 			OpenFromCommandLine(data);
+			if (Environment.GetCommandLineArgs().Contains("--settings"))
+			{
+				Settings_Click(this, new RoutedEventArgs());
+			}
 		}
 		catch (Exception ex)
 		{
@@ -177,11 +201,85 @@ public partial class EditorWindow : Window, INavigator
 		SetStatus(reason);
 	}
 
+	/// <summary>Zoom, live refresh and the read-only badge from the settings.</summary>
+	private void ApplyPreferences()
+	{
+		double scale = Math.Clamp(AppSettings.Current.UiScale, 0.8, 1.5);
+		((FrameworkElement)Content).LayoutTransform = Math.Abs(scale - 1.0) < 0.01 ? Transform.Identity : new ScaleTransform(scale, scale);
+		_liveTimer.Interval = TimeSpan.FromMilliseconds(Math.Clamp(AppSettings.Current.LiveRefreshMs, 500, 10000));
+		if (_data != null)
+		{
+			if (AppSettings.Current.LiveRefresh) _liveTimer.Start(); else _liveTimer.Stop();
+		}
+		ReadOnlyBadge.Visibility = AppSettings.Current.ReadOnlyMode ? Visibility.Visible : Visibility.Collapsed;
+		if (AppSettings.Current.AutoConnect)
+		{
+			_connectTimer.Start();
+		}
+		else
+		{
+			_connectTimer.Stop();
+		}
+		ConnectButton.Visibility = AppSettings.Current.AutoConnect ? Visibility.Collapsed : Visibility.Visible;
+	}
+
+	private void Connect_Click(object sender, RoutedEventArgs e)
+	{
+		_failedPid = 0;
+		TryConnect();
+	}
+
+	/// <summary>Open tabs are remembered by unique ID: memory addresses change every session.</summary>
+	private void RememberTabs()
+	{
+		if (_data == null || !AppSettings.Current.RestoreTabs)
+		{
+			return;
+		}
+		AppSettings.Current.LastTabs = _pages.Select(p => p switch
+		{
+			PlayerPage pp => "player:" + pp.Uid,
+			ClubPage cp => "club:" + cp.Uid,
+			StaffPage sp => "staff:" + sp.Row.Uid,
+			_ => ""
+		}).Where(k => k.Length > 0).ToList();
+		AppSettings.Current.Save();
+	}
+
+	private void RestoreTabs(GameData data)
+	{
+		if (!AppSettings.Current.RestoreTabs)
+		{
+			return;
+		}
+		IPage? home = _current;
+		foreach (string key in AppSettings.Current.LastTabs)
+		{
+			string[] parts = key.Split(':');
+			if (parts.Length != 2 || !uint.TryParse(parts[1], out uint uid) || uid == 0)
+			{
+				continue;
+			}
+			switch (parts[0])
+			{
+			case "player" when data.Players.FirstOrDefault(p => p.Uid == uid) is { } player: OpenPlayer(player.Address); break;
+			case "club" when data.Clubs.FirstOrDefault(c => c.Uid == uid) is { } club: OpenClub(club.Address); break;
+			case "staff" when data.Staff.FirstOrDefault(s => s.Uid == uid) is { } staff: OpenStaff(staff.Address); break;
+			}
+		}
+		if (home != null)
+		{
+			OpenPage(home);
+		}
+	}
+
 	private void ShowWaiting()
 	{
 		Overlay.Visibility = Visibility.Visible;
 		OverlayTitle.Text = Build.T("Football Manager bekleniyor", "Waiting for Football Manager");
-		OverlayText.Text = Build.T("Oyunu aç ve kaydını yükle. SquadEditor kendiliğinden bağlanır.", "Start the game and load your save. SquadEditor connects on its own.");
+		OverlayText.Text = AppSettings.Current.AutoConnect
+			? Build.T("Oyunu aç ve kaydını yükle. SquadEditor kendiliğinden bağlanır.", "Start the game and load your save. SquadEditor connects on its own.")
+			: Build.T("Oyunu aç, kaydını yükle ve Bağlan'a bas.", "Start the game, load your save and press Connect.");
 		OverlayProgress.Visibility = Visibility.Visible;
 		StatusDot.Fill = Build.Res("Faint");
 		StatusText.Text = Build.T("Bağlı değil", "Not connected");
@@ -491,6 +589,7 @@ public partial class EditorWindow : Window, INavigator
 			}
 			OpenPage(_pages.FirstOrDefault(p => p.Key == currentKey) ?? _pages[0]);
 		}
+		ApplyPreferences();
 		UpdateCounts();
 		SetStatus(Build.T("Ayarlar kaydedildi.", "Settings saved."));
 	}

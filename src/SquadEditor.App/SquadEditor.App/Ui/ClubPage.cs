@@ -45,6 +45,7 @@ public sealed class ClubPage : UserControl, IPage
 		Background = Build.Res("Bg");
 	}
 
+	public uint Uid => _club.Uid;
 	public string Key => "club:" + _club.Address;
 	public string Title => _club.Name;
 	public ImageSource? Icon => ImageLookup.Graphics.Club(_club.Uid);
@@ -161,7 +162,7 @@ public sealed class ClubPage : UserControl, IPage
 	/// <summary>Sortable player table shared by squads and the player browser. Multi-select + right-click applies presets.</summary>
 	public static DataGrid PlayerGrid(GameData data, IEnumerable<PlayerRow> players, INavigator nav, bool showClub, bool showTeam = false)
 	{
-		var grid = new DataGrid { ItemsSource = players.ToList() };
+		var grid = new DataGrid { ItemsSource = players.ToList(), RowHeight = AppSettings.Current.Compact ? 27 : 34 };
 		grid.Columns.Add(Build.TemplateColumn(Build.T("Oyuncu", "Player"), "PlayerNameCell", "Name", 250));
 		grid.Columns.Add(Build.TextColumn(Build.T("Mevki", "Position"), "Positions", 105));
 		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 50));
@@ -200,7 +201,7 @@ public sealed class ClubPage : UserControl, IPage
 
 	public static DataGrid StaffGrid(IEnumerable<StaffRow> staff, INavigator nav, bool showClub)
 	{
-		var grid = new DataGrid { ItemsSource = staff.ToList() };
+		var grid = new DataGrid { ItemsSource = staff.ToList(), RowHeight = AppSettings.Current.Compact ? 27 : 34 };
 		grid.Columns.Add(Build.TemplateColumn(Build.T("Personel", "Staff"), "PlayerNameCell", "Name", 250));
 		grid.Columns.Add(Build.TextColumn(Build.T("Görev", "Job"), "Job", 190));
 		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 50));
@@ -223,7 +224,7 @@ public sealed class ClubPage : UserControl, IPage
 
 	public static DataGrid ClubGrid(IEnumerable<ClubRow> clubs, INavigator nav)
 	{
-		var grid = new DataGrid { ItemsSource = clubs.ToList() };
+		var grid = new DataGrid { ItemsSource = clubs.ToList(), RowHeight = AppSettings.Current.Compact ? 27 : 34 };
 		grid.Columns.Add(Build.TemplateColumn(Build.T("Kulüp", "Club"), "ClubNameCell", "Name", 280));
 		grid.Columns.Add(Build.TextColumn(Build.T("Lig", "League"), "League", 220));
 		grid.Columns.Add(Build.TextColumn(Build.T("Ülke", "Nation"), "Nation", 150));
@@ -267,6 +268,7 @@ public sealed class ClubPage : UserControl, IPage
 		foreach (var preset in data.Layout.Presets.Where(p => p.Entity == entity))
 		{
 			var item = new MenuItem { Header = data.Layout.Text(lang, preset.Name), ToolTip = preset.Description == null ? null : data.Layout.Text(lang, preset.Description) };
+			item.IsEnabled = !AppSettings.Current.ReadOnlyMode;
 			item.Click += (_, _) =>
 			{
 				List<BulkTarget> list = targets();
@@ -274,7 +276,7 @@ public sealed class ClubPage : UserControl, IPage
 				{
 					return;
 				}
-				if (list.Count > 1 && MessageBox.Show(
+				if (list.Count > 1 && AppSettings.Current.ConfirmBulkEdits && MessageBox.Show(
 					Build.T($"\"{data.Layout.Text(lang, preset.Name)}\" {list.Count} oyuncuya uygulansın mı? Ctrl+Z ile geri alabilirsin.", $"Apply \"{preset.Name}\" to {list.Count} players? Ctrl+Z undoes it."),
 					"SquadEditor", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
 				{
@@ -324,7 +326,7 @@ public sealed class StaffPage : UserControl, IPage
 		}
 		if (row.ContractEnd.Length > 0)
 		{
-			pills.Add(Build.Pill(row.ContractEnd, Build.T("Sözleşme bitişi", "Contract ends")));
+			pills.Add(Build.Pill(Dates.Show(row.ContractEnd), Build.T("Sözleşme bitişi", "Contract ends")));
 		}
 		Border header = Build.Header(Build.Avatar(Icon, row.Name, 92, round: true), row.Name, line1, line2, pills);
 		DockPanel.SetDock(header, Dock.Top);

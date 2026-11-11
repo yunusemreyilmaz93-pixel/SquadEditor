@@ -95,6 +95,9 @@
               <TextBlock x:Name="StatusText" Text="Bağlı değil" FontSize="12" VerticalAlignment="Center"/>
             </StackPanel>
           </Border>
+          <Border x:Name="ReadOnlyBadge" CornerRadius="14" Padding="10,5" Margin="10,0,0,0" Background="{DynamicResource AccentSoft}" Visibility="Collapsed" ToolTip="Salt okunur mod: oyuna hiçbir şey yazılmaz">
+            <TextBlock Text="🔒 Salt okunur" FontSize="12" VerticalAlignment="Center"/>
+          </Border>
           <Button x:Name="UndoButton" Style="{StaticResource GhostButton}" Margin="10,0,0,0" Click="Undo_Click" ToolTip="Son değişikliği geri al (Ctrl+Z)">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="↶" FontSize="15" Margin="0,0,6,0"/>
@@ -125,6 +128,7 @@
         </Border>
         <TextBlock x:Name="OverlayTitle" Text="Football Manager bekleniyor" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,20,0,8"/>
         <TextBlock x:Name="OverlayText" Text="Oyunu aç ve kaydını yükle. SquadEditor kendiliğinden bağlanır." Foreground="{StaticResource Muted}" TextWrapping="Wrap" TextAlignment="Center"/>
+        <Button x:Name="ConnectButton" Style="{StaticResource AccentButton}" Content="Bağlan" HorizontalAlignment="Center" Margin="0,20,0,0" Padding="22,8" Click="Connect_Click" Visibility="Collapsed"/>
         <ProgressBar x:Name="OverlayProgress" IsIndeterminate="True" Height="3" Margin="60,22,60,0" Background="{StaticResource Panel}" Foreground="{StaticResource Accent}" BorderThickness="0"/>
       </StackPanel>
     </Grid>

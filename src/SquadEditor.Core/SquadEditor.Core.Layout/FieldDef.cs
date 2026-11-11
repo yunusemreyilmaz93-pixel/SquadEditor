@@ -39,6 +39,27 @@ public sealed class FieldDef
 	/// <summary>Other copies of the same value in the game; written together with <see cref="Path"/>.</summary>
 	public List<List<long>> Mirrors { get; init; } = new List<List<long>>();
 
+	/// <summary>The same field on the stored scale (e.g. 5-100 instead of 1-20), with its limits scaled too.</summary>
+	public FieldDef Unscaled()
+	{
+		double scale = Scale ?? 1.0;
+		return new FieldDef
+		{
+			Name = Name,
+			Path = Path,
+			Mirrors = Mirrors,
+			Type = Type,
+			Min = Min * scale,
+			Max = Max * scale,
+			ReadOnly = ReadOnly,
+			Group = Group,
+			Format = Format,
+			Currency = Currency,
+			Options = Options,
+			MaxLength = MaxLength
+		};
+	}
+
 	internal FieldDef WithoutScale()
 	{
 		return new FieldDef
