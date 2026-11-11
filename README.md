@@ -12,7 +12,7 @@
 - **Logos and faces.** Your graphics packs in `Documents\Sports Interactive\Football Manager 27\graphics` are picked up automatically (the same folder the game uses). Another folder can be set in Settings.
 - **Players:** all technical, mental, physical, goalkeeping and hidden attributes, CA / PA, position ratings on a pitch, condition, morale, value, reputation (current, home, world), height, date of birth, wage and contract end.
 - **Staff:** managers, coaches, scouts, physios and the rest: coaching, mental, knowledge and medical attributes, personality, CA / PA, reputation, job, wage and contract.
-- **Clubs:** squad split into first team and youth teams, staff list, balance, transfer budget and wage budget.
+- **Clubs:** squad split into first team and youth teams, staff list, balance, transfer and wage budgets, ticket price, facilities, stadium, reputation and supporters.
 - **Search everything** (Ctrl+F) with accent-insensitive matching ("fenerbahce" finds Fenerbahçe). Open players, staff and clubs in tabs.
 - **Presets** (Heal and inspire, Wonderkid, World star, Rich owner, max attributes…) on one record or, with right-click, on every selected player of a squad.
 - **Undo** every change (Ctrl+Z).
@@ -51,8 +51,7 @@ dotnet publish src/SquadEditor.App/SquadEditor.csproj -c Release -r win-x64 --se
 
 ## Roadmap
 
-- Club facilities, stadium, reputation; staff attributes
-- Injuries, bans, squad numbers, renaming people
+- Injuries and bans, renaming people
 - Competitions and nations
 - Transfers and loans (move to club)
 
