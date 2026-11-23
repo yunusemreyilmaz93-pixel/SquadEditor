@@ -330,13 +330,13 @@ public partial class EditorWindow : Window, INavigator
 				uids.Add("staff:" + s.Uid);
 			}
 		}
-		AppSettings.Current.FrozenUids = uids;
+		AppSettings.Current.SetFrozen(_data.SaveKey, uids);
 		AppSettings.Current.Save();
 	}
 
 	private static void RestoreFrozen(GameData data)
 	{
-		foreach (string key in AppSettings.Current.FrozenUids)
+		foreach (string key in AppSettings.Current.GetFrozen(data.SaveKey))
 		{
 			string[] parts = key.Split(':');
 			if (parts.Length != 2 || !uint.TryParse(parts[1], out uint uid) || uid == 0)

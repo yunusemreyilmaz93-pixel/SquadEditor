@@ -438,11 +438,108 @@ public sealed class PlayerPage : UserControl, IPage
 		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"),
 			Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "Nation", "City of Birth", "Height"))),
 			Build.Card(Build.T("Kişilik (1-20)", "Personality (1-20)"), Build.Rows(Group("Personality"))),
+			Build.Card(Build.T("Tercih Ettiği Hareketler (Traits)", "Player Traits"), TraitsPanel()),
 			Build.Card(Build.T("Milli takım", "International"), Build.Rows(Group("International"))));
 		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
+			Build.Card(Build.T("Sözleşme Maddeleri ve Bonuslar", "Contract Clauses & Bonuses"), ClausesPanel()),
 			Build.Card(Build.T("İtibar (0-10000)", "Reputation (0-10000)"), Build.Rows(Named("Current Reputation", "Home Reputation", "World Reputation"))),
 			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, RefreshValues, _nav));
 		return Build.Scroll(grid);
+	}
+
+	private UIElement TraitsPanel()
+	{
+		var wrap = new WrapPanel { Margin = new Thickness(12, 4, 12, 10) };
+		ulong mask = PlayerTraits.ReadMask(_data.Memory, Address);
+		bool canWrite = !AppSettings.Current.ReadOnlyMode;
+		foreach (var (bit, tr, en) in PlayerTraits.All)
+		{
+			int b = bit;
+			string label = Build.T(tr, en);
+			var cb = new CheckBox
+			{
+				Content = label,
+				Style = Build.StyleOf("FilterChip"),
+				IsChecked = (mask & (1UL << b)) != 0,
+				IsEnabled = canWrite,
+				Margin = new Thickness(0, 0, 5, 5)
+			};
+			cb.Click += (_, _) =>
+			{
+				try
+				{
+					PlayerTraits.Toggle(_data, Address, b, label, Name);
+					_nav.SetStatus(Build.T($"✓ {Name} · {label} güncellendi. Ctrl+Z geri alır.", $"✓ {Name} · {label} updated. Ctrl+Z undoes it."));
+				}
+				catch (Exception ex)
+				{
+					_nav.SetStatus(ex.Message);
+				}
+			};
+			wrap.Children.Add(cb);
+		}
+		return wrap;
+	}
+
+	private UIElement ClausesPanel()
+	{
+		var host = new ContentControl();
+		void Fill()
+		{
+			var stack = new StackPanel { Margin = new Thickness(12, 0, 12, 10) };
+			var clauses = ContractClauses.Read(_data.Memory, Address);
+			if (clauses.Count == 0)
+			{
+				stack.Children.Add(Build.Text(Build.T("Aktif sözleşme maddesi veya bonus yok.", "No active contract clauses or bonuses."), 12.5, Build.Res("Muted")));
+			}
+			bool canWrite = !AppSettings.Current.ReadOnlyMode;
+			foreach (ContractClause clause in clauses)
+			{
+				ContractClause current = clause;
+				var row = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
+				var del = new Button { Content = "✕", Style = Build.StyleOf("GhostButton"), Padding = new Thickness(6, 1, 6, 1), FontSize = 11, Margin = new Thickness(6, 0, 0, 0), IsEnabled = canWrite, ToolTip = Build.T("Maddeyi sil (Ctrl+Z geri alır)", "Remove clause (Ctrl+Z undoes)") };
+				del.Click += (_, _) =>
+				{
+					ContractClauses.Remove(_data, Address, current.Index, Name);
+					_nav.SetStatus(Build.T($"✓ {Name}: \"{current.Label}\" silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed \"{current.Label}\". Ctrl+Z undoes it."));
+					Fill();
+				};
+				var box = new TextBox
+				{
+					Text = current.ValueDisplay,
+					Width = 110,
+					Height = 24,
+					FontSize = 12,
+					IsReadOnly = !canWrite,
+					HorizontalContentAlignment = HorizontalAlignment.Right
+				};
+				box.KeyDown += (_, e) =>
+				{
+					if (e.Key == System.Windows.Input.Key.Enter)
+					{
+						try
+						{
+							ContractClauses.UpdateValue(_data, current, box.Text, Name);
+							_nav.SetStatus(Build.T($"✓ {Name} · {current.Label} güncellendi. Ctrl+Z geri alır.", $"✓ {Name} · {current.Label} updated. Ctrl+Z undoes it."));
+							Fill();
+						}
+						catch (Exception ex)
+						{
+							_nav.SetStatus(ex.Message);
+						}
+					}
+				};
+				DockPanel.SetDock(del, Dock.Right);
+				DockPanel.SetDock(box, Dock.Right);
+				row.Children.Add(del);
+				row.Children.Add(box);
+				row.Children.Add(Build.Text(current.Label, 12.5, Build.Res("Muted")));
+				stack.Children.Add(row);
+			}
+			host.Content = stack;
+		}
+		Fill();
+		return host;
 	}
 
 	private UIElement Positions()

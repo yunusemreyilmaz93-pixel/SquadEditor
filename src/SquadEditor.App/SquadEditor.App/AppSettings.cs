@@ -75,8 +75,30 @@ public sealed class AppSettings
 	/// <summary>Optional Genie Scout columns enabled in PlayerGrid.</summary>
 	public List<string> ExtraColumns { get; set; } = new List<string> { "Growth", "Role" };
 
-	/// <summary>Starred / shortlisted player UIDs.</summary>
+	/// <summary>Starred / shortlisted player UIDs (legacy fallback).</summary>
 	public List<uint> ShortlistUids { get; set; } = new List<uint>();
+
+	/// <summary>Save-scoped frozen entities ("save:&lt;humanUid&gt;" -> ["player:123", ...]).</summary>
+	public Dictionary<string, List<string>> FrozenBySave { get; set; } = new Dictionary<string, List<string>>();
+
+	/// <summary>Save-scoped shortlisted player UIDs.</summary>
+	public Dictionary<string, List<uint>> ShortlistBySave { get; set; } = new Dictionary<string, List<uint>>();
+
+	public List<string> GetFrozen(string saveKey) => FrozenBySave.TryGetValue(saveKey, out var list) ? list : FrozenUids;
+
+	public void SetFrozen(string saveKey, List<string> list)
+	{
+		FrozenBySave[saveKey] = list;
+		FrozenUids = list;
+	}
+
+	public List<uint> GetShortlist(string saveKey) => ShortlistBySave.TryGetValue(saveKey, out var list) ? list : ShortlistUids;
+
+	public void SetShortlist(string saveKey, List<uint> list)
+	{
+		ShortlistBySave[saveKey] = list;
+		ShortlistUids = list;
+	}
 
 	private static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SquadEditor", "settings.json");
 

@@ -505,13 +505,13 @@ public sealed class ClubPage : UserControl, IPage
 		{
 			var rows = grid.SelectedItems.OfType<PlayerRow>().Where(r => r.Uid > 0).ToList();
 			if (rows.Count == 0) return;
-			var set = new HashSet<uint>(AppSettings.Current.ShortlistUids);
+			var set = new HashSet<uint>(AppSettings.Current.GetShortlist(data.SaveKey));
 			bool allIn = rows.All(r => set.Contains(r.Uid));
 			foreach (PlayerRow r in rows)
 			{
 				if (allIn) set.Remove(r.Uid); else set.Add(r.Uid);
 			}
-			AppSettings.Current.ShortlistUids = set.ToList();
+			AppSettings.Current.SetShortlist(data.SaveKey, set.ToList());
 			AppSettings.Current.Save();
 			nav.SetStatus(allIn
 				? Build.T($"★ {rows.Count} oyuncu kısa listeden çıkarıldı.", $"★ Removed {rows.Count} players from shortlist.")
@@ -1236,7 +1236,7 @@ public sealed class HomePage : UserControl, IPage
 			bool injuredOnly = _injuredOnly.IsChecked == true;
 			bool wonderkid = _wonderkid.IsChecked == true;
 			bool shortlistOnly = _shortlistOnly.IsChecked == true;
-			HashSet<uint>? shortlist = shortlistOnly ? new HashSet<uint>(AppSettings.Current.ShortlistUids) : null;
+			HashSet<uint>? shortlist = shortlistOnly ? new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey)) : null;
 			long? maxWageGbp = _scoutFilter.MaxWageDisplay.HasValue ? (long)Math.Round(Money.FromDisplay(_scoutFilter.MaxWageDisplay.Value, true)) : null;
 			DateTime expireCutoff = _data.GameDate.AddYears(1);
 			IEnumerable<PlayerRow> query = _data.Players;

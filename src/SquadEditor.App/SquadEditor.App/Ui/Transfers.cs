@@ -50,8 +50,8 @@ public static partial class Transfers
 
 	private sealed record PlayerList(ulong Team, ulong Header, ulong Begin, ulong End, ulong Capacity, ulong[] Items);
 
-	/// <summary>Works out moving the player to <paramref name="club"/>'s senior team, or releasing him when it is 0. Nothing is written.</summary>
-	public static MovePlan Plan(GameData data, ulong player, ulong club)
+	/// <summary>Works out moving the player to <paramref name="club"/>'s senior team (with optional GBP transfer fee), or releasing him when club is 0. Nothing is written.</summary>
+	public static MovePlan Plan(GameData data, ulong player, ulong club, long feeGbp = 0)
 	{
 		IMemory m = data.Memory;
 		string name = data.Read(player, data.PlayerDef, "Name");
@@ -185,9 +185,59 @@ public static partial class Transfers
 			}
 			steps.Add(Build.T("Sözleşmesi yeni kulübe geçer (maaş ve bitiş aynı kalır), forma numarası boşalır, katılma tarihi bugün olur.",
 				"His contract moves to the new club (same wage and end date), no squad number, joined today."));
-			summary = Build.T($"{name}: {oldName} → {newName} (bonservissiz).", $"{name}: {oldName} → {newName} (free transfer).");
+			if (feeGbp > 0)
+			{
+				AddTransferFeeWrites(m, oldClub, club, oldName, newName, feeGbp, writes, steps);
+				summary = Build.T($"{name}: {oldName} → {newName} ({Money.Format(feeGbp, false)} bonservis).",
+					$"{name}: {oldName} → {newName} ({Money.Format(feeGbp, false)} fee).");
+			}
+			else
+			{
+				summary = Build.T($"{name}: {oldName} → {newName} (bonservissiz).", $"{name}: {oldName} → {newName} (free transfer).");
+			}
 		}
 		return new MovePlan(summary, steps, writes.Where(w => !w.Expected.AsSpan().SequenceEqual(w.Bytes)).ToList(), club, senior);
+	}
+
+	private static void AddTransferFeeWrites(IMemory m, ulong sellerClub, ulong buyerClub, string sellerName, string buyerName, long feeGbp, List<PlannedWrite> writes, List<string> steps)
+	{
+		const long ClubFinance = 0x150, FinBalance = 0x0C, FinTransfer = 0x7C4, FinRevPct = 0x7D0;
+		long[] transferMirrors = { 0x7C4, 0x7C8, 0x7D4 };
+		ulong buyerFin = m.ReadPointer(buyerClub + ClubFinance);
+		ulong sellerFin = m.ReadPointer(sellerClub + ClubFinance);
+		if (buyerFin != 0)
+		{
+			int bal = m.Read<int>(buyerFin + FinBalance);
+			int newBal = (int)Math.Clamp((long)bal - feeGbp, -2_000_000_000, 2_000_000_000);
+			writes.Add(new PlannedWrite(buyerFin + FinBalance, BitConverter.GetBytes(bal), BitConverter.GetBytes(newBal), Build.T("Alıcı Bakiye", "Buyer Balance")));
+			int bud = m.Read<int>(buyerFin + FinTransfer);
+			int newBud = (int)Math.Max(0, (long)bud - feeGbp);
+			foreach (long off in transferMirrors)
+			{
+				int cur = m.Read<int>(buyerFin + (ulong)off);
+				writes.Add(new PlannedWrite(buyerFin + (ulong)off, BitConverter.GetBytes(cur), BitConverter.GetBytes(newBud), Build.T("Alıcı Transfer Bütçesi", "Buyer Transfer Budget")));
+			}
+		}
+		if (sellerFin != 0)
+		{
+			int bal = m.Read<int>(sellerFin + FinBalance);
+			int newBal = (int)Math.Clamp((long)bal + feeGbp, -2_000_000_000, 2_000_000_000);
+			writes.Add(new PlannedWrite(sellerFin + FinBalance, BitConverter.GetBytes(bal), BitConverter.GetBytes(newBal), Build.T("Satıcı Bakiye", "Seller Balance")));
+			int revPct = Math.Clamp(m.Read<int>(sellerFin + FinRevPct), 0, 100);
+			long budAdd = feeGbp * revPct / 100;
+			if (budAdd > 0)
+			{
+				int bud = m.Read<int>(sellerFin + FinTransfer);
+				int newBud = (int)Math.Clamp((long)bud + budAdd, 0, 2_000_000_000);
+				foreach (long off in transferMirrors)
+				{
+					int cur = m.Read<int>(sellerFin + (ulong)off);
+					writes.Add(new PlannedWrite(sellerFin + (ulong)off, BitConverter.GetBytes(cur), BitConverter.GetBytes(newBud), Build.T("Satıcı Transfer Bütçesi", "Seller Transfer Budget")));
+				}
+			}
+		}
+		steps.Add(Build.T($"Bonservis: {buyerName} kasasından {Money.Format(feeGbp, false)} düşülür, {sellerName} kasasına eklenir.",
+			$"Transfer fee: {Money.Format(feeGbp, false)} deducted from {buyerName} and paid to {sellerName}."));
 	}
 
 	private static Exception Refuse(string tr, string en) => new InvalidOperationException(Build.T(tr, en));

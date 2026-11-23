@@ -152,6 +152,9 @@ public sealed class GameData : IDisposable
 	/// <summary>Today in the game: the newest "last update" date among players.</summary>
 	public DateTime GameDate { get; private set; } = DateTime.Today;
 
+	/// <summary>Per-career key derived from the human manager's UID so shortlists and frozen lists stay save-scoped.</summary>
+	public string SaveKey { get; private set; } = "default";
+
 	/// <summary>Team (first team, reserves, U19...) labels by TEAM address.</summary>
 	public IReadOnlyDictionary<ulong, string> TeamNames { get; private set; } = new Dictionary<ulong, string>();
 
@@ -331,7 +334,13 @@ public sealed class GameData : IDisposable
 			}
 			try
 			{
-				staffAddressesList.AddRange(Session.GetCollectionItems("Humans"));
+				var humans = Session.GetCollectionItems("Humans");
+				staffAddressesList.AddRange(humans);
+				uint humanUid = humans.Select(h => (uint)ReadInt(h, StaffDef, "Unique ID")).FirstOrDefault(id => id > 0);
+				if (humanUid > 0)
+				{
+					SaveKey = "save:" + humanUid;
+				}
 			}
 			catch (Exception)
 			{

@@ -1678,6 +1678,45 @@
           "format": "number"
         },
         {
+          "name": "Pitch Condition",
+          "group": "Stadium",
+          "path": [
+            "0x18",
+            "0x0",
+            "0x78",
+            "0xA8"
+          ],
+          "type": "u16",
+          "min": 1,
+          "max": 200
+        },
+        {
+          "name": "Pitch Length",
+          "group": "Stadium",
+          "path": [
+            "0x18",
+            "0x0",
+            "0x78",
+            "0x98"
+          ],
+          "type": "u16",
+          "min": 900,
+          "max": 1200
+        },
+        {
+          "name": "Pitch Width",
+          "group": "Stadium",
+          "path": [
+            "0x18",
+            "0x0",
+            "0x78",
+            "0x9A"
+          ],
+          "type": "u16",
+          "min": 550,
+          "max": 900
+        },
+        {
           "name": "Ticket Price",
           "group": "Finances",
           "path": [
@@ -2709,6 +2748,10 @@
       "Crucial": "Hayati",
       "Reputation": "İtibar (1-200)",
       "Reputation (10000)": "İtibar (1-10000)",
+      "Stadium Expansion Capacity": "Stadyum Genişletme Kapasitesi",
+      "Pitch Condition": "Zemin Durumu (1-200)",
+      "Pitch Length": "Saha Uzunluğu (dm)",
+      "Pitch Width": "Saha Genişliği (dm)",
       "Clubs": "Kulüpler",
       "Club": "Kulüp",
       "League": "Lig",
