@@ -1083,7 +1083,7 @@ public sealed class HomePage : UserControl, IPage
 	private readonly TextBox _search;
 	private readonly Border _filterBar;
 	private readonly Border _staffFilterBar;
-	private readonly ComboBox _pos, _region;
+	private readonly ComboBox _pos, _region, _nation;
 	private readonly ComboBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
 	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _regenOnly, _shortlistOnly, _previewToggle;
 	private readonly Button _advFilterBtn;
@@ -1199,6 +1199,21 @@ public sealed class HomePage : UserControl, IPage
 		_region.SelectedValue = "";
 		_region.SelectionChanged += (_, _) => Apply();
 
+		var playerNations = data.Players.Select(p => p.Nation).Where(n => n.Length > 0).Distinct().OrderBy(n => n).ToList();
+		_nation = new ComboBox
+		{
+			Width = 128,
+			Height = 28,
+			FontSize = 12,
+			IsEditable = true,
+			IsTextSearchEnabled = true,
+			VerticalAlignment = VerticalAlignment.Center,
+			ItemsSource = playerNations,
+			ToolTip = Build.T("Oyuncu uyruğu seç veya yaz (örn. Türkiye, Brezilya, Fransa)", "Pick or type player nationality (e.g. Türkiye, Brazil, France)")
+		};
+		_nation.SelectionChanged += (_, _) => ScheduleApply();
+		_nation.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) => ScheduleApply()));
+
 		ComboBox RangeCombo(string tip, double w, IEnumerable<string> items)
 		{
 			var cb = new ComboBox
@@ -1243,7 +1258,7 @@ public sealed class HomePage : UserControl, IPage
 		_advFilterBtn = new Button { Content = Build.T("🔍 Gelişmiş", "🔍 Advanced"), Padding = new Thickness(10, 4, 10, 4), FontSize = 12, Margin = new Thickness(4, 0, 6, 0), ToolTip = Build.T("Genie Scout filtreleri (PA-CA, Rol %, Profesyonellik, İstikrar, Sakatlık Eğilimi, Hız, Maaş…)", "Genie Scout filters (PA-CA, Role %, Professionalism, Consistency, Injury Proneness, Pace, Wage…)") };
 		_advFilterBtn.Click += (_, _) =>
 		{
-			var win = new ScoutFilterWindow(_scoutFilter) { Owner = Window.GetWindow(this) };
+			var win = new ScoutFilterWindow(_scoutFilter, _data.Players.Select(p => p.Nation)) { Owner = Window.GetWindow(this) };
 			if (win.ShowDialog() == true)
 			{
 				_advFilterBtn.Style = _scoutFilter.IsActive ? Build.StyleOf("AccentButton") : (Style)Application.Current.FindResource(typeof(Button));
@@ -1296,6 +1311,8 @@ public sealed class HomePage : UserControl, IPage
 		{
 			_pos.SelectedValue = "";
 			_region.SelectedValue = "";
+			_nation.SelectedIndex = -1;
+			_nation.Text = "";
 			foreach (ComboBox cb in new[] { _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM })
 			{
 				cb.SelectedIndex = -1;
@@ -1352,6 +1369,8 @@ public sealed class HomePage : UserControl, IPage
 		row1.Children.Add(_maxValM);
 		row1.Children.Add(Lbl(Build.T("Bölge", "Region")));
 		row1.Children.Add(_region);
+		row1.Children.Add(Lbl(Build.T("Uyruk", "Nation")));
+		row1.Children.Add(_nation);
 
 		var row2 = new DockPanel();
 		DockPanel.SetDock(_matchCount, Dock.Right);
@@ -1528,6 +1547,7 @@ public sealed class HomePage : UserControl, IPage
 		{
 			string pos = _pos.SelectedValue as string ?? "";
 			string region = _region.SelectedValue as string ?? "";
+			string nation = (_nation.Text ?? "").Trim();
 			int? ageMin = ParseInt(_ageMin), ageMax = ParseInt(_ageMax), caMin = ParseInt(_caMin), caMax = ParseInt(_caMax), paMin = ParseInt(_paMin);
 			double? maxValM = ParseDouble(_maxValM);
 			long? maxValGbp = maxValM.HasValue ? (long)Math.Round(Money.FromDisplay(maxValM.Value * 1_000_000.0, false)) : null;
@@ -1544,6 +1564,11 @@ public sealed class HomePage : UserControl, IPage
 			if (q.Length > 0) query = query.Where(p => p.Search.Contains(q));
 			if (pos.Length > 0) query = query.Where(p => p.Positions.Split(' ', '/', ',').Any(tok => tok == pos));
 			if (region.Length > 0) query = query.Where(p => MatchesRegion(p.Nation, region));
+			if (nation.Length > 0)
+			{
+				string normNat = GameData.Normalize(nation);
+				query = query.Where(p => GameData.Normalize(p.Nation).Contains(normNat));
+			}
 			if (ageMin.HasValue) query = query.Where(p => p.Age >= ageMin.Value);
 			if (ageMax.HasValue) query = query.Where(p => p.Age > 0 && p.Age <= ageMax.Value);
 			if (caMin.HasValue) query = query.Where(p => p.CA >= caMin.Value);
@@ -1559,7 +1584,7 @@ public sealed class HomePage : UserControl, IPage
 			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp));
 			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
 			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
-			RebuildActiveChips(pos, region, ageMin, ageMax, caMin, caMax, paMin, maxValM, freeOnly, expiringOnly, injuredOnly, wonderkid, regenOnly, shortlistOnly);
+			RebuildActiveChips(pos, region, nation, ageMin, ageMax, caMin, caMax, paMin, maxValM, freeOnly, expiringOnly, injuredOnly, wonderkid, regenOnly, shortlistOnly);
 			var pg = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
 			pg.SelectionChanged += (_, _) =>
 			{
@@ -1595,7 +1620,7 @@ public sealed class HomePage : UserControl, IPage
 		_previewCard.Visibility = _mode == "players" && _previewToggle.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 	}
 
-	private void RebuildActiveChips(string pos, string region, int? ageMin, int? ageMax, int? caMin, int? caMax, int? paMin, double? maxValM,
+	private void RebuildActiveChips(string pos, string region, string nation, int? ageMin, int? ageMax, int? caMin, int? caMax, int? paMin, double? maxValM,
 		bool freeOnly, bool expiringOnly, bool injuredOnly, bool wonderkid, bool regenOnly, bool shortlistOnly)
 	{
 		_activeChips.Children.Clear();
@@ -1616,6 +1641,7 @@ public sealed class HomePage : UserControl, IPage
 		}
 		if (pos.Length > 0) Chip(Build.T($"Mevki: {pos}", $"Pos: {pos}"), () => _pos.SelectedValue = "");
 		if (region.Length > 0) Chip(Build.T($"Bölge: {region}", $"Region: {region}"), () => _region.SelectedValue = "");
+		if (nation.Length > 0) Chip(Build.T($"Uyruk: {nation}", $"Nation: {nation}"), () => { _nation.SelectedIndex = -1; _nation.Text = ""; });
 		if (ageMin.HasValue) Chip(Build.T($"Yaş ≥ {ageMin}", $"Age ≥ {ageMin}"), () => { _ageMin.SelectedIndex = -1; _ageMin.Text = ""; });
 		if (ageMax.HasValue) Chip(Build.T($"Yaş ≤ {ageMax}", $"Age ≤ {ageMax}"), () => { _ageMax.SelectedIndex = -1; _ageMax.Text = ""; });
 		if (caMin.HasValue) Chip($"CA ≥ {caMin}", () => { _caMin.SelectedIndex = -1; _caMin.Text = ""; });
@@ -1700,8 +1726,45 @@ public sealed class HomePage : UserControl, IPage
 		var cmpBtn = new Button { Content = Build.T("⚖ Karşılaştır", "⚖ Compare"), Margin = new Thickness(3, 0, 0, 0), FontSize = 11.5 };
 		cmpBtn.Click += (_, _) =>
 		{
-			var other = _lastPlayers.FirstOrDefault(x => x.Address != p.Address);
-			if (other != null) new PlayerCompareWindow(_data, p, other, _nav) { Owner = Window.GetWindow(this) }.ShowDialog();
+			var dlg = new Window
+			{
+				Title = Build.T($"{p.Name} ile karşılaştırılacak oyuncuyu seç", $"Pick player to compare with {p.Name}"),
+				Width = 460,
+				Height = 440,
+				WindowStartupLocation = WindowStartupLocation.CenterOwner,
+				Owner = Window.GetWindow(this),
+				Background = Build.Res("Bg"),
+				Foreground = Build.Res("Text")
+			};
+			var dock = new DockPanel { Margin = new Thickness(14) };
+			var sBox = new TextBox { Height = 30, Margin = new Thickness(0, 0, 0, 8), ToolTip = Build.T("Oyuncu adı yaz…", "Type player name…") };
+			DockPanel.SetDock(sBox, Dock.Top);
+			var lBox = new ListBox { Background = Build.Res("Panel"), BorderBrush = Build.Res("StrokeSoft") };
+			void RefreshList()
+			{
+				string q2 = GameData.Normalize(sBox.Text.Trim());
+				lBox.ItemsSource = _data.Players
+					.Where(x => x.Address != p.Address && (q2.Length == 0 || x.Search.Contains(q2)))
+					.OrderByDescending(x => x.CA)
+					.Take(80)
+					.Select(x => new KeyValuePair<PlayerRow, string>(x, $"{x.Name}  ·  {x.Positions}  ·  CA {x.CA}  ({x.Club})"))
+					.ToList();
+				lBox.DisplayMemberPath = "Value";
+			}
+			sBox.TextChanged += (_, _) => RefreshList();
+			lBox.MouseDoubleClick += (_, _) =>
+			{
+				if (lBox.SelectedItem is KeyValuePair<PlayerRow, string> kv)
+				{
+					dlg.Close();
+					new PlayerCompareWindow(_data, p, kv.Key, _nav) { Owner = Window.GetWindow(this) }.ShowDialog();
+				}
+			};
+			RefreshList();
+			dock.Children.Add(sBox);
+			dock.Children.Add(lBox);
+			dlg.Content = dock;
+			dlg.ShowDialog();
 		};
 		subBtns.Children.Add(starBtn);
 		subBtns.Children.Add(cmpBtn);

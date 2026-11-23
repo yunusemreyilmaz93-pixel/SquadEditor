@@ -95,7 +95,9 @@ public partial class Theme : ResourceDictionary
 			SetHeader(target, "#1C3F86", "#16284F", "#121A2B");
 			break;
 		}
-		if (accent is { Length: 7 } hex && hex.StartsWith('#'))
+		bool useCustomAccent = accent is { Length: 7 } && accent.StartsWith('#')
+			&& !(themeName == "charcoal" && accent.Equals("#4F8CFF", StringComparison.OrdinalIgnoreCase));
+		if (useCustomAccent && accent is { } hex)
 		{
 			try
 			{

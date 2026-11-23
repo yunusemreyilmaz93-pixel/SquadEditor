@@ -649,32 +649,6 @@ public partial class EditorWindow : Window, INavigator
 				Open = () => OpenStaff(staff.Address)
 			});
 		}
-		foreach (NationRow n in _data.Nations.Where(n => n.Search.Contains(q)).OrderByDescending(n => n.YouthRating).Take(3))
-		{
-			NationRow nation = n;
-			hits.Add(new SearchHit
-			{
-				Title = n.Name,
-				Subtitle = $"{n.Code}  ·  {Build.T("Gençlik", "Youth")} {n.YouthRating}  ·  {n.Development}",
-				Corner = new CornerRadius(6),
-				Badge = Build.T("Ülke", "Nation"),
-				BadgeBrush = Build.Res("Muted"),
-				Open = () => OpenNation(nation.Address)
-			});
-		}
-		foreach (CompRow c in _data.Competitions.Where(c => c.Search.Contains(q)).OrderByDescending(c => c.Reputation).Take(3))
-		{
-			CompRow comp = c;
-			hits.Add(new SearchHit
-			{
-				Title = c.Name,
-				Subtitle = $"{c.ShortName}  ·  {Build.T("İtibar", "Rep")} {c.Reputation}",
-				Corner = new CornerRadius(6),
-				Badge = Build.T("Lig", "Comp"),
-				BadgeBrush = Build.Res("Muted"),
-				Open = () => OpenComp(comp.Address)
-			});
-		}
 		SearchResults.ItemsSource = hits;
 		SearchPopup.IsOpen = hits.Count > 0;
 		if (hits.Count > 0)
@@ -805,10 +779,36 @@ public partial class EditorWindow : Window, INavigator
 				AppSettings.Current.Save();
 				Theme.ApplyLive(theme, AppSettings.Current.Accent);
 				DarkTitleBar();
+				RebuildOpenPages();
 				SetStatus(Build.T($"✓ Tema değiştirildi: {theme}", $"✓ Theme switched: {theme}"));
 			})
 		{ Owner = this };
 		dlg.ShowDialog();
+	}
+
+	private void RebuildOpenPages()
+	{
+		if (_data == null) return;
+		string? currentKey = _current?.Key;
+		var keys = _pages.Select(p => p.Key).ToList();
+		_pages.Clear();
+		_current = null;
+		foreach (string key in keys)
+		{
+			string[] parts = key.Split(':');
+			ulong address = parts.Length == 2 && ulong.TryParse(parts[1], out ulong a) ? a : 0;
+			switch (parts[0])
+			{
+			case "home": _pages.Add(new HomePage(_data, this)); break;
+			case "player": _pages.Add(new PlayerPage(_data, address, this)); break;
+			case "club": if (_data.ClubsByAddress.TryGetValue(address, out ClubRow? c)) _pages.Add(new ClubPage(_data, c, this)); break;
+			case "staff": if (_data.Staff.FirstOrDefault(s => s.Address == address) is { } s) _pages.Add(new StaffPage(_data, s, this)); break;
+			case "nation": if (_data.Nations.FirstOrDefault(n => n.Address == address) is { } n) _pages.Add(new NationPage(_data, n, this)); break;
+			case "comp": if (_data.Competitions.FirstOrDefault(x => x.Address == address) is { } x) _pages.Add(new CompPage(_data, x, this)); break;
+			}
+		}
+		IPage? target = _pages.FirstOrDefault(p => p.Key == currentKey) ?? _pages.FirstOrDefault();
+		if (target != null) OpenPage(target);
 	}
 
 	private Task _graphics = Task.CompletedTask;

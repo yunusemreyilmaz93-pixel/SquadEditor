@@ -242,11 +242,18 @@ public sealed class PlayerCompareWindow : Window
 		DockPanel.SetDock(banner, Dock.Top);
 		root.Children.Add(banner);
 
-		// Side-by-side attribute delta comparison across Technical, Mental, Physical
+		// Side-by-side attribute delta comparison across Technical/GK, Mental, Physical, and Hidden/Personality
 		string lang = Loc.Instance.Language;
-		var groups = new[] { ("Technical", Build.T("Teknik", "Technical")), ("Mental", Build.T("Zihinsel", "Mental")), ("Physical", Build.T("Fiziksel", "Physical")) };
+		bool isGkCompare = a.Positions.Contains("GK") && b.Positions.Contains("GK");
+		var groups = new[]
+		{
+			(isGkCompare ? "Goalkeeping" : "Technical", isGkCompare ? Build.T("Kalecilik", "Goalkeeping") : Build.T("Teknik", "Technical")),
+			("Mental", Build.T("Zihinsel", "Mental")),
+			("Physical", Build.T("Fiziksel", "Physical")),
+			("Personality", Build.T("Kişilik", "Personality"))
+		};
 		var cols = new Grid();
-		for (int i = 0; i < 3; i++) cols.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+		for (int i = 0; i < groups.Length; i++) cols.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
 		for (int gi = 0; gi < groups.Length; gi++)
 		{

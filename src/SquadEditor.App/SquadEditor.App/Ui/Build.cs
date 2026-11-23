@@ -171,9 +171,9 @@ public static class Build
 					};
 					quick.Children.Add(b);
 				}
-				AddQuick("+1y", d => d.AddYears(1));
-				AddQuick("+3y", d => d.AddYears(3));
-				AddQuick("+5y", d => d.AddYears(5));
+				AddQuick(T("+1 Yıl", "+1y"), d => d.AddYears(1));
+				AddQuick(T("+3 Yıl", "+3y"), d => d.AddYears(3));
+				AddQuick(T("+5 Yıl", "+5y"), d => d.AddYears(5));
 				AddQuick("30.06", d => new DateTime(d.Year, 6, 30));
 				var popStack = new StackPanel();
 				popStack.Children.Add(cal);
