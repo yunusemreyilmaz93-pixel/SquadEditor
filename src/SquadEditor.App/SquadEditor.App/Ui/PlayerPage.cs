@@ -273,10 +273,39 @@ public sealed class PlayerPage : UserControl, IPage
 				}
 				Fill();
 			};
+			bool inShortlist = AppSettings.Current.GetShortlist(_data.SaveKey).Contains(Uid);
+			var shortlistBtn = new Button
+			{
+				Content = inShortlist ? Build.T("★ Kısa Listede", "★ Shortlisted") : Build.T("☆ Kısa Listeye Ekle", "☆ Add to Shortlist"),
+				ToolTip = Build.T("Oyuncuyu kendi kısa listene ekle veya çıkar (Ana Sayfadaki ★ Kısa Liste filtresinde görünür)", "Add or remove this player from your save's shortlist"),
+				Padding = new Thickness(10, 4, 10, 4),
+				Margin = new Thickness(0, 0, 6, 0)
+			};
+			if (inShortlist)
+			{
+				shortlistBtn.Style = Build.StyleOf("AccentButton");
+			}
+			shortlistBtn.Click += (_, _) =>
+			{
+				var list = new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey));
+				if (list.Contains(Uid))
+				{
+					list.Remove(Uid);
+					_nav.SetStatus(Build.T($"{Name} kısa listeden çıkarıldı.", $"{Name} removed from shortlist."));
+				}
+				else
+				{
+					list.Add(Uid);
+					_nav.SetStatus(Build.T($"★ {Name} kısa listeye eklendi.", $"★ {Name} added to shortlist."));
+				}
+				AppSettings.Current.SetShortlist(_data.SaveKey, list.ToList());
+				AppSettings.Current.Save();
+				Fill();
+			};
 			var healMax = new Button
 			{
-				Content = Build.T("⚡ Kondisyon & Moral Fulle", "⚡ Max Fitness & Morale"),
-				ToolTip = Build.T("Sadece sakatlık/cezayı kaldırır ve kondisyon, maç formu, morali %100 yapar (yetenek özelliklerine dokunmaz)", "Only heals injuries/bans and maxes condition, sharpness & morale (does not touch attributes)"),
+				Content = Build.T("⚡ Kondisyon, Moral & Mutluluk Fulle", "⚡ Max Fitness, Morale & Happiness"),
+				ToolTip = Build.T("Sakatlık/cezayı kaldırır; kondisyon, maç formu, moral ve sözleşme mutluluğunu %100 yapar (yetenek özelliklerine dokunmaz)", "Heals injuries/bans and maxes condition, sharpness, morale & contract happiness (does not touch attributes)"),
 				Padding = new Thickness(10, 4, 10, 4),
 				Margin = new Thickness(0, 0, 6, 0),
 				IsEnabled = canWrite
@@ -287,7 +316,7 @@ public sealed class PlayerPage : UserControl, IPage
 				{
 					Medical.Heal(_data, Address, Name);
 					Medical.LiftBans(_data, Address, Name);
-					foreach (string fn in new[] { "Condition", "Match Sharpness", "Morale" })
+					foreach (string fn in new[] { "Condition", "Match Sharpness", "Morale", "Contract Happiness" })
 					{
 						if (_f.TryGetValue(fn, out EditField? ef) && ef.Def.Max.HasValue)
 						{
@@ -300,7 +329,7 @@ public sealed class PlayerPage : UserControl, IPage
 					}
 				}
 				RefreshValues();
-				_nav.SetStatus(Build.T($"✓ {Name} iyileştirildi ve maça hazırlandı. Ctrl+Z geri alır.", $"✓ {Name} healed and maxed. Ctrl+Z undoes it."));
+				_nav.SetStatus(Build.T($"✓ {Name} iyileştirildi; kondisyon, moral ve mutluluk fullendi. Ctrl+Z geri alır.", $"✓ {Name} healed; fitness, morale & happiness maxed. Ctrl+Z undoes it."));
 			};
 			Button ExtendBtn(int years)
 			{
@@ -355,6 +384,7 @@ public sealed class PlayerPage : UserControl, IPage
 				}
 			};
 			panel.Children.Add(freeze);
+			panel.Children.Add(shortlistBtn);
 			panel.Children.Add(healMax);
 			panel.Children.Add(ExtendBtn(1));
 			panel.Children.Add(ExtendBtn(3));

@@ -38,7 +38,7 @@ public sealed class PlayerRow
 	public int Passing { get; init; }
 	public long Wage { get; init; }
 	public long Value { get; init; }
-	public int Morale { get; init; }
+	public int Morale { get; set; }
 	public int Age { get; set; }
 	public DateTime? Born { get; init; }
 	public ulong TeamAddress { get; set; }
@@ -52,6 +52,7 @@ public sealed class PlayerRow
 public sealed class StaffRow
 {
 	public ulong Address { get; init; }
+	public bool IsHuman { get; init; }
 	public string Name { get; set; } = "";
 	public uint Uid { get; init; }
 	public ulong ClubAddress { get; set; }
@@ -132,8 +133,52 @@ public sealed class GameData : IDisposable
 		PlayerDef = session.Layout.GetEntity("Player");
 		ClubDef = session.Layout.GetEntity("Club");
 		StaffDef = session.Layout.GetEntity("Staff");
+		HumanDef = BuildHumanDef(StaffDef);
 		NationDef = session.Layout.Entities.FirstOrDefault(e => e.Name == "Nation");
 		CompDef = session.Layout.Entities.FirstOrDefault(e => e.Name == "Competition");
+	}
+
+	/// <summary>HUMAN_NON_PLAYER has colOffset 0x440 vs ACTUAL_NON_PLAYER 0x100, so NON_PLAYER fields before PersonBlock shift by -0x340.</summary>
+	private static EntityDef BuildHumanDef(EntityDef staff)
+	{
+		const long shift = -0x340;
+		return new EntityDef
+		{
+			Name = "Human",
+			DisplayField = staff.DisplayField,
+			HeaderFields = staff.HeaderFields,
+			ListFields = staff.ListFields,
+			TableFields = staff.TableFields,
+			Fields = staff.Fields.Select(f =>
+			{
+				if (f.Path.Count == 0 || f.Path[0] >= 0) return f;
+				var path = new List<long>(f.Path);
+				path[0] += shift;
+				var mirrors = f.Mirrors.Select(m =>
+				{
+					var copy = new List<long>(m);
+					if (copy.Count > 0 && copy[0] < 0) copy[0] += shift;
+					return copy;
+				}).ToList();
+				return new FieldDef
+				{
+					Name = f.Name,
+					Path = path,
+					Mirrors = mirrors,
+					Type = f.Type,
+					Min = f.Min,
+					Max = f.Max,
+					ReadOnly = f.ReadOnly,
+					Group = f.Group,
+					Format = f.Format,
+					Options = f.Options,
+					MaxLength = f.MaxLength,
+					Scale = f.Scale,
+					Concat = f.Concat,
+					Currency = f.Currency
+				};
+			}).ToList()
+		};
 	}
 
 	public ProcessMemory Memory { get; }
@@ -142,6 +187,7 @@ public sealed class GameData : IDisposable
 	public EntityDef PlayerDef { get; }
 	public EntityDef ClubDef { get; }
 	public EntityDef StaffDef { get; }
+	public EntityDef HumanDef { get; }
 	public EntityDef? NationDef { get; }
 	public EntityDef? CompDef { get; }
 	public IReadOnlyList<StaffRow> Staff { get; private set; } = Array.Empty<StaffRow>();
@@ -325,6 +371,7 @@ public sealed class GameData : IDisposable
 
 			progress?.Report("staff");
 			var staffAddressesList = new List<ulong>();
+			var humanSet = new HashSet<ulong>();
 			try
 			{
 				staffAddressesList.AddRange(Session.GetCollectionItems("Staff"));
@@ -335,8 +382,9 @@ public sealed class GameData : IDisposable
 			try
 			{
 				var humans = Session.GetCollectionItems("Humans");
+				foreach (ulong h in humans) humanSet.Add(h);
 				staffAddressesList.AddRange(humans);
-				uint humanUid = humans.Select(h => (uint)ReadInt(h, StaffDef, "Unique ID")).FirstOrDefault(id => id > 0);
+				uint humanUid = humans.Select(h => (uint)ReadInt(h, HumanDef, "Unique ID")).FirstOrDefault(id => id > 0);
 				if (humanUid > 0)
 				{
 					SaveKey = "save:" + humanUid;
@@ -350,18 +398,21 @@ public sealed class GameData : IDisposable
 			Parallel.For(0, staffAddresses.Count, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, i =>
 			{
 				ulong a = staffAddresses[i];
-				string name = Read(a, StaffDef, "Name");
-				ulong club = ulong.TryParse(Read(a, StaffDef, "Club Ref"), out ulong c) ? c : 0;
-				string dob = Read(a, StaffDef, "Date of Birth");
-				string jobKey = Read(a, StaffDef, "Job");
-				string job = Field(StaffDef, "Job").Options.TryGetValue(jobKey, out string? j) ? Layout.Text(Loc.Instance.Language, j) : (jobKey.Length > 0 && jobKey != "0" ? "#" + jobKey : "");
+				bool isHuman = humanSet.Contains(a);
+				EntityDef def = isHuman ? HumanDef : StaffDef;
+				string name = Read(a, def, "Name");
+				ulong club = ulong.TryParse(Read(a, def, "Club Ref"), out ulong c) ? c : 0;
+				string dob = Read(a, def, "Date of Birth");
+				string jobKey = Read(a, def, "Job");
+				string job = Field(def, "Job").Options.TryGetValue(jobKey, out string? j) ? Layout.Text(Loc.Instance.Language, j) : (jobKey.Length > 0 && jobKey != "0" ? "#" + jobKey : "");
 				string clubName = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "";
-				string nation = Read(a, StaffDef, "Nation");
+				string nation = Read(a, def, "Nation");
 				staff[i] = new StaffRow
 				{
 					Address = a,
+					IsHuman = isHuman,
 					Name = name,
-					Uid = (uint)ReadInt(a, StaffDef, "Unique ID"),
+					Uid = (uint)ReadInt(a, def, "Unique ID"),
 					ClubAddress = club,
 					Club = clubName,
 					ClubUid = row?.Uid ?? 0,
@@ -369,10 +420,10 @@ public sealed class GameData : IDisposable
 					Nation = nation,
 					DateOfBirth = dob,
 					Born = ParseDate(dob),
-					CA = ReadInt(a, StaffDef, "CA"),
-					PA = ReadInt(a, StaffDef, "PA"),
-					Wage = ReadInt(a, StaffDef, "Wage"),
-					ContractEnd = Read(a, StaffDef, "Contract Expires"),
+					CA = ReadInt(a, def, "CA"),
+					PA = ReadInt(a, def, "PA"),
+					Wage = ReadInt(a, def, "Wage"),
+					ContractEnd = Read(a, def, "Contract Expires"),
 					Search = Normalize($"{name} {clubName} {nation} {job}")
 				};
 			});

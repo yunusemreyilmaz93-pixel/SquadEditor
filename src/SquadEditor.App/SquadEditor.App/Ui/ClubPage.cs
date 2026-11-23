@@ -129,8 +129,8 @@ public sealed class ClubPage : UserControl, IPage
 		var prepare = new Button
 		{
 			Content = Build.T("⚡ Tüm Kadroyu Maça Hazırla", "⚡ Prepare Squad for Match"),
-			ToolTip = Build.T("Kadroda görünen tüm oyuncuların sakatlıklarını iyileştirir, cezalarını kaldırır, kondisyon ve morallerini fuller (Ctrl+Z geri alır)",
-				"Heals injuries, lifts bans, and maxes condition & morale for all players in the current view (Ctrl+Z undoes it)"),
+			ToolTip = Build.T("Kadroda görünen tüm oyuncuların sakatlıklarını iyileştirir, cezalarını kaldırır; kondisyon, maç formu, moral ve mutluluklarını %100 yapar (Ctrl+Z geri alır)",
+				"Heals injuries, lifts bans, and maxes condition, sharpness, morale & contract happiness for all players in the current view (Ctrl+Z undoes it)"),
 			Style = Build.StyleOf("AccentButton"),
 			Padding = new Thickness(10, 4, 10, 4),
 			FontSize = 12,
@@ -151,12 +151,14 @@ public sealed class ClubPage : UserControl, IPage
 					if (Medical.Heal(_data, r.Address, r.Name)) healed++;
 					if (Medical.LiftBans(_data, r.Address, r.Name)) lifted++;
 					r.Status = Medical.Status(_data.Memory, r.Address, _data.GameDate);
+					r.Morale = 20;
 				}
 				var actions = new[]
 				{
 					new SquadEditor.Core.Layout.PresetAction { Field = "Condition", Value = "max" },
 					new SquadEditor.Core.Layout.PresetAction { Field = "Match Sharpness", Value = "max" },
-					new SquadEditor.Core.Layout.PresetAction { Field = "Morale", Value = "max" }
+					new SquadEditor.Core.Layout.PresetAction { Field = "Morale", Value = "max" },
+					new SquadEditor.Core.Layout.PresetAction { Field = "Contract Happiness", Value = "max" }
 				};
 				var targets = rows.Select(r => new BulkTarget(r.Address, r.Name)).ToList();
 				foreach (var t in targets)
@@ -184,10 +186,78 @@ public sealed class ClubPage : UserControl, IPage
 				}
 			}
 			currentGrid?.Items.Refresh();
-			_nav.SetStatus(Build.T($"✓ {rows.Count} oyuncu maça hazırlandı ({healed} sakatlık iyileşti, {lifted} ceza kalktı, {boosted} kondisyon/moral güncellendi). Ctrl+Z geri alır.",
-				$"✓ {rows.Count} players prepared ({healed} healed, {lifted} bans lifted, {boosted} fitness/morale updated). Ctrl+Z undoes it."));
+			_nav.SetStatus(Build.T($"✓ {rows.Count} oyuncu maça hazırlandı ({healed} sakatlık, {lifted} ceza, kondisyon/moral/mutluluk fullendi · {boosted} alan). Ctrl+Z geri alır.",
+				$"✓ {rows.Count} players prepared ({healed} healed, {lifted} bans lifted, fitness/morale/happiness maxed · {boosted} fields). Ctrl+Z undoes it."));
 		};
 		quickBar.Children.Add(prepare);
+		var contractsBtn = new Button
+		{
+			Content = Build.T("📝 Toplu Sözleşme ▾", "📝 Bulk Contracts ▾"),
+			ToolTip = Build.T("Kadroda görünen tüm oyuncuların sözleşmelerini topluca uzat (+1/+3/+4/+5 yıl) veya feshet", "Bulk extend (+1/+3/+4/+5y) or terminate contracts for all players in the current view"),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		void BulkContractAction(int? addYears, bool terminate)
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).Where(p => p.ContractDate != null).ToList();
+			if (rows.Count == 0) return;
+			string desc = terminate
+				? Build.T($"{_club.Name} ({rows.Count} oyuncu) tüm sözleşmeler yarın bitecek şekilde feshedilsin mi? (Ctrl+Z geri alır)",
+					$"Terminate contracts for {rows.Count} players at {_club.Name} (expire tomorrow)? (Ctrl+Z undoes it)")
+				: Build.T($"{_club.Name} ({rows.Count} oyuncu) tüm sözleşmeler +{addYears} yıl uzatılsın mı? (Ctrl+Z geri alır)",
+					$"Extend contracts for {rows.Count} players at {_club.Name} by +{addYears} year(s)? (Ctrl+Z undoes it)");
+			if (AppSettings.Current.ConfirmBulkEdits && MessageBox.Show(desc, "SquadEditor", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+			{
+				return;
+			}
+			var ceField = _data.PlayerDef.Fields.First(f => f.Name == "Contract Expires");
+			int done = 0;
+			string batchLabel = terminate
+				? Build.T($"{_club.Name}: Toplu sözleşme feshi", $"{_club.Name}: Terminate squad contracts")
+				: Build.T($"{_club.Name}: Toplu sözleşme +{addYears} yıl", $"{_club.Name}: Extend squad contracts +{addYears}y");
+			using (_data.Session.History.BeginBatch(batchLabel))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					DateTime next = terminate ? _data.GameDate.AddDays(1) : r.ContractDate!.Value.AddYears(addYears!.Value);
+					string txt = next.ToString("dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+					try
+					{
+						_data.Session.WriteField(r.Address, ceField, txt, r.Name);
+						r.ContractDate = next;
+						r.ContractEnd = Dates.Show(txt);
+						done++;
+					}
+					catch (Exception)
+					{
+					}
+				}
+			}
+			currentGrid?.Items.Refresh();
+			_nav.SetStatus(terminate
+				? Build.T($"✓ {_club.Name}: {done} oyuncunun sözleşmesi yarın bitecek şekilde feshedildi. Ctrl+Z geri alır.", $"✓ {_club.Name}: {done} contracts set to expire tomorrow. Ctrl+Z undoes it.")
+				: Build.T($"✓ {_club.Name}: {done} oyuncunun sözleşmesi +{addYears} yıl uzatıldı. Ctrl+Z geri alır.", $"✓ {_club.Name}: {done} contracts extended by +{addYears}y. Ctrl+Z undoes it."));
+		}
+		contractsBtn.Click += (_, _) =>
+		{
+			var menu = new ContextMenu();
+			foreach (int y in new[] { 1, 3, 4, 5 })
+			{
+				int years = y;
+				var mi = new MenuItem { Header = Build.T($"📝 Tüm Kadro Sözleşme +{years} Yıl", $"📝 Extend Squad Contracts +{years}y") };
+				mi.Click += (_, _) => BulkContractAction(years, terminate: false);
+				menu.Items.Add(mi);
+			}
+			menu.Items.Add(new Separator());
+			var term = new MenuItem { Header = Build.T("✂ Tüm Kadro Sözleşmelerini Feshet (Yarın Bitir)", "✂ Terminate Squad Contracts (Expire Tomorrow)") };
+			term.Click += (_, _) => BulkContractAction(null, terminate: true);
+			menu.Items.Add(term);
+			menu.PlacementTarget = contractsBtn;
+			menu.IsOpen = true;
+		};
+		quickBar.Children.Add(contractsBtn);
 		var destroy = new Button
 		{
 			Content = Build.T("💀 Takımı Yık", "💀 Destroy Team"),
@@ -694,7 +764,8 @@ public sealed class StaffPage : UserControl, IPage
 		_nav = nav;
 		string lang = Loc.Instance.Language;
 		Row = row;
-		_f = data.StaffDef.Fields.Where(f => f.GroupKey != "Internal" && f.Concat.Count == 0)
+		var staffDef = row.IsHuman ? data.HumanDef : data.StaffDef;
+		_f = staffDef.Fields.Where(f => f.GroupKey != "Internal" && f.Concat.Count == 0)
 			.ToDictionary(f => f.Name, f => new EditField(data, row.Address, f, data.Layout.Text(lang, f.Name)));
 		Loaded += (_, _) => FieldBox.EntityLabel = Row.Name;
 
@@ -824,7 +895,7 @@ public sealed class StaffPage : UserControl, IPage
 			}
 			else
 			{
-				int count = _data.Session.FreezeEntity(Row.Address, Row.Name, _data.StaffDef, StaffFreezeGroups);
+				int count = _data.Session.FreezeEntity(Row.Address, Row.Name, Row.IsHuman ? _data.HumanDef : _data.StaffDef, StaffFreezeGroups);
 				_nav.SetStatus(Build.T($"{Row.Name} donduruldu ({count} alan kilitlendi).", $"{Row.Name} frozen ({count} fields locked)."));
 			}
 			UpdateFreeze();
@@ -898,8 +969,7 @@ public sealed class HomePage : UserControl, IPage
 	private readonly Border _filterBar;
 	private readonly Border _staffFilterBar;
 	private readonly ComboBox _pos;
-	private readonly TextBox _ageMin, _caMin, _caMax, _paMin;
-	private readonly ComboBox _ageMax, _maxValM;
+	private readonly ComboBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
 	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly;
 	private readonly Button _advFilterBtn;
 	private readonly ScoutFilter _scoutFilter = new ScoutFilter();
@@ -990,8 +1060,8 @@ public sealed class HomePage : UserControl, IPage
 		}
 		TextBlock Lbl(string text) => new TextBlock { Text = text, Foreground = Build.Res("Muted"), FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 4, 0) };
 
-		// Player scout filter bar
-		_pos = new ComboBox { Width = 72, Height = 24, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+		// Player scout filter bar (2 spacious rows with editable 0-200 presets)
+		_pos = new ComboBox { Width = 84, Height = 28, FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center };
 		_pos.ItemsSource = Positions.Select(p => new KeyValuePair<string, string>(p, p.Length == 0 ? Build.T("Tümü", "All") : p)).ToList();
 		_pos.DisplayMemberPath = "Value";
 		_pos.SelectedValuePath = "Key";
@@ -1003,8 +1073,8 @@ public sealed class HomePage : UserControl, IPage
 			var cb = new ComboBox
 			{
 				Width = w,
-				Height = 24,
-				FontSize = 12,
+				Height = 28,
+				FontSize = 12.5,
 				IsEditable = true,
 				VerticalAlignment = VerticalAlignment.Center,
 				ToolTip = tip
@@ -1017,25 +1087,25 @@ public sealed class HomePage : UserControl, IPage
 			cb.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) => ScheduleApply()));
 			return cb;
 		}
-		_ageMin = NumBox(Build.T("En az yaş", "Min age"), 34);
-		_ageMax = PresetCombo(Build.T("En fazla yaş (yaz veya seç)", "Max age (type or pick)"), 52, "19", "21", "23", "25", "28", "30");
-		_caMin = NumBox(Build.T("En az CA", "Min CA"), 38);
-		_caMax = NumBox(Build.T("En fazla CA", "Max CA"), 38);
-		_paMin = NumBox(Build.T("En az PA", "Min PA"), 38);
-		_maxValM = PresetCombo(Build.T($"En fazla değer — milyon {Money.Current.Symbol} (yaz veya seç)", $"Max value in million {Money.Current.Symbol} (type or pick)"), 58, "1", "5", "10", "25", "50", "100");
+		_ageMin = PresetCombo(Build.T("En az yaş (yaz veya seç)", "Min age (type or pick)"), 62, "15", "17", "19", "21", "24", "28", "30");
+		_ageMax = PresetCombo(Build.T("En fazla yaş (yaz veya seç)", "Max age (type or pick)"), 62, "18", "20", "21", "23", "25", "28", "30", "35");
+		_caMin = PresetCombo(Build.T("En az CA (0-200, yaz veya seç)", "Min CA (0-200, type or pick)"), 68, "0", "80", "100", "120", "130", "140", "150", "160", "170", "180", "190", "200");
+		_caMax = PresetCombo(Build.T("En fazla CA (0-200, yaz veya seç)", "Max CA (0-200, type or pick)"), 68, "100", "120", "140", "150", "160", "170", "180", "190", "200");
+		_paMin = PresetCombo(Build.T("En az PA (0-200, yaz veya seç)", "Min PA (0-200, type or pick)"), 68, "0", "120", "130", "140", "150", "160", "170", "180", "190", "200");
+		_maxValM = PresetCombo(Build.T($"En fazla değer — milyon {Money.Current.Symbol} (yaz veya seç)", $"Max value in million {Money.Current.Symbol} (type or pick)"), 68, "1", "5", "10", "20", "35", "50", "100");
 
-		_freeOnly = new CheckBox { Content = Build.T("Serbest", "Free"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(8, 0, 0, 0) };
-		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year") };
-		_injuredOnly = new CheckBox { Content = Build.T("Sakat/Cezalı", "Inj/Ban"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0) };
-		_wonderkid = new CheckBox { Content = Build.T("Wonderkid", "Wonderkid"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Yaş ≤ 21 ve PA ≥ 150", "Age ≤ 21 and PA ≥ 150") };
-		_shortlistOnly = new CheckBox { Content = Build.T("★ Kısa Liste", "★ Shortlist"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Sağ tıkla yıldızladığın oyuncular", "Players starred via right-click") };
+		_freeOnly = new CheckBox { Content = Build.T("Serbest", "Free"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year") };
+		_injuredOnly = new CheckBox { Content = Build.T("Sakat/Cezalı", "Inj/Ban"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		_wonderkid = new CheckBox { Content = Build.T("Wonderkid", "Wonderkid"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Yaş ≤ 21 ve PA ≥ 150", "Age ≤ 21 and PA ≥ 150") };
+		_shortlistOnly = new CheckBox { Content = Build.T("★ Kısa Liste", "★ Shortlist"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Oyuncu profilinde ☆ Kısa Listeye Ekle veya listede sağ tıkla yıldızladığın oyuncular", "Players starred from their profile or via right-click") };
 		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly })
 		{
 			cb.Checked += (_, _) => Apply();
 			cb.Unchecked += (_, _) => Apply();
 		}
 
-		_advFilterBtn = new Button { Content = Build.T("🔍 Gelişmiş", "🔍 Advanced"), Padding = new Thickness(8, 2, 8, 2), FontSize = 11.5, Margin = new Thickness(6, 0, 0, 0), ToolTip = Build.T("Genie Scout filtreleri (PA-CA, Rol %, Profesyonellik, İstikrar, Sakatlık Eğilimi, Hız, Maaş…)", "Genie Scout filters (PA-CA, Role %, Professionalism, Consistency, Injury Proneness, Pace, Wage…)") };
+		_advFilterBtn = new Button { Content = Build.T("🔍 Gelişmiş", "🔍 Advanced"), Padding = new Thickness(10, 4, 10, 4), FontSize = 12, Margin = new Thickness(4, 0, 6, 0), ToolTip = Build.T("Genie Scout filtreleri (PA-CA, Rol %, Profesyonellik, İstikrar, Sakatlık Eğilimi, Hız, Maaş…)", "Genie Scout filters (PA-CA, Role %, Professionalism, Consistency, Injury Proneness, Pace, Wage…)") };
 		_advFilterBtn.Click += (_, _) =>
 		{
 			var win = new ScoutFilterWindow(_scoutFilter) { Owner = Window.GetWindow(this) };
@@ -1046,7 +1116,7 @@ public sealed class HomePage : UserControl, IPage
 			}
 		};
 
-		var colBtn = new Button { Content = Build.T("Sütunlar", "Columns"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Tabloda gösterilecek Genie Scout sütunlarını seç", "Choose extra Genie Scout columns") };
+		var colBtn = new Button { Content = Build.T("Sütunlar", "Columns"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Tabloda gösterilecek Genie Scout sütunlarını seç", "Choose extra Genie Scout columns") };
 		colBtn.Click += (_, _) =>
 		{
 			var menu = new ContextMenu();
@@ -1079,69 +1149,74 @@ public sealed class HomePage : UserControl, IPage
 			menu.IsOpen = true;
 		};
 
-		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(4, 0, 0, 0) };
+		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(2, 0, 0, 0) };
 		clear.Click += (_, _) =>
 		{
 			_pos.SelectedValue = "";
-			_ageMin.Text = _caMin.Text = _caMax.Text = _paMin.Text = "";
-			_ageMax.SelectedIndex = -1;
-			_ageMax.Text = "";
-			_maxValM.SelectedIndex = -1;
-			_maxValM.Text = "";
+			foreach (ComboBox cb in new[] { _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM })
+			{
+				cb.SelectedIndex = -1;
+				cb.Text = "";
+			}
 			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = _shortlistOnly.IsChecked = false;
 			_scoutFilter.Clear();
 			_advFilterBtn.Style = (Style)Application.Current.FindResource(typeof(Button));
 			Apply();
 		};
-		var exportCsv = new Button { Content = Build.T("CSV", "CSV"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered list to CSV") };
+		var exportCsv = new Button { Content = Build.T("CSV", "CSV"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered list to CSV") };
 		exportCsv.Click += (_, _) => ExportPlayersCsv();
 
-		_matchCount = Build.Text("", 11.5, Build.Res("Faint"));
-		_matchCount.Margin = new Thickness(8, 0, 4, 0);
+		_matchCount = Build.Text("", 12, Build.Res("Muted"));
+		_matchCount.Margin = new Thickness(10, 0, 4, 0);
 
-		var filterDock = new DockPanel();
+		var row1 = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 6) };
+		var posLbl = Lbl(Build.T("Mevki", "Pos"));
+		posLbl.Margin = new Thickness(0, 0, 5, 0);
+		row1.Children.Add(posLbl);
+		row1.Children.Add(_pos);
+		row1.Children.Add(Lbl(Build.T("Yaş", "Age")));
+		row1.Children.Add(_ageMin);
+		row1.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(3, 0, 3, 0) });
+		row1.Children.Add(_ageMax);
+		row1.Children.Add(Lbl("CA"));
+		row1.Children.Add(_caMin);
+		row1.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(3, 0, 3, 0) });
+		row1.Children.Add(_caMax);
+		row1.Children.Add(Lbl("PA ≥"));
+		row1.Children.Add(_paMin);
+		row1.Children.Add(Lbl(Build.T($"Değer ≤M{Money.Current.Symbol}", $"Val ≤M{Money.Current.Symbol}")));
+		row1.Children.Add(_maxValM);
+
+		var row2 = new DockPanel();
 		DockPanel.SetDock(_matchCount, Dock.Right);
 		DockPanel.SetDock(exportCsv, Dock.Right);
 		DockPanel.SetDock(colBtn, Dock.Right);
-		filterDock.Children.Add(_matchCount);
-		filterDock.Children.Add(exportCsv);
-		filterDock.Children.Add(colBtn);
-		var filters = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-		var posLbl = Lbl(Build.T("Mevki", "Pos"));
-		posLbl.Margin = new Thickness(0, 0, 4, 0);
-		filters.Children.Add(posLbl);
-		filters.Children.Add(_pos);
-		filters.Children.Add(Lbl(Build.T("Yaş", "Age")));
-		filters.Children.Add(_ageMin);
-		filters.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 2, 0) });
-		filters.Children.Add(_ageMax);
-		filters.Children.Add(Lbl("CA"));
-		filters.Children.Add(_caMin);
-		filters.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 2, 0) });
-		filters.Children.Add(_caMax);
-		filters.Children.Add(Lbl("PA ≥"));
-		filters.Children.Add(_paMin);
-		filters.Children.Add(Lbl(Build.T($"≤M{Money.Current.Symbol}", $"≤M{Money.Current.Symbol}")));
-		filters.Children.Add(_maxValM);
-		filters.Children.Add(new Border { Width = 1, Height = 16, Background = Build.Res("StrokeSoft"), Margin = new Thickness(10, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center });
-		filters.Children.Add(_freeOnly);
-		filters.Children.Add(_expiringOnly);
-		filters.Children.Add(_injuredOnly);
-		filters.Children.Add(_wonderkid);
-		filters.Children.Add(_shortlistOnly);
-		filters.Children.Add(_advFilterBtn);
-		filters.Children.Add(clear);
-		filterDock.Children.Add(filters);
+		row2.Children.Add(_matchCount);
+		row2.Children.Add(exportCsv);
+		row2.Children.Add(colBtn);
+		var chips = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+		chips.Children.Add(_freeOnly);
+		chips.Children.Add(_expiringOnly);
+		chips.Children.Add(_injuredOnly);
+		chips.Children.Add(_wonderkid);
+		chips.Children.Add(_shortlistOnly);
+		chips.Children.Add(_advFilterBtn);
+		chips.Children.Add(clear);
+		row2.Children.Add(chips);
+
+		var filterStack = new StackPanel();
+		filterStack.Children.Add(row1);
+		filterStack.Children.Add(row2);
 
 		_filterBar = new Border
 		{
 			Background = Build.Res("Panel"),
 			BorderBrush = Build.Res("StrokeSoft"),
 			BorderThickness = new Thickness(1),
-			CornerRadius = new CornerRadius(5),
-			Padding = new Thickness(10, 6, 10, 6),
+			CornerRadius = new CornerRadius(6),
+			Padding = new Thickness(12, 8, 12, 8),
 			Margin = new Thickness(0, 0, 0, 10),
-			Child = filterDock
+			Child = filterStack
 		};
 		DockPanel.SetDock(_filterBar, Dock.Top);
 		root.Children.Add(_filterBar);
