@@ -19,6 +19,7 @@ public sealed class PlayerRow
 	public string Club { get; set; } = "";
 	public string Nation { get; init; } = "";
 	public string Positions { get; init; } = "";
+	public int PositionOrder { get; init; }
 	public string DateOfBirth { get; init; } = "";
 	public int BirthYear { get; init; }
 	public int CA { get; set; }
@@ -221,7 +222,24 @@ public sealed class GameData : IDisposable
 				string clubName = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "";
 				string contractEnd = Read(a, PlayerDef, "Contract Expires");
 				byte[] raw69 = new byte[69];
-				(string bestRole, double bestRating) = _reader.Memory.TryRead(a + 0x150, raw69) ? ScoutRating.Evaluate(raw69) : ("", 0);
+				bool hasRaw = _reader.Memory.TryRead(a + 0x150, raw69);
+				(string bestRole, double bestRating) = hasRaw ? ScoutRating.Evaluate(raw69) : ("", 0);
+				int posOrder = 99;
+				if (hasRaw)
+				{
+					// Football order: GK(0), SW(1), DL(2), DC(3), DR(4), WBL(13), WBR(14), DM(5), ML(6), MC(7), MR(8), AML(9), AMC(10), AMR(11), ST(12)
+					int[] footballIdx = { 0, 1, 2, 3, 4, 13, 14, 5, 6, 7, 8, 9, 10, 11, 12 };
+					int bestPosVal = 0;
+					for (int k = 0; k < footballIdx.Length; k++)
+					{
+						int v = raw69[footballIdx[k]];
+						if (v > bestPosVal)
+						{
+							bestPosVal = v;
+							posOrder = k;
+						}
+					}
+				}
 				static int Scaled(byte b) => Math.Clamp((int)Math.Round(b / 5.0), 1, 20);
 				players[i] = new PlayerRow
 				{
@@ -233,6 +251,7 @@ public sealed class GameData : IDisposable
 					ClubUid = row?.Uid ?? 0,
 					Nation = nation,
 					Positions = ReadPositions(a),
+					PositionOrder = posOrder,
 					DateOfBirth = dob,
 					Born = ParseDate(dob),
 					Value = ReadInt(a, PlayerDef, "Value"),
@@ -271,15 +290,22 @@ public sealed class GameData : IDisposable
 			}
 
 			progress?.Report("staff");
-			IReadOnlyList<ulong> staffAddresses;
+			var staffAddressesList = new List<ulong>();
 			try
 			{
-				staffAddresses = Session.GetCollectionItems("Staff");
+				staffAddressesList.AddRange(Session.GetCollectionItems("Staff"));
 			}
 			catch (Exception)
 			{
-				staffAddresses = Array.Empty<ulong>();
 			}
+			try
+			{
+				staffAddressesList.AddRange(Session.GetCollectionItems("Humans"));
+			}
+			catch (Exception)
+			{
+			}
+			IReadOnlyList<ulong> staffAddresses = staffAddressesList.Distinct().ToList();
 			var staff = new StaffRow[staffAddresses.Count];
 			Parallel.For(0, staffAddresses.Count, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, i =>
 			{

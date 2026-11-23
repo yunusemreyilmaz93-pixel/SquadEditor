@@ -43,7 +43,7 @@ public static class Build
 			}
 			head.Children.Add(extra);
 		}
-		head.Children.Add(new TextBlock { Text = title.ToUpperInvariant(), Style = StyleOf("CardTitle") });
+		head.Children.Add(new TextBlock { Text = title.ToUpper(System.Globalization.CultureInfo.CurrentCulture), Style = StyleOf("CardTitle") });
 		var panel = new DockPanel();
 		DockPanel.SetDock(head, Dock.Top);
 		panel.Children.Add(head);

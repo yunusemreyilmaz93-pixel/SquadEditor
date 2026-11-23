@@ -197,19 +197,27 @@ public static class Colors
 	private static Brush Good = Freeze(new SolidColorBrush(Color.FromRgb(0x7F, 0xDB, 0x6A)));
 	private static Brush Elite = Freeze(new SolidColorBrush(Color.FromRgb(0x3D, 0xD6, 0xC0)));
 
-	/// <summary>Darker tones that stay readable on the light theme.</summary>
+	/// <summary>Darker tones that stay readable on the light theme, or bright tones on dark theme.</summary>
 	public static void UseLight(bool light)
 	{
-		if (!light)
+		if (light)
 		{
-			return;
+			Text = Freeze(new SolidColorBrush(Color.FromRgb(0x17, 0x20, 0x33)));
+			Low = Freeze(new SolidColorBrush(Color.FromRgb(0xD0, 0x2F, 0x2F)));
+			Weak = Freeze(new SolidColorBrush(Color.FromRgb(0xC9, 0x5F, 0x0A)));
+			Mid = Freeze(new SolidColorBrush(Color.FromRgb(0xA1, 0x82, 0x00)));
+			Good = Freeze(new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x1F)));
+			Elite = Freeze(new SolidColorBrush(Color.FromRgb(0x0B, 0x8A, 0x78)));
 		}
-		Text = Freeze(new SolidColorBrush(Color.FromRgb(0x17, 0x20, 0x33)));
-		Low = Freeze(new SolidColorBrush(Color.FromRgb(0xD0, 0x2F, 0x2F)));
-		Weak = Freeze(new SolidColorBrush(Color.FromRgb(0xC9, 0x5F, 0x0A)));
-		Mid = Freeze(new SolidColorBrush(Color.FromRgb(0xA1, 0x82, 0x00)));
-		Good = Freeze(new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x1F)));
-		Elite = Freeze(new SolidColorBrush(Color.FromRgb(0x0B, 0x8A, 0x78)));
+		else
+		{
+			Text = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xEC, 0xF4)));
+			Low = Freeze(new SolidColorBrush(Color.FromRgb(0xF2, 0x6D, 0x6D)));
+			Weak = Freeze(new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x4B)));
+			Mid = Freeze(new SolidColorBrush(Color.FromRgb(0xE9, 0xD2, 0x5A)));
+			Good = Freeze(new SolidColorBrush(Color.FromRgb(0x7F, 0xDB, 0x6A)));
+			Elite = Freeze(new SolidColorBrush(Color.FromRgb(0x3D, 0xD6, 0xC0)));
+		}
 	}
 
 	/// <summary>FM-like attribute colours: red, orange, yellow, green, teal.</summary>

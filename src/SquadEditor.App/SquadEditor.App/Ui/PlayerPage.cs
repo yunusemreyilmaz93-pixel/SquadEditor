@@ -69,6 +69,16 @@ public sealed class PlayerPage : UserControl, IPage
 		_header = BuildHeader();
 		DockPanel.SetDock(_header, Dock.Top);
 		_root.Children.Add(_header);
+		Border ribbon = new Border
+		{
+			Background = Build.Res("Chrome"),
+			BorderBrush = Build.Res("StrokeSoft"),
+			BorderThickness = new Thickness(0, 0, 0, 1),
+			Padding = new Thickness(16, 6, 16, 6),
+			Child = ActionsPanel()
+		};
+		DockPanel.SetDock(ribbon, Dock.Top);
+		_root.Children.Add(ribbon);
 		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
 		Build.NavItem(menu, Build.T("Genel Bakış", "Overview"), () => content.Content = Overview(), isChecked: true);
 		Build.NavItem(menu, Build.T("Kişisel ve Sözleşme", "Personal & Contract"), () => content.Content = Personal());
@@ -226,20 +236,21 @@ public sealed class PlayerPage : UserControl, IPage
 		return host;
 	}
 
-	/// <summary>Freeze, rename, move to another club, release, loan actions.</summary>
+	/// <summary>FMRTE-style top action ribbon: freeze, heal/max fitness, extend contract, rename, transfer, loan.</summary>
 	private UIElement ActionsPanel()
 	{
 		var host = new ContentControl();
 		void Fill()
 		{
-			var panel = new WrapPanel { Margin = new Thickness(12, 0, 12, 10) };
+			var panel = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 			bool canWrite = !AppSettings.Current.ReadOnlyMode;
 			bool frozen = _data.Session.Freezer.IsFrozen(Address);
 			var freeze = new Button
 			{
 				Content = frozen ? Build.T("❄ Donduruldu", "❄ Frozen") : Build.T("❄ Dondur", "❄ Freeze"),
 				ToolTip = Build.T("Oyuncunun özelliklerini oyun değiştiremesin diye kilitle", "Lock player attributes so the game cannot lower them"),
-				Margin = new Thickness(0, 0, 6, 6),
+				Padding = new Thickness(10, 4, 10, 4),
+				Margin = new Thickness(0, 0, 6, 0),
 				IsEnabled = canWrite || frozen
 			};
 			if (frozen)
@@ -260,7 +271,56 @@ public sealed class PlayerPage : UserControl, IPage
 				}
 				Fill();
 			};
-			var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+			var healMax = new Button
+			{
+				Content = Build.T("⚡ İyileştir & Fulle", "⚡ Heal & Max"),
+				ToolTip = Build.T("Sakatlık ve cezayı kaldırır, kondisyon/maç formu/morali %100 yapar", "Heals injuries, lifts bans, and maxes condition, sharpness & morale"),
+				Padding = new Thickness(10, 4, 10, 4),
+				Margin = new Thickness(0, 0, 6, 0),
+				IsEnabled = canWrite
+			};
+			healMax.Click += (_, _) =>
+			{
+				using (_data.Session.History.BeginBatch(Build.T($"{Name}: İyileştir & Fulle", $"{Name}: Heal & Max")))
+				{
+					Medical.Heal(_data, Address, Name);
+					Medical.LiftBans(_data, Address, Name);
+					foreach (string fn in new[] { "Condition", "Match Sharpness", "Morale" })
+					{
+						if (_f.TryGetValue(fn, out EditField? ef) && ef.Def.Max.HasValue)
+						{
+							try { _data.Session.WriteField(Address, ef.Def, ef.Def.Max.Value.ToString(CultureInfo.InvariantCulture), Name); } catch (Exception) { }
+						}
+					}
+				}
+				RefreshValues();
+				_nav.SetStatus(Build.T($"✓ {Name} iyileştirildi ve maça hazırlandı. Ctrl+Z geri alır.", $"✓ {Name} healed and maxed. Ctrl+Z undoes it."));
+			};
+			Button ExtendBtn(int years)
+			{
+				var btn = new Button
+				{
+					Content = Build.T($"📝 +{years} Yıl", $"📝 +{years}y"),
+					ToolTip = Build.T($"Sözleşme bitişini {years} yıl uzat", $"Extend contract expiry by {years} year(s)"),
+					Padding = new Thickness(9, 4, 9, 4),
+					Margin = new Thickness(0, 0, 6, 0),
+					IsEnabled = canWrite && _f.TryGetValue("Contract Expires", out EditField? ce) && GameData.ParseDate(ce.Value) != null
+				};
+				btn.Click += (_, _) =>
+				{
+					if (_f.TryGetValue("Contract Expires", out EditField? ce) && GameData.ParseDate(ce.Value) is { } cur)
+					{
+						DateTime next = cur.AddYears(years);
+						_data.Session.WriteField(Address, ce.Def, next.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture), Name);
+						RefreshValues();
+						RebuildHeader();
+						_nav.SetStatus(Build.T($"✓ {Name} sözleşmesi {Dates.Show(next.ToString("dd.MM.yyyy"))} tarihine uzatıldı. Ctrl+Z geri alır.",
+							$"✓ {Name}'s contract extended to {Dates.Show(next.ToString("dd.MM.yyyy"))}. Ctrl+Z undoes it."));
+					}
+				};
+				return btn;
+			}
+			var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
 			rename.Click += (_, _) =>
 			{
 				var dialog = new RenameWindow(_data, Address + 0x288, Name) { Owner = Window.GetWindow(this) };
@@ -273,7 +333,7 @@ public sealed class PlayerPage : UserControl, IPage
 					_nav.SetStatus(Build.T($"{old} → {Name}. Ctrl+Z geri alır. Oyunda görmek için profili yeniden aç.", $"{old} → {Name}. Ctrl+Z undoes it. Reopen the profile in the game to see it."));
 				}
 			};
-			var move = new Button { Content = Build.T("Kulübe taşı", "Move to club"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+			var move = new Button { Content = Build.T("Kulübe taşı", "Move to club"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
 			move.Click += (_, _) =>
 			{
 				bool freeAgent = _data.Memory.Read<ulong>(Address + 0x130) == 0 && _data.Memory.Read<ulong>(Address + 0x330) == 0;
@@ -289,21 +349,21 @@ public sealed class PlayerPage : UserControl, IPage
 				}
 			};
 			panel.Children.Add(freeze);
+			panel.Children.Add(healMax);
+			panel.Children.Add(ExtendBtn(1));
+			panel.Children.Add(ExtendBtn(3));
 			panel.Children.Add(rename);
 			panel.Children.Add(move);
 			if (Transfers.Loan(_data.Memory, Address) is { } loan)
 			{
 				string from = _data.ClubsByAddress.TryGetValue(loan.FromClub, out ClubRow? f) ? f.Name : "?";
 				string to = _data.ClubsByAddress.TryGetValue(loan.ToClub, out ClubRow? t) ? t.Name : "?";
-				var info = Build.Text(Build.T($"Kiralık: {from} → {to}", $"On loan: {from} → {to}") + (loan.Until is { } u ? Build.T($", {u:dd.MM.yyyy} tarihine kadar", $", until {u:dd.MM.yyyy}") : "")
-					+ (loan.OptionFee > 0 ? Build.T($" · satın alma opsiyonu {Money.Format(loan.OptionFee, false)}", $" · option to buy {Money.Format(loan.OptionFee, false)}") : ""), 12.5, Build.Res("Muted"));
-				info.TextWrapping = TextWrapping.Wrap;
-				info.Width = 240;
-				info.Margin = new Thickness(0, 4, 0, 6);
+				var info = Build.Text(Build.T($"  ·  Kiralık: {from} → {to}", $"  ·  Loan: {from} → {to}") + (loan.Until is { } u ? $" ({u:dd.MM.yyyy})" : ""), 12, Build.Res("Muted"));
+				info.Margin = new Thickness(6, 0, 8, 0);
 				panel.Children.Add(info);
-				var recall = new Button { Content = Build.T("Kiradan geri çağır", "Recall from loan"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+				var recall = new Button { Content = Build.T("Kiradan geri çağır", "Recall"), Padding = new Thickness(9, 4, 9, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
 				recall.Click += (_, _) => { if (PlanConfirm.Run(Window.GetWindow(this), _data, () => Transfers.PlanRecall(_data, Address), _nav)) { RefreshValues(); Fill(); } };
-				var permanent = new Button { Content = Build.T("Kalıcı yap", "Make permanent"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+				var permanent = new Button { Content = Build.T("Kalıcı yap", "Make permanent"), Padding = new Thickness(9, 4, 9, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
 				permanent.Click += (_, _) =>
 				{
 					if (PlanConfirm.Run(Window.GetWindow(this), _data, () => Transfers.PlanPermanent(_data, Address), _nav))
@@ -359,7 +419,7 @@ public sealed class PlayerPage : UserControl, IPage
 		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"))));
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))));
-		AddColumn(grid, 3, Build.Card(Build.T("İşlemler", "Actions"), ActionsPanel()),
+		AddColumn(grid, 3,
 			Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
 			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
 			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),

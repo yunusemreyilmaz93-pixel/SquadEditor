@@ -16,6 +16,13 @@
       "colOffset": 256
     },
     {
+      "name": "HumanVtable",
+      "scope": "module",
+      "resolve": "rttiVtable",
+      "typeName": ".?AVHUMAN_NON_PLAYER@db@@",
+      "colOffset": 1088
+    },
+    {
       "name": "PlayerVtable",
       "scope": "module",
       "resolve": "rttiVtable",
@@ -35,6 +42,13 @@
       "anchor": "StaffVtable",
       "scan": true,
       "maxCount": 2000000
+    },
+    {
+      "name": "Humans",
+      "entity": "Staff",
+      "anchor": "HumanVtable",
+      "scan": true,
+      "maxCount": 1000
     },
     {
       "name": "Players",
@@ -2472,7 +2486,7 @@
       "Home Reputation": "Yerel İtibar",
       "World Reputation": "Dünya İtibarı",
       "Finances": "Finans",
-      "Balance": "Bakiye",
+      "Balance": "Denge",
       "Transfer Budget": "Transfer Bütçesi",
       "Wage Budget": "Maaş Bütçesi",
       "Coach": "Antrenör",

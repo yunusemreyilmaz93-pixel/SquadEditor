@@ -26,7 +26,8 @@ public sealed class ClubPage : UserControl, IPage
 		_nav = nav;
 		_club = club;
 		string lang = Loc.Instance.Language;
-		_fields = data.ClubDef.Fields.Where(f => f.GroupKey != "Internal").Select(f => new EditField(data, club.Address, f, data.Layout.Text(lang, f.Name))).ToList();
+		_fields = data.ClubDef.Fields.Where(f => f.GroupKey != "Internal")
+			.Select(f => new EditField(data, club.Address, f, f.Name == "Balance" ? Build.T("Bakiye", "Balance") : data.Layout.Text(lang, f.Name))).ToList();
 		Loaded += (_, _) => FieldBox.EntityLabel = club.Name;
 		EditField.Written += OnWritten;
 		Unloaded += (_, _) => EditField.Written -= OnWritten;
@@ -180,6 +181,47 @@ public sealed class ClubPage : UserControl, IPage
 				$"✓ {rows.Count} players prepared ({healed} healed, {lifted} bans lifted, {boosted} fitness/morale updated). Ctrl+Z undoes it."));
 		};
 		quickBar.Children.Add(prepare);
+		var destroy = new Button
+		{
+			Content = Build.T("💀 Takımı Yık", "💀 Destroy Team"),
+			ToolTip = Build.T("FMRTE klasiği: tüm kadronun kondisyon ve moralini 1 yapar, yorgunluğu artırır (rakip takımlar için · Ctrl+Z geri alır)",
+				"FMRTE classic: drops condition & morale to 1 and spikes jadedness for the current squad (for rivals · Ctrl+Z undoes it)"),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		destroy.Click += (_, _) =>
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).ToList();
+			if (rows.Count == 0) return;
+			if (AppSettings.Current.ConfirmBulkEdits && MessageBox.Show(
+				Build.T($"{_club.Name} ({rows.Count} oyuncu) kondisyon ve morali sıfırlansın mı? Ctrl+Z geri alır.",
+					$"Destroy team {_club.Name} ({rows.Count} players: min condition/morale, high jadedness)? Ctrl+Z undoes it."),
+				"SquadEditor", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+			{
+				return;
+			}
+			int written = 0;
+			using (_data.Session.History.BeginBatch(Build.T($"{_club.Name}: Takımı yık", $"{_club.Name}: Destroy team")))
+			{
+				var targets = new (string Field, string Value)[] { ("Condition", "1"), ("Match Sharpness", "1"), ("Morale", "1"), ("Jadedness", "800") };
+				foreach (PlayerRow r in rows)
+				{
+					foreach (var (fn, val) in targets)
+					{
+						var fd = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == fn && f.IsWritable && f.IsNumeric);
+						if (fd != null)
+						{
+							try { _data.Session.WriteField(r.Address, fd, val, r.Name); written++; } catch (Exception) { }
+						}
+					}
+				}
+			}
+			_nav.SetStatus(Build.T($"💀 {_club.Name}: {rows.Count} oyuncu yıpratıldı ({written} değer). Ctrl+Z geri alır.",
+				$"💀 {_club.Name}: {rows.Count} players destroyed ({written} values). Ctrl+Z undoes it."));
+		};
+		quickBar.Children.Add(destroy);
 		var topBar = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
 		DockPanel.SetDock(quickBar, Dock.Right);
 		topBar.Children.Add(quickBar);
@@ -204,7 +246,11 @@ public sealed class ClubPage : UserControl, IPage
 
 	private UIElement Finances()
 	{
-		var stack = new StackPanel { MaxWidth = 560, HorizontalAlignment = HorizontalAlignment.Left };
+		var grid = new Grid();
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 380 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 360 });
+
+		var left = new StackPanel();
 		var note = Build.Text(Build.T(
 			$"Tutarlar {Money.Current.Code} olarak gösterilir, maaşlar {Money.WageSuffix.TrimStart('/')} bazında. Ayarlardan değiştirebilirsin.",
 			$"Amounts are shown in {Money.Current.Code}, wages per {Money.WageSuffix.TrimStart('/')}. Change this in Settings."), 12, Build.Res("Muted"));
@@ -212,9 +258,79 @@ public sealed class ClubPage : UserControl, IPage
 		note.TextWrapping = TextWrapping.Wrap;
 		var rows = Build.Rows(_fields.Where(f => f.Def.GroupKey == "Finances"));
 		rows.Children.Add(note);
-		stack.Children.Add(Build.Card(Build.T("Finans", "Finances"), rows));
-		stack.Children.Add(Build.PresetsCard(_data, "Club", () => new[] { new BulkTarget(_club.Address, _club.Name) }, () => { RefreshValues(); OnWritten(null, F("Balance")); }, _nav));
-		return Build.Scroll(stack);
+		left.Children.Add(Build.Card(Build.T("Finans", "Finances"), rows));
+
+		// Live squad payroll & valuation summary
+		var squad = _data.Squads[_club.Address].ToList();
+		long totalWages = squad.Sum(p => p.Wage);
+		long totalValue = squad.Sum(p => p.Value);
+		long wageBudget = F("Wage Budget").Number;
+		double usage = wageBudget > 0 ? (double)totalWages / wageBudget * 100.0 : 0;
+		var summary = new StackPanel { Margin = new Thickness(14, 4, 14, 12) };
+		void StatLine(string label, string val, Brush? brush = null)
+		{
+			var d = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
+			var v = Build.Text(val, 13, brush ?? Build.Res("Text"), FontWeights.SemiBold);
+			DockPanel.SetDock(v, Dock.Right);
+			d.Children.Add(v);
+			d.Children.Add(Build.Text(label, 12.5, Build.Res("Muted")));
+			summary.Children.Add(d);
+		}
+		StatLine(Build.T("Toplam Kadro Değeri", "Total Squad Value"), Money.Format(totalValue, false));
+		StatLine(Build.T("Mevcut Kadro Maaş Yükü", "Current Squad Wage Bill"), Money.Format(totalWages, true));
+		StatLine(Build.T("Maaş Bütçesi Kullanımı", "Wage Budget Usage"), wageBudget > 0 ? $"%{usage:0.0}" : "—", usage > 100 ? Build.Res("Danger") : Build.Res("Positive"));
+		StatLine(Build.T("Sözleşmesi 1 Yıl İçinde Biten", "Expiring Within 1 Year"), squad.Count(p => p.ContractDate is { } cd && cd <= _data.GameDate.AddYears(1)).ToString());
+		left.Children.Add(Build.Card(Build.T("Kadro Finans Özeti", "Squad Financial Summary"), summary));
+
+		var right = new StackPanel();
+		var quick = new WrapPanel { Margin = new Thickness(10, 0, 10, 12) };
+		bool canWrite = !AppSettings.Current.ReadOnlyMode;
+		void QuickBtn(string label, Action act)
+		{
+			var b = new Button { Content = label, Margin = new Thickness(4), Padding = new Thickness(10, 5, 10, 5), FontSize = 12, IsEnabled = canWrite };
+			b.Click += (_, _) =>
+			{
+				act();
+				RefreshValues();
+				OnWritten(null, F("Balance"));
+			};
+			quick.Children.Add(b);
+		}
+		void AddMoney(string fieldName, long deltaGbp, string label)
+		{
+			EditField ef = F(fieldName);
+			long next = Math.Clamp(ef.Number + deltaGbp, (long)(ef.Def.Min ?? -2_000_000_000), (long)(ef.Def.Max ?? 2_000_000_000));
+			_data.Session.WriteField(_club.Address, ef.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
+			_nav.SetStatus(Build.T($"✓ {_club.Name}: {label} uygulandı. Ctrl+Z geri alır.", $"✓ {_club.Name}: {label} applied. Ctrl+Z undoes it."));
+		}
+		QuickBtn(Build.T("+10M Bakiye", "+10M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(10_000_000, false)), "+10M"));
+		QuickBtn(Build.T("+50M Bakiye", "+50M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M"));
+		QuickBtn(Build.T("+100M Bakiye", "+100M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M"));
+		QuickBtn(Build.T("+50M Transfer Bütçesi", "+50M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M Transfer"));
+		QuickBtn(Build.T("Maaş Bütçesini 2x Yap", "Double Wage Budget"), () =>
+		{
+			EditField wb = F("Wage Budget"), swb = F("Spending Wage Budget");
+			long next = Math.Clamp(Math.Max(wb.Number, 100_000) * 2L, 0, (long)(wb.Def.Max ?? 200_000_000));
+			using (_data.Session.History.BeginBatch(Build.T($"{_club.Name}: Maaş bütçesi 2x", $"{_club.Name}: Double wage budget")))
+			{
+				_data.Session.WriteField(_club.Address, wb.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
+				_data.Session.WriteField(_club.Address, swb.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
+			}
+			_nav.SetStatus(Build.T($"✓ {_club.Name} maaş bütçesi iki katına çıkarıldı.", $"✓ {_club.Name} wage budget doubled."));
+		});
+		QuickBtn(Build.T("Bilet Fiyatı 1", "Ticket Price 1"), () =>
+		{
+			EditField tp = F("Ticket Price");
+			_data.Session.WriteField(_club.Address, tp.Def, "1", _club.Name);
+			_nav.SetStatus(Build.T($"✓ {_club.Name} bilet fiyatı 1 yapıldı.", $"✓ {_club.Name} ticket price set to 1."));
+		});
+		right.Children.Add(Build.Card(Build.T("Hızlı Finans İşlemleri", "Quick Finance Actions"), quick));
+		right.Children.Add(Build.PresetsCard(_data, "Club", () => new[] { new BulkTarget(_club.Address, _club.Name) }, () => { RefreshValues(); OnWritten(null, F("Balance")); }, _nav));
+
+		Grid.SetColumn(right, 1);
+		grid.Children.Add(left);
+		grid.Children.Add(right);
+		return Build.Scroll(grid);
 	}
 
 	private UIElement Info()
@@ -239,7 +355,9 @@ public sealed class ClubPage : UserControl, IPage
 	{
 		var grid = new DataGrid { ItemsSource = players.ToList(), RowHeight = AppSettings.Current.Compact ? 27 : 34 };
 		grid.Columns.Add(Build.TemplateColumn(Build.T("Oyuncu", "Player"), "PlayerNameCell", "Name", 250));
-		grid.Columns.Add(Build.TextColumn(Build.T("Mevki", "Position"), "Positions", 105));
+		var posCol = Build.TextColumn(Build.T("Mevki", "Position"), "Positions", 105);
+		posCol.SortMemberPath = "PositionOrder";
+		grid.Columns.Add(posCol);
 		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 50));
 		var status = Build.TextColumn(Build.T("Durum", "Status"), "Status", 120);
 		status.Foreground = Build.Res("Danger");
@@ -568,6 +686,16 @@ public sealed class StaffPage : UserControl, IPage
 		_header = BuildHeader();
 		DockPanel.SetDock(_header, Dock.Top);
 		_root.Children.Add(_header);
+		Border ribbon = new Border
+		{
+			Background = Build.Res("Chrome"),
+			BorderBrush = Build.Res("StrokeSoft"),
+			BorderThickness = new Thickness(0, 0, 0, 1),
+			Padding = new Thickness(16, 6, 16, 6),
+			Child = BuildActionsRibbon()
+		};
+		DockPanel.SetDock(ribbon, Dock.Top);
+		_root.Children.Add(ribbon);
 		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
 		Build.NavItem(menu, Build.T("Genel Bakış", "Overview"), () => content.Content = Overview(), isChecked: true);
 		_root.Children.Add(body);
@@ -650,13 +778,25 @@ public sealed class StaffPage : UserControl, IPage
 		var c2 = new StackPanel();
 		c2.Children.Add(Build.Card(Build.T("Yetenek ve itibar", "Ability & reputation"), Build.Rows(Named("CA", "PA", "Home Reputation", "Current Reputation", "World Reputation"))));
 		c2.Children.Add(Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "Job", "Wage", "Contract Expires"))));
-		var actions = new WrapPanel { Margin = new Thickness(12, 0, 12, 10) };
-		var freeze = new Button { Margin = new Thickness(0, 0, 6, 6) };
+		c2.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(Named("First Name", "Last Name", "Common Name", "Unique ID", "Date of Birth", "Nation", "City of Birth"))));
+		Grid.SetColumn(c1, 1);
+		Grid.SetColumn(c2, 2);
+		grid.Children.Add(c0);
+		grid.Children.Add(c1);
+		grid.Children.Add(c2);
+		return Build.Scroll(grid);
+	}
+
+	private UIElement BuildActionsRibbon()
+	{
+		var actions = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+		bool canWrite = !AppSettings.Current.ReadOnlyMode;
+		var freeze = new Button { Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0) };
 		void UpdateFreeze()
 		{
 			bool frozen = _data.Session.Freezer.IsFrozen(Row.Address);
 			freeze.Content = frozen ? Build.T("❄ Donduruldu", "❄ Frozen") : Build.T("❄ Dondur", "❄ Freeze");
-			freeze.IsEnabled = !AppSettings.Current.ReadOnlyMode || frozen;
+			freeze.IsEnabled = canWrite || frozen;
 			freeze.Style = frozen ? Build.StyleOf("AccentButton") : (Style)Application.Current.FindResource(typeof(Button));
 		}
 		UpdateFreeze();
@@ -674,7 +814,31 @@ public sealed class StaffPage : UserControl, IPage
 			}
 			UpdateFreeze();
 		};
-		var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		Button ExtendBtn(int years)
+		{
+			var btn = new Button
+			{
+				Content = Build.T($"📝 +{years} Yıl", $"📝 +{years}y"),
+				ToolTip = Build.T($"Sözleşme bitişini {years} yıl uzat", $"Extend contract expiry by {years} year(s)"),
+				Padding = new Thickness(9, 4, 9, 4),
+				Margin = new Thickness(0, 0, 6, 0),
+				IsEnabled = canWrite && _f.TryGetValue("Contract Expires", out EditField? ce) && GameData.ParseDate(ce.Value) != null
+			};
+			btn.Click += (_, _) =>
+			{
+				if (_f.TryGetValue("Contract Expires", out EditField? ce) && GameData.ParseDate(ce.Value) is { } cur)
+				{
+					DateTime next = cur.AddYears(years);
+					_data.Session.WriteField(Row.Address, ce.Def, next.ToString("dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture), Row.Name);
+					RefreshValues();
+					Row.ContractEnd = next.ToString("dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+					RebuildHeader();
+					_nav.SetStatus(Build.T($"✓ {Row.Name} sözleşmesi {Dates.Show(Row.ContractEnd)} tarihine uzatıldı.", $"✓ {Row.Name}'s contract extended to {Dates.Show(Row.ContractEnd)}."));
+				}
+			};
+			return btn;
+		}
+		var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
 		rename.Click += (_, _) =>
 		{
 			var dialog = new RenameWindow(_data, Row.Address, Row.Name) { Owner = Window.GetWindow(this) };
@@ -686,7 +850,7 @@ public sealed class StaffPage : UserControl, IPage
 				_nav.SetStatus(Build.T("Ad değiştirildi. Ctrl+Z geri alır.", "Renamed. Ctrl+Z undoes it."));
 			}
 		};
-		var move = new Button { Content = Build.T("Kulübe taşı / İşe al", "Move / Hire"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		var move = new Button { Content = Build.T("Kulübe taşı / İşe al", "Move / Hire"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
 		move.Click += (_, _) =>
 		{
 			var dialog = MoveWindow.ForStaff(_data, Row.Address, Row.Name);
@@ -700,16 +864,11 @@ public sealed class StaffPage : UserControl, IPage
 			}
 		};
 		actions.Children.Add(freeze);
+		actions.Children.Add(ExtendBtn(1));
+		actions.Children.Add(ExtendBtn(3));
 		actions.Children.Add(rename);
 		actions.Children.Add(move);
-		c2.Children.Add(Build.Card(Build.T("İşlemler", "Actions"), actions));
-		c2.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(Named("First Name", "Last Name", "Common Name", "Unique ID", "Date of Birth", "Nation", "City of Birth"))));
-		Grid.SetColumn(c1, 1);
-		Grid.SetColumn(c2, 2);
-		grid.Children.Add(c0);
-		grid.Children.Add(c1);
-		grid.Children.Add(c2);
-		return Build.Scroll(grid);
+		return actions;
 	}
 }
 
@@ -792,7 +951,7 @@ public sealed class HomePage : UserControl, IPage
 			}
 		}
 		_frozenTab = frozenBtn!;
-		_search = new TextBox { Style = Build.StyleOf("SearchBox"), Width = 280, Height = 30, Margin = new Thickness(12, 0, 0, 0), ToolTip = Build.T("İsim, kulüp veya ülke yaz (aksan fark etmez)", "Type name, club or nation (accents ignored)") };
+		_search = new TextBox { Style = Build.StyleOf("SearchBox"), Width = 280, Height = 32, Margin = new Thickness(12, 0, 0, 0), ToolTip = Build.T("İsim, kulüp veya ülke yaz (aksan fark etmez)", "Type name, club or nation (accents ignored)") };
 		_search.TextChanged += (_, _) => ScheduleApply();
 		_debounce.Tick += (_, _) => { _debounce.Stop(); Apply(); };
 		var searchHost = new Grid { VerticalAlignment = VerticalAlignment.Center };

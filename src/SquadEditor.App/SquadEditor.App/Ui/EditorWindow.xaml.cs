@@ -727,6 +727,8 @@ public partial class EditorWindow : Window, INavigator
 			Application.Current.Shutdown();
 			return;
 		}
+		Theme.ApplyLive(AppSettings.Current.UiTheme == "light", AppSettings.Current.Accent);
+		DarkTitleBar();
 		await ReloadGraphicsAsync();
 		// Pages are rebuilt so money, wages and images follow the new settings.
 		string? currentKey = _current?.Key;
@@ -756,12 +758,8 @@ public partial class EditorWindow : Window, INavigator
 
 	private void DarkTitleBar()
 	{
-		if (AppSettings.Current.UiTheme == "light")
-		{
-			return;
-		}
 		IntPtr hwnd = new WindowInteropHelper(this).Handle;
-		int on = 1;
+		int on = AppSettings.Current.UiTheme == "light" ? 0 : 1;
 		DwmSetWindowAttribute(hwnd, 20, ref on, sizeof(int));
 	}
 

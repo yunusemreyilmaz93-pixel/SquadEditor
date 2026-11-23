@@ -48,6 +48,25 @@ public sealed class SettingsWindow : Window
 		Fill(_theme, new[] { ("dark", Build.T("Koyu", "Dark")), ("light", Build.T("Açık", "Light")) }, _s.UiTheme);
 		Fill(_language, new[] { ("tr", "Türkçe"), ("en", "English") }, _s.EffectiveLanguage);
 		Fill(_accent, Accents.Select(a => (a.Hex, "●  " + Build.T(a.Tr, a.En))).ToArray(), _s.Accent);
+		string origTheme = _s.UiTheme, origAccent = _s.Accent;
+		void PreviewTheme()
+		{
+			if (_theme.SelectedValue is string t && _accent.SelectedValue is string a)
+			{
+				Theme.ApplyLive(t == "light", a);
+				Background = Build.Res("Bg");
+				Foreground = Build.Res("Text");
+			}
+		}
+		_theme.SelectionChanged += (_, _) => PreviewTheme();
+		_accent.SelectionChanged += (_, _) => PreviewTheme();
+		Closed += (_, _) =>
+		{
+			if (DialogResult != true)
+			{
+				Theme.ApplyLive(origTheme == "light", origAccent);
+			}
+		};
 		Fill(_scale, new[] { 0.9, 1.0, 1.1, 1.2, 1.3 }.Select(v => (v.ToString(CultureInfo.InvariantCulture), $"%{v * 100:0}")).ToArray(), _s.UiScale.ToString(CultureInfo.InvariantCulture));
 		Fill(_currency, Money.Currencies.Select(c => (c.Code, $"{c.Symbol}  {c.Code}")).ToArray(), _s.Currency);
 		Fill(_period, new[] { ("week", Build.T("Haftalık", "Weekly")), ("month", Build.T("Aylık", "Monthly")), ("year", Build.T("Yıllık", "Yearly")) }, _s.WagePeriod);
@@ -285,7 +304,7 @@ public sealed class SettingsWindow : Window
 			return;
 		}
 		string theme = (string)_theme.SelectedValue, language = (string)_language.SelectedValue, accent = (string)_accent.SelectedValue;
-		NeedsRestart = theme != _s.UiTheme || language != _s.EffectiveLanguage || accent != _s.Accent;
+		NeedsRestart = language != _s.EffectiveLanguage;
 		_s.UiTheme = theme;
 		_s.Language = language;
 		_s.Accent = accent;
