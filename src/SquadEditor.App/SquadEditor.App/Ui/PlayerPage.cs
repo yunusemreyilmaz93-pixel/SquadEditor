@@ -452,7 +452,7 @@ public sealed class PlayerPage : UserControl, IPage
 
 	private UIElement TraitsPanel()
 	{
-		var wrap = new WrapPanel { Margin = new Thickness(12, 4, 12, 10) };
+		var grid = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(12, 4, 12, 10) };
 		ulong mask = PlayerTraits.ReadMask(_data.Memory, Address);
 		bool canWrite = !AppSettings.Current.ReadOnlyMode;
 		foreach (var (bit, tr, en) in PlayerTraits.All)
@@ -465,7 +465,9 @@ public sealed class PlayerPage : UserControl, IPage
 				Style = Build.StyleOf("FilterChip"),
 				IsChecked = (mask & (1UL << b)) != 0,
 				IsEnabled = canWrite,
-				Margin = new Thickness(0, 0, 5, 5)
+				HorizontalAlignment = HorizontalAlignment.Stretch,
+				HorizontalContentAlignment = HorizontalAlignment.Left,
+				Margin = new Thickness(3)
 			};
 			cb.Click += (_, _) =>
 			{
@@ -479,9 +481,9 @@ public sealed class PlayerPage : UserControl, IPage
 					_nav.SetStatus(ex.Message);
 				}
 			};
-			wrap.Children.Add(cb);
+			grid.Children.Add(cb);
 		}
-		return wrap;
+		return grid;
 	}
 
 	private UIElement ClausesPanel()
@@ -541,6 +543,63 @@ public sealed class PlayerPage : UserControl, IPage
 				row.Children.Add(Build.Text(current.Label, 12.5, Build.Res("Muted")));
 				stack.Children.Add(row);
 			}
+			if (canWrite)
+			{
+				bool hasRoom = ContractClauses.CanAdd(_data.Memory, Address);
+				var addRow = new DockPanel { Margin = new Thickness(0, 8, 0, 2) };
+				var typeBox = new ComboBox
+				{
+					Height = 26,
+					FontSize = 11.5,
+					ItemsSource = ContractClauses.Presets.Select(p => new KeyValuePair<byte, string>(p.TypeId, Build.T(p.Tr, p.En))).ToList(),
+					DisplayMemberPath = "Value",
+					SelectedValuePath = "Key",
+					SelectedIndex = 0,
+					Margin = new Thickness(0, 0, 6, 0)
+				};
+				var valBox = new TextBox
+				{
+					Width = 92,
+					Height = 26,
+					FontSize = 12,
+					Padding = new Thickness(6, 1, 6, 1),
+					VerticalContentAlignment = VerticalAlignment.Center,
+					HorizontalContentAlignment = HorizontalAlignment.Right,
+					Margin = new Thickness(0, 0, 6, 0),
+					ToolTip = Build.T($"Tutar ({Money.Current.Code}) veya yüzde (örn. 15)", $"Amount ({Money.Current.Code}) or percent (e.g. 15)")
+				};
+				var addBtn = new Button
+				{
+					Content = Build.T("+ Ekle", "+ Add"),
+					Padding = new Thickness(10, 2, 10, 2),
+					Height = 26,
+					FontSize = 11.5,
+					ToolTip = hasRoom
+						? Build.T("Yeni sözleşme maddesi veya bonus ekle (Ctrl+Z geri alır)", "Add a new contract clause or bonus (Ctrl+Z undoes)")
+						: Build.T("Oyun belleğinde bu sözleşme için boş yer yok; önce mevcut bir maddeyi silersen yer açılır", "No spare capacity in this contract vector; removing a clause frees a slot")
+				};
+				addBtn.Click += (_, _) =>
+				{
+					if (typeBox.SelectedValue is not byte tid) return;
+					var preset = ContractClauses.Presets.First(p => p.TypeId == tid);
+					try
+					{
+						ContractClauses.Add(_data, Address, preset.TypeId, preset.IsMoney, valBox.Text, Name);
+						_nav.SetStatus(Build.T($"✓ {Name} · {Build.T(preset.Tr, preset.En)} eklendi. Ctrl+Z geri alır.", $"✓ {Name} · added {preset.En}. Ctrl+Z undoes it."));
+						Fill();
+					}
+					catch (Exception ex)
+					{
+						_nav.SetStatus(ex.Message);
+					}
+				};
+				DockPanel.SetDock(addBtn, Dock.Right);
+				DockPanel.SetDock(valBox, Dock.Right);
+				addRow.Children.Add(addBtn);
+				addRow.Children.Add(valBox);
+				addRow.Children.Add(typeBox);
+				stack.Children.Add(addRow);
+			}
 			host.Content = stack;
 		}
 		Fill();
@@ -552,8 +611,14 @@ public sealed class PlayerPage : UserControl, IPage
 		var grid = new Grid { HorizontalAlignment = HorizontalAlignment.Left };
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(340) });
-		AddColumn(grid, 0, Build.Card(Build.T("Saha", "Pitch"), MiniPitch(380)));
-		AddColumn(grid, 1, Build.Card(Build.T("Mevki puanları (1-20)", "Position ratings (1-20)"), Build.Rows(Group("Positions"))));
+		Border pitchCard = Build.Card(Build.T("Saha", "Pitch"), MiniPitch(345));
+		pitchCard.VerticalAlignment = VerticalAlignment.Stretch;
+		Border ratingsCard = Build.Card(Build.T("Mevki puanları (1-20)", "Position ratings (1-20)"), Build.Rows(Group("Positions")));
+		ratingsCard.VerticalAlignment = VerticalAlignment.Stretch;
+		Grid.SetColumn(pitchCard, 0);
+		Grid.SetColumn(ratingsCard, 1);
+		grid.Children.Add(pitchCard);
+		grid.Children.Add(ratingsCard);
 		return Build.Scroll(grid);
 	}
 

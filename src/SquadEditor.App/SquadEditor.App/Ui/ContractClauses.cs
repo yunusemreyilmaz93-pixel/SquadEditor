@@ -44,6 +44,89 @@ public static class ContractClauses
 	private const long ClausesVector = 0x68;
 	private const int EntrySize = 8;
 
+	public static readonly (byte TypeId, bool IsMoney, string Tr, string En)[] Presets =
+	{
+		(0x00, true, "Serbest Kalma Bedeli", "Minimum Fee Release Clause"),
+		(0x20, true, "Maç Başı Bonus", "Appearance Fee"),
+		(0x21, true, "Gol Bonusu", "Goal Bonus"),
+		(0x22, true, "Gol Yememe Bonusu", "Clean Sheet Bonus"),
+		(0x23, true, "Kullanılmayan Yedek Bonusu", "Unused Sub Fee"),
+		(0x26, true, "Özel Performans / Yılın Takımı Bonusu", "Performance / Milestone Bonus"),
+		(0x03, false, "Yıllık Maaş Artışı (%)", "Yearly Wage Rise (%)"),
+		(0x04, false, "Küme Düşme Maaş Kesintisi (%)", "Relegation Wage Drop (%)"),
+		(0x05, false, "Üst Lige Çıkma Maaş Artışı (%)", "Promotion Wage Rise (%)")
+	};
+
+	public static bool CanAdd(IMemory m, ulong player)
+	{
+		try
+		{
+			ulong contract = m.ReadPointer(player + PlayerContract);
+			if (contract == 0) return false;
+			ulong begin = m.ReadPointer(contract + ClausesVector);
+			ulong end = m.ReadPointer(contract + ClausesVector + 8);
+			ulong cap = m.ReadPointer(contract + ClausesVector + 16);
+			return begin != 0 && end >= begin && cap >= end && (cap - end) >= EntrySize && (end - begin) < EntrySize * 32;
+		}
+		catch (MemoryAccessException)
+		{
+			return false;
+		}
+	}
+
+	public static void Add(GameData data, ulong player, byte typeId, bool isMoney, string valueInput, string entityLabel)
+	{
+		if (AppSettings.Current.ReadOnlyMode)
+		{
+			throw new InvalidOperationException(Build.T("Salt okunur mod açık.", "Read-only mode is on."));
+		}
+		IMemory m = data.Memory;
+		ulong contract = m.ReadPointer(player + PlayerContract);
+		if (contract == 0)
+		{
+			throw new InvalidOperationException(Build.T("Oyuncunun aktif sözleşmesi yok.", "Player has no active contract."));
+		}
+		ulong begin = m.ReadPointer(contract + ClausesVector);
+		ulong end = m.ReadPointer(contract + ClausesVector + 8);
+		ulong cap = m.ReadPointer(contract + ClausesVector + 16);
+		if (begin == 0 || end < begin || cap < end || (cap - end) < EntrySize)
+		{
+			throw new InvalidOperationException(Build.T(
+				"Bu sözleşmenin bellek bloğunda yeni madde için boş yer yok (önce bir madde silebilir veya mevcutları düzenleyebilirsin).",
+				"No spare vector capacity in this contract for a new clause (remove an existing clause first or edit existing ones)."));
+		}
+		string cleaned = valueInput.Trim().Replace(" ", "").Replace("£", "").Replace("€", "").Replace("$", "").Replace("₺", "").Replace("%", "").Replace(",", ".");
+		if (!double.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out double val) || val < 0)
+		{
+			throw new FormatException(Build.T("Geçerli bir sayı gir.", "Enter a valid number."));
+		}
+		byte[] entry = new byte[EntrySize];
+		string display;
+		if (isMoney)
+		{
+			int gbp = (int)Math.Clamp(Math.Round(Money.FromDisplay(val, false)), 0, 2_000_000_000);
+			BitConverter.GetBytes(gbp).CopyTo(entry, 0);
+			BitConverter.GetBytes((short)0).CopyTo(entry, 4);
+			display = Money.Format(gbp, false);
+		}
+		else
+		{
+			BitConverter.GetBytes(-1).CopyTo(entry, 0);
+			short p = (short)Math.Clamp(Math.Round(val), 0, 100);
+			BitConverter.GetBytes(p).CopyTo(entry, 4);
+			display = $"%{p}";
+		}
+		entry[6] = typeId;
+		entry[7] = 0;
+		string label = new ContractClause(0, end, isMoney ? 0 : -1, 0, typeId).Label;
+		using (data.Session.History.BeginBatch(Build.T($"{entityLabel}: Sözleşme maddesi ekle", $"{entityLabel}: Add clause")))
+		{
+			data.Session.History.Apply(m, end, entry, new EditInfo(entityLabel, label, "—", display), guarded: true);
+			data.Session.History.Apply(m, contract + ClausesVector + 8, BitConverter.GetBytes(end + EntrySize),
+				new EditInfo(entityLabel, Build.T("Sözleşme maddesi sayısı", "Clause count"), "", "+1"), guarded: true);
+		}
+	}
+
 	public static IReadOnlyList<ContractClause> Read(IMemory m, ulong player)
 	{
 		var list = new List<ContractClause>();

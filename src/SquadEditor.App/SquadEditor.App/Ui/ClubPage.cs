@@ -102,12 +102,14 @@ public sealed class ClubPage : UserControl, IPage
 		var teams = all.Where(p => p.Team.Length > 0).GroupBy(p => p.Team)
 			.OrderByDescending(g => g.Average(p => p.CA)).Select(g => g.Key).ToList();
 		var host = new ContentControl();
+		DataGrid? currentGrid = null;
 		var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
 		void Show(string? team)
 		{
 			_team = team;
 			var rows = (team == null ? all : all.Where(p => p.Team == team)).OrderByDescending(p => p.CA);
-			host.Content = new Border { Style = Build.StyleOf("CardBorder"), Padding = new Thickness(4), Child = PlayerGrid(_data, rows, _nav, showClub: false, showTeam: team == null) };
+			currentGrid = PlayerGrid(_data, rows, _nav, showClub: false, showTeam: team == null);
+			host.Content = new Border { Style = Build.StyleOf("CardBorder"), Padding = new Thickness(4), Child = currentGrid };
 		}
 		var everyone = new RadioButton { Content = Build.T($"Tümü ({all.Count})", $"All ({all.Count})"), Style = Build.StyleOf("Segment"), GroupName = "teams" + _club.Address };
 		everyone.Checked += (_, _) => Show(null);
@@ -181,7 +183,7 @@ public sealed class ClubPage : UserControl, IPage
 					}
 				}
 			}
-			Show(_team);
+			currentGrid?.Items.Refresh();
 			_nav.SetStatus(Build.T($"✓ {rows.Count} oyuncu maça hazırlandı ({healed} sakatlık iyileşti, {lifted} ceza kalktı, {boosted} kondisyon/moral güncellendi). Ctrl+Z geri alır.",
 				$"✓ {rows.Count} players prepared ({healed} healed, {lifted} bans lifted, {boosted} fitness/morale updated). Ctrl+Z undoes it."));
 		};
@@ -251,9 +253,9 @@ public sealed class ClubPage : UserControl, IPage
 
 	private UIElement Finances()
 	{
-		var grid = new Grid();
+		var grid = new Grid { MaxWidth = 1040, HorizontalAlignment = HorizontalAlignment.Left };
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 380 });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 360 });
 
 		var left = new StackPanel();
 		var note = Build.Text(Build.T(
@@ -896,7 +898,8 @@ public sealed class HomePage : UserControl, IPage
 	private readonly Border _filterBar;
 	private readonly Border _staffFilterBar;
 	private readonly ComboBox _pos;
-	private readonly TextBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
+	private readonly TextBox _ageMin, _caMin, _caMax, _paMin;
+	private readonly ComboBox _ageMax, _maxValM;
 	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly;
 	private readonly Button _advFilterBtn;
 	private readonly ScoutFilter _scoutFilter = new ScoutFilter();
@@ -995,12 +998,31 @@ public sealed class HomePage : UserControl, IPage
 		_pos.SelectedValue = "";
 		_pos.SelectionChanged += (_, _) => Apply();
 
+		ComboBox PresetCombo(string tip, double w, params string[] presets)
+		{
+			var cb = new ComboBox
+			{
+				Width = w,
+				Height = 24,
+				FontSize = 12,
+				IsEditable = true,
+				VerticalAlignment = VerticalAlignment.Center,
+				ToolTip = tip
+			};
+			foreach (string p in presets)
+			{
+				cb.Items.Add(p);
+			}
+			cb.SelectionChanged += (_, _) => ScheduleApply();
+			cb.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) => ScheduleApply()));
+			return cb;
+		}
 		_ageMin = NumBox(Build.T("En az yaş", "Min age"), 34);
-		_ageMax = NumBox(Build.T("En fazla yaş", "Max age"), 34);
+		_ageMax = PresetCombo(Build.T("En fazla yaş (yaz veya seç)", "Max age (type or pick)"), 52, "19", "21", "23", "25", "28", "30");
 		_caMin = NumBox(Build.T("En az CA", "Min CA"), 38);
 		_caMax = NumBox(Build.T("En fazla CA", "Max CA"), 38);
 		_paMin = NumBox(Build.T("En az PA", "Min PA"), 38);
-		_maxValM = NumBox(Build.T($"En fazla değer (milyon {Money.Current.Symbol})", $"Max value (million {Money.Current.Symbol})"), 44);
+		_maxValM = PresetCombo(Build.T($"En fazla değer — milyon {Money.Current.Symbol} (yaz veya seç)", $"Max value in million {Money.Current.Symbol} (type or pick)"), 58, "1", "5", "10", "25", "50", "100");
 
 		_freeOnly = new CheckBox { Content = Build.T("Serbest", "Free"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(8, 0, 0, 0) };
 		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year") };
@@ -1061,7 +1083,11 @@ public sealed class HomePage : UserControl, IPage
 		clear.Click += (_, _) =>
 		{
 			_pos.SelectedValue = "";
-			_ageMin.Text = _ageMax.Text = _caMin.Text = _caMax.Text = _paMin.Text = _maxValM.Text = "";
+			_ageMin.Text = _caMin.Text = _caMax.Text = _paMin.Text = "";
+			_ageMax.SelectedIndex = -1;
+			_ageMax.Text = "";
+			_maxValM.SelectedIndex = -1;
+			_maxValM.Text = "";
 			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = _shortlistOnly.IsChecked = false;
 			_scoutFilter.Clear();
 			_advFilterBtn.Style = (Style)Application.Current.FindResource(typeof(Button));
@@ -1097,6 +1123,7 @@ public sealed class HomePage : UserControl, IPage
 		filters.Children.Add(_paMin);
 		filters.Children.Add(Lbl(Build.T($"≤M{Money.Current.Symbol}", $"≤M{Money.Current.Symbol}")));
 		filters.Children.Add(_maxValM);
+		filters.Children.Add(new Border { Width = 1, Height = 16, Background = Build.Res("StrokeSoft"), Margin = new Thickness(10, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center });
 		filters.Children.Add(_freeOnly);
 		filters.Children.Add(_expiringOnly);
 		filters.Children.Add(_injuredOnly);
@@ -1201,7 +1228,9 @@ public sealed class HomePage : UserControl, IPage
 
 	private static int? ParseInt(TextBox box) => int.TryParse(box.Text.Trim(), out int v) ? v : null;
 
-	private static double? ParseDouble(TextBox box) => double.TryParse(box.Text.Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double v) ? v : null;
+	private static int? ParseInt(ComboBox box) => int.TryParse((box.Text ?? "").Trim(), out int v) ? v : null;
+
+	private static double? ParseDouble(ComboBox box) => double.TryParse((box.Text ?? "").Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double v) ? v : null;
 
 	private void Apply()
 	{
