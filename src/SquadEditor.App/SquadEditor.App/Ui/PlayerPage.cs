@@ -148,6 +148,15 @@ public sealed class PlayerPage : UserControl, IPage
 		{
 			Build.Pill($"{ca} / {pa}", "CA / PA", Colors.Attribute((int)Math.Round(ca / 10.0))),
 		};
+		byte[] raw69 = new byte[69];
+		if (_data.Memory.TryRead(Address + 0x150, raw69))
+		{
+			var (role, rating) = ScoutRating.Evaluate(raw69);
+			if (role.Length > 0)
+			{
+				pills.Add(Build.Pill($"{role} {rating:0.0}%", Build.T("En İyi Rol", "Best Role"), Colors.Attribute((int)Math.Round(rating / 5.0))));
+			}
+		}
 		if (_f["Value"].Number > 0)
 		{
 			pills.Add(Build.Pill(Money.Format(_f["Value"].Number, false), Build.T("Değer", "Value")));

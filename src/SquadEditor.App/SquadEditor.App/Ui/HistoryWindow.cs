@@ -78,6 +78,10 @@ public sealed class HistoryWindow : Window
 				MessageBox.Show(this, Build.T($"\"{ex.Batch.Label}\" geri alınamadı: oyun bu arada veriyi değiştirdi.", $"\"{ex.Batch.Label}\" could not be undone: the game changed this data since."), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
 				Fill();
 			}
+			catch (InvalidOperationException)
+			{
+				MessageBox.Show(this, Build.T("Aynı alana daha sonra başka bir değişiklik yapılmış. Önce daha yeni değişikliği geri al.", "A newer change touched the same field. Undo the newer change first."), Title, MessageBoxButton.OK, MessageBoxImage.Information);
+			}
 		};
 
 		undoAll.Click += (_, _) =>

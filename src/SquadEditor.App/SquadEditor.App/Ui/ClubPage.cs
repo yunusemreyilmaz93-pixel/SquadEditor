@@ -255,6 +255,19 @@ public sealed class ClubPage : UserControl, IPage
 		grid.Columns.Add(Build.TextColumn(Build.T("Uyruk", "Nation"), "Nation", 120));
 		grid.Columns.Add(Build.TemplateColumn("CA", "CACell", "CA", 52));
 		grid.Columns.Add(Build.TemplateColumn("PA", "PACell", "PA", 52));
+		HashSet<string> extras = new HashSet<string>(AppSettings.Current.ExtraColumns);
+		if (extras.Contains("Growth")) grid.Columns.Add(Build.TextColumn("PA-CA", "Growth", 54));
+		if (extras.Contains("Role"))
+		{
+			var col = Build.TextColumn(Build.T("En İyi Rol", "Best Role"), "RoleDisplay", 86);
+			col.SortMemberPath = "BestRating";
+			grid.Columns.Add(col);
+		}
+		if (extras.Contains("Pro")) grid.Columns.Add(Build.TextColumn(Build.T("Prof.", "Pro"), "Professionalism", 48));
+		if (extras.Contains("Cons")) grid.Columns.Add(Build.TextColumn(Build.T("İstik.", "Cons"), "Consistency", 48));
+		if (extras.Contains("Imp")) grid.Columns.Add(Build.TextColumn(Build.T("Ön.Maç", "Imp.M"), "ImportantMatches", 56));
+		if (extras.Contains("Inj")) grid.Columns.Add(Build.TextColumn(Build.T("Sak.Eğ.", "Inj.P"), "InjuryProneness", 56));
+		if (extras.Contains("Det")) grid.Columns.Add(Build.TextColumn(Build.T("Karar.", "Det"), "Determination", 52));
 		grid.Columns.Add(MoneyColumn(Build.T("Değer", "Value"), "Value", false, 110));
 		grid.Columns.Add(MoneyColumn(Build.T("Maaş", "Wage"), "Wage", true, 130));
 		grid.Columns.Add(Build.TextColumn(Build.T("Sözleşme", "Contract"), "ContractEnd", 95));
@@ -368,6 +381,25 @@ public sealed class ClubPage : UserControl, IPage
 				$"✓ Cloned {src.Name} → {targets.Count} players ({res.Written} values). Ctrl+Z undoes it."));
 		};
 		grid.ContextMenu.Items.Add(cloneSel);
+		grid.ContextMenu.Items.Add(new Separator());
+		var shortlistAdd = new MenuItem { Header = Build.T("★ Kısa listeye ekle / çıkar", "★ Toggle shortlist") };
+		shortlistAdd.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().Where(r => r.Uid > 0).ToList();
+			if (rows.Count == 0) return;
+			var set = new HashSet<uint>(AppSettings.Current.ShortlistUids);
+			bool allIn = rows.All(r => set.Contains(r.Uid));
+			foreach (PlayerRow r in rows)
+			{
+				if (allIn) set.Remove(r.Uid); else set.Add(r.Uid);
+			}
+			AppSettings.Current.ShortlistUids = set.ToList();
+			AppSettings.Current.Save();
+			nav.SetStatus(allIn
+				? Build.T($"★ {rows.Count} oyuncu kısa listeden çıkarıldı.", $"★ Removed {rows.Count} players from shortlist.")
+				: Build.T($"★ {rows.Count} oyuncu kısa listeye eklendi (toplam {set.Count}).", $"★ Added {rows.Count} players to shortlist ({set.Count} total)."));
+		};
+		grid.ContextMenu.Items.Add(shortlistAdd);
 		return grid;
 	}
 
@@ -693,7 +725,9 @@ public sealed class HomePage : UserControl, IPage
 	private readonly Border _staffFilterBar;
 	private readonly ComboBox _pos;
 	private readonly TextBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
-	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid;
+	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly;
+	private readonly Button _advFilterBtn;
+	private readonly ScoutFilter _scoutFilter = new ScoutFilter();
 	private readonly ComboBox _staffJob;
 	private readonly TextBox _staffCaMin, _staffPaMin;
 	private readonly CheckBox _staffFreeOnly;
@@ -798,18 +832,65 @@ public sealed class HomePage : UserControl, IPage
 		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year") };
 		_injuredOnly = new CheckBox { Content = Build.T("Sakat/Cezalı", "Inj/Ban"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0) };
 		_wonderkid = new CheckBox { Content = Build.T("Wonderkid", "Wonderkid"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Yaş ≤ 21 ve PA ≥ 150", "Age ≤ 21 and PA ≥ 150") };
-		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid })
+		_shortlistOnly = new CheckBox { Content = Build.T("★ Kısa Liste", "★ Shortlist"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Sağ tıkla yıldızladığın oyuncular", "Players starred via right-click") };
+		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly })
 		{
 			cb.Checked += (_, _) => Apply();
 			cb.Unchecked += (_, _) => Apply();
 		}
 
-		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(6, 0, 0, 0) };
+		_advFilterBtn = new Button { Content = Build.T("🔍 Gelişmiş", "🔍 Advanced"), Padding = new Thickness(8, 2, 8, 2), FontSize = 11.5, Margin = new Thickness(6, 0, 0, 0), ToolTip = Build.T("Genie Scout filtreleri (PA-CA, Rol %, Profesyonellik, İstikrar, Sakatlık Eğilimi, Hız, Maaş…)", "Genie Scout filters (PA-CA, Role %, Professionalism, Consistency, Injury Proneness, Pace, Wage…)") };
+		_advFilterBtn.Click += (_, _) =>
+		{
+			var win = new ScoutFilterWindow(_scoutFilter) { Owner = Window.GetWindow(this) };
+			if (win.ShowDialog() == true)
+			{
+				_advFilterBtn.Style = _scoutFilter.IsActive ? Build.StyleOf("AccentButton") : (Style)Application.Current.FindResource(typeof(Button));
+				Apply();
+			}
+		};
+
+		var colBtn = new Button { Content = Build.T("Sütunlar", "Columns"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Tabloda gösterilecek Genie Scout sütunlarını seç", "Choose extra Genie Scout columns") };
+		colBtn.Click += (_, _) =>
+		{
+			var menu = new ContextMenu();
+			var opts = new[]
+			{
+				("Growth", Build.T("PA − CA (Gelişim Payı)", "PA − CA (Growth)")),
+				("Role", Build.T("En İyi Rol (%)", "Best Role (%)")),
+				("Pro", Build.T("Profesyonellik", "Professionalism")),
+				("Cons", Build.T("İstikrar", "Consistency")),
+				("Imp", Build.T("Önemli Maçlar", "Important Matches")),
+				("Inj", Build.T("Sakatlık Eğilimi", "Injury Proneness")),
+				("Det", Build.T("Kararlılık", "Determination"))
+			};
+			var active = new HashSet<string>(AppSettings.Current.ExtraColumns);
+			foreach (var (key, label) in opts)
+			{
+				string k = key;
+				var mi = new MenuItem { Header = label, IsCheckable = true, IsChecked = active.Contains(k) };
+				mi.Click += (_, _) =>
+				{
+					var set = new HashSet<string>(AppSettings.Current.ExtraColumns);
+					if (mi.IsChecked) set.Add(k); else set.Remove(k);
+					AppSettings.Current.ExtraColumns = set.ToList();
+					AppSettings.Current.Save();
+					Apply();
+				};
+				menu.Items.Add(mi);
+			}
+			menu.PlacementTarget = colBtn;
+			menu.IsOpen = true;
+		};
+
+		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(4, 0, 0, 0) };
 		clear.Click += (_, _) =>
 		{
 			_pos.SelectedValue = "";
 			_ageMin.Text = _ageMax.Text = _caMin.Text = _caMax.Text = _paMin.Text = _maxValM.Text = "";
-			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = false;
+			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = _shortlistOnly.IsChecked = false;
+			_scoutFilter.Clear();
+			_advFilterBtn.Style = (Style)Application.Current.FindResource(typeof(Button));
 			Apply();
 		};
 		var exportCsv = new Button { Content = Build.T("CSV", "CSV"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered list to CSV") };
@@ -821,8 +902,10 @@ public sealed class HomePage : UserControl, IPage
 		var filterDock = new DockPanel();
 		DockPanel.SetDock(_matchCount, Dock.Right);
 		DockPanel.SetDock(exportCsv, Dock.Right);
+		DockPanel.SetDock(colBtn, Dock.Right);
 		filterDock.Children.Add(_matchCount);
 		filterDock.Children.Add(exportCsv);
+		filterDock.Children.Add(colBtn);
 		var filters = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 		var posLbl = Lbl(Build.T("Mevki", "Pos"));
 		posLbl.Margin = new Thickness(0, 0, 4, 0);
@@ -844,6 +927,8 @@ public sealed class HomePage : UserControl, IPage
 		filters.Children.Add(_expiringOnly);
 		filters.Children.Add(_injuredOnly);
 		filters.Children.Add(_wonderkid);
+		filters.Children.Add(_shortlistOnly);
+		filters.Children.Add(_advFilterBtn);
 		filters.Children.Add(clear);
 		filterDock.Children.Add(filters);
 
@@ -983,6 +1068,9 @@ public sealed class HomePage : UserControl, IPage
 			bool expiringOnly = _expiringOnly.IsChecked == true;
 			bool injuredOnly = _injuredOnly.IsChecked == true;
 			bool wonderkid = _wonderkid.IsChecked == true;
+			bool shortlistOnly = _shortlistOnly.IsChecked == true;
+			HashSet<uint>? shortlist = shortlistOnly ? new HashSet<uint>(AppSettings.Current.ShortlistUids) : null;
+			long? maxWageGbp = _scoutFilter.MaxWageDisplay.HasValue ? (long)Math.Round(Money.FromDisplay(_scoutFilter.MaxWageDisplay.Value, true)) : null;
 			DateTime expireCutoff = _data.GameDate.AddYears(1);
 			IEnumerable<PlayerRow> query = _data.Players;
 			if (q.Length > 0) query = query.Where(p => p.Search.Contains(q));
@@ -997,6 +1085,8 @@ public sealed class HomePage : UserControl, IPage
 			if (expiringOnly) query = query.Where(p => p.ClubAddress != 0 && p.ContractDate is { } cd && cd <= expireCutoff);
 			if (injuredOnly) query = query.Where(p => p.Status.Length > 0);
 			if (wonderkid) query = query.Where(p => p.Age > 0 && p.Age <= 21 && p.PA >= 150);
+			if (shortlist != null) query = query.Where(p => shortlist.Contains(p.Uid));
+			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp));
 			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
 			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
 			_host.Content = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
@@ -1023,11 +1113,11 @@ public sealed class HomePage : UserControl, IPage
 		static string Esc(string s) => "\"" + s.Replace("\"", "\"\"") + "\"";
 		var lines = new List<string>(_lastPlayers.Count + 1)
 		{
-			"UID,Name,Positions,Age,Club,Nation,CA,PA,Value,Wage,ContractEnd,Status"
+			$"UID,Name,Positions,Age,Club,Nation,CA,PA,PA-CA,BestRole,BestRating,Pro,Consistency,ImportantMatches,InjuryProneness,Determination,Value ({Money.Current.Code}),Wage ({Money.Current.Code}{Money.WageSuffix}),ContractEnd,Status"
 		};
 		foreach (PlayerRow p in _lastPlayers)
 		{
-			lines.Add($"{p.Uid},{Esc(p.Name)},{Esc(p.Positions)},{p.Age},{Esc(p.Club)},{Esc(p.Nation)},{p.CA},{p.PA},{p.Value},{p.Wage},{Esc(p.ContractEnd)},{Esc(p.Status)}");
+			lines.Add($"{p.Uid},{Esc(p.Name)},{Esc(p.Positions)},{p.Age},{Esc(p.Club)},{Esc(p.Nation)},{p.CA},{p.PA},{p.Growth},{Esc(p.BestRole)},{p.BestRating.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)},{p.Professionalism},{p.Consistency},{p.ImportantMatches},{p.InjuryProneness},{p.Determination},{Esc(Money.Format(p.Value, false))},{Esc(Money.Format(p.Wage, true))},{Esc(p.ContractEnd)},{Esc(p.Status)}");
 		}
 		System.IO.File.WriteAllLines(dlg.FileName, lines, System.Text.Encoding.UTF8);
 		_nav.SetStatus(Build.T($"✓ {_lastPlayers.Count:N0} oyuncu dışa aktarıldı: {System.IO.Path.GetFileName(dlg.FileName)}",

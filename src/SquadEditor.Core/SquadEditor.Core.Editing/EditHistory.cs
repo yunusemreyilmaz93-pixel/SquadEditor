@@ -95,6 +95,11 @@ public sealed class EditHistory
 		{
 			return null;
 		}
+		var addresses = new HashSet<ulong>(editBatch.Entries.Select(e => e.Address));
+		if (_entries.Any(e => e.Batch > batchId && addresses.Contains(e.Address)))
+		{
+			throw new InvalidOperationException("A newer change touched the same field; undo the newer change first.");
+		}
 		foreach (EditRecord guarded in editBatch.Entries.Where(r => r.Guarded))
 		{
 			if (!((ReadOnlySpan<byte>)memory.ReadBytes(guarded.Address, guarded.NewBytes.Length)).SequenceEqual(guarded.NewBytes))

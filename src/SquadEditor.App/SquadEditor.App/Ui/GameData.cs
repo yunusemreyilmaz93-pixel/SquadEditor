@@ -23,6 +23,18 @@ public sealed class PlayerRow
 	public int BirthYear { get; init; }
 	public int CA { get; set; }
 	public int PA { get; set; }
+	public int Growth => Math.Max(0, PA - CA);
+	public string BestRole { get; init; } = "";
+	public double BestRating { get; init; }
+	public string RoleDisplay => BestRole.Length > 0 ? $"{BestRole} {BestRating:0.0}%" : "";
+	public int Consistency { get; init; }
+	public int ImportantMatches { get; init; }
+	public int InjuryProneness { get; init; }
+	public int Determination { get; init; }
+	public int Professionalism { get; init; }
+	public int Pace { get; init; }
+	public int Finishing { get; init; }
+	public int Passing { get; init; }
 	public long Wage { get; init; }
 	public long Value { get; init; }
 	public int Morale { get; init; }
@@ -51,6 +63,18 @@ public sealed class StaffRow
 	public int Age { get; set; }
 	public int CA { get; set; }
 	public int PA { get; set; }
+	public int Growth => Math.Max(0, PA - CA);
+	public string BestRole { get; init; } = "";
+	public double BestRating { get; init; }
+	public string RoleDisplay => BestRole.Length > 0 ? $"{BestRole} {BestRating:0.0}%" : "";
+	public int Consistency { get; init; }
+	public int ImportantMatches { get; init; }
+	public int InjuryProneness { get; init; }
+	public int Determination { get; init; }
+	public int Professionalism { get; init; }
+	public int Pace { get; init; }
+	public int Finishing { get; init; }
+	public int Passing { get; init; }
 	public long Wage { get; init; }
 	public string ContractEnd { get; set; } = "";
 	public string Search { get; set; } = "";
@@ -196,6 +220,9 @@ public sealed class GameData : IDisposable
 				string nation = Read(a, PlayerDef, "Nation");
 				string clubName = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "";
 				string contractEnd = Read(a, PlayerDef, "Contract Expires");
+				byte[] raw69 = new byte[69];
+				(string bestRole, double bestRating) = _reader.Memory.TryRead(a + 0x150, raw69) ? ScoutRating.Evaluate(raw69) : ("", 0);
+				static int Scaled(byte b) => Math.Clamp((int)Math.Round(b / 5.0), 1, 20);
 				players[i] = new PlayerRow
 				{
 					Address = a,
@@ -214,6 +241,16 @@ public sealed class GameData : IDisposable
 					BirthYear = ReadInt(a, PlayerDef, "Birth Year"),
 					CA = ReadInt(a, PlayerDef, "CA"),
 					PA = ReadInt(a, PlayerDef, "PA"),
+					BestRole = bestRole,
+					BestRating = bestRating,
+					Consistency = Scaled(raw69[15 + 44]),
+					ImportantMatches = Scaled(raw69[15 + 47]),
+					InjuryProneness = Scaled(raw69[15 + 48]),
+					Determination = Scaled(raw69[15 + 51]),
+					Pace = Scaled(raw69[15 + 38]),
+					Finishing = Scaled(raw69[15 + 2]),
+					Passing = Scaled(raw69[15 + 7]),
+					Professionalism = ReadInt(a, PlayerDef, "Professionalism"),
 					Wage = ReadInt(a, PlayerDef, "Wage"),
 					ContractEnd = contractEnd,
 					ContractDate = ParseDate(contractEnd),

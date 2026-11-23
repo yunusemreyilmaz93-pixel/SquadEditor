@@ -72,6 +72,12 @@ public sealed class AppSettings
 	/// <summary>Most recently opened club UID for 1-click access from Home.</summary>
 	public uint LastClubUid { get; set; }
 
+	/// <summary>Optional Genie Scout columns enabled in PlayerGrid.</summary>
+	public List<string> ExtraColumns { get; set; } = new List<string> { "Growth", "Role" };
+
+	/// <summary>Starred / shortlisted player UIDs.</summary>
+	public List<uint> ShortlistUids { get; set; } = new List<uint>();
+
 	private static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SquadEditor", "settings.json");
 
 	public static AppSettings Current { get; } = Load();
