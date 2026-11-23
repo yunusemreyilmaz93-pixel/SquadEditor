@@ -491,6 +491,100 @@ switch (cmd)
         }
         break;
     }
+    case "faz1":
+    {
+        mem.TryGetModule("game_plugin.dll", out var gp);
+        ulong? nVt = Rtti.FindVtable(mem, gp, ".?AVNATION@db@@");
+        ulong? cVt = Rtti.FindVtable(mem, gp, ".?AVCOMP@db@@");
+        ulong? clVt = Rtti.FindVtable(mem, gp, ".?AVCLUB@db@@");
+        var vts = new[] { nVt!.Value, cVt!.Value, clVt!.Value };
+        var found = ObjectScanner.FindObjects(mem, vts);
+
+        Console.WriteLine("=== NATIONS (Türkiye, Brazil, England, San Marino) ===");
+        var sampleNations = new List<(string Name, byte[] Raw)>();
+        foreach (ulong a in found[nVt.Value])
+        {
+            string n = ReadLenString(a + 0x18);
+            string code = ReadLenString(a + 0x28);
+            if (code is "TUR" or "BRA" or "ENG" or "SMR")
+            {
+                var raw = new byte[0x200]; mem.TryRead(a, raw);
+                sampleNations.Add(($"{code}({n})", raw));
+                Console.WriteLine($"  {a:X12} {code} {n} uid={BitConverter.ToUInt32(raw, 0x0C)}");
+            }
+        }
+        if (sampleNations.Count >= 3)
+        {
+            Console.WriteLine("--- Nation u16 diffs (reputation ~ 1000..9500) ---");
+            for (int o = 0x10; o <= 0x1FC; o += 2)
+            {
+                var vals = sampleNations.Select(x => BitConverter.ToUInt16(x.Raw, o)).ToArray();
+                if (vals.Distinct().Count() >= 3 && vals.All(v => v >= 500 && v <= 10000))
+                    Console.WriteLine($"  +0x{o:X3} u16: " + string.Join("  ", sampleNations.Select((x, i) => $"{x.Name.Split('(')[0]}={vals[i]}")));
+            }
+            Console.WriteLine("--- Nation u8 diffs (youth 1..200 / dev 1..5 / imp 1..5 / econ 1..20) ---");
+            for (int o = 0x38; o <= 0x1FF; o++)
+            {
+                var vals = sampleNations.Select(x => x.Raw[o]).ToArray();
+                if (vals.Distinct().Count() >= 2 && vals.All(v => v >= 1 && v <= 200))
+                {
+                    // Print if BRA > SMR or ENG > SMR (heuristic for youth/econ/dev/imp)
+                    int iBra = sampleNations.FindIndex(x => x.Name.StartsWith("BRA"));
+                    int iEng = sampleNations.FindIndex(x => x.Name.StartsWith("ENG"));
+                    int iSmr = sampleNations.FindIndex(x => x.Name.StartsWith("SMR"));
+                    if (iBra >= 0 && iEng >= 0 && iSmr >= 0 && (vals[iBra] > vals[iSmr] || vals[iEng] > vals[iSmr]))
+                        Console.WriteLine($"  +0x{o:X3} u8:  " + string.Join("  ", sampleNations.Select((x, i) => $"{x.Name.Split('(')[0]}={vals[i]}")));
+                }
+            }
+        }
+
+        Console.WriteLine("\n=== COMPS (Süper Lig, Premier League, Champions League) ===");
+        var sampleComps = new List<(string Name, byte[] Raw)>();
+        foreach (ulong a in found[cVt.Value])
+        {
+            string n = ReadLenString(a + 0x40);
+            if (n.Contains("Süper Lig") || n == "English Premier Division" || n == "Premier League" || n.Contains("Champions League") || n.Contains("Şampiyonlar Ligi"))
+            {
+                var raw = new byte[0x1B0]; mem.TryRead(a, raw);
+                if (sampleComps.Count < 8)
+                {
+                    sampleComps.Add((n, raw));
+                    Console.WriteLine($"  {a:X12} uid={BitConverter.ToUInt32(raw, 0x0C)} {n} | short={ReadLenString(a + 0x48)}");
+                }
+            }
+        }
+        if (sampleComps.Count >= 2)
+        {
+            for (int o = 0x10; o <= 0x1AC; o += 2)
+            {
+                var vals = sampleComps.Select(x => BitConverter.ToUInt16(x.Raw, o)).ToArray();
+                if (vals.Distinct().Count() >= 2 && vals.All(v => v >= 100 && v <= 10000))
+                    Console.WriteLine($"  +0x{o:X3} u16: " + string.Join("  ", sampleComps.Take(4).Select((x, i) => $"{x.Name[..Math.Min(12, x.Name.Length)]}={vals[i]}")));
+            }
+        }
+
+        Console.WriteLine("\n=== FENERBAHÇE CLUB_FINANCE_BASE ===");
+        foreach (ulong a in found[clVt.Value])
+        {
+            if (ReadLenString(a + 0xC8) == "Fenerbahçe")
+            {
+                ulong fin = mem.Read<ulong>(a + 0x150);
+                Console.WriteLine($"  Club={a:X12} Finance={fin:X12}");
+                var fb = new byte[0x900]; mem.TryRead(fin, fb);
+                for (int o = 0; o < 0x900; o += 4)
+                {
+                    int iv = BitConverter.ToInt32(fb, o);
+                    float fv = BitConverter.ToSingle(fb, o);
+                    if ((o >= 0x7B0 && o <= 0x8D0) && (iv != 0))
+                    {
+                        Console.WriteLine($"  +0x{o:X3}: i32={iv,12}  f32={fv:0.##}  u8=[{fb[o]},{fb[o+1]},{fb[o+2]},{fb[o+3]}]");
+                    }
+                }
+                break;
+            }
+        }
+        break;
+    }
     default:
         Console.WriteLine("unknown command");
         break;

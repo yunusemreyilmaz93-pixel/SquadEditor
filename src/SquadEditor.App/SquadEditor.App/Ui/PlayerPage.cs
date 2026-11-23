@@ -24,6 +24,8 @@ public interface INavigator
 	void OpenPlayer(ulong address);
 	void OpenClub(ulong address);
 	void OpenStaff(ulong address);
+	void OpenNation(ulong address);
+	void OpenComp(ulong address);
 	void SetStatus(string text);
 }
 

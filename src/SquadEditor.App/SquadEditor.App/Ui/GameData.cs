@@ -95,6 +95,31 @@ public sealed class ClubRow
 	public string Search { get; init; } = "";
 }
 
+public sealed class NationRow
+{
+	public ulong Address { get; init; }
+	public uint Uid { get; init; }
+	public string Name { get; init; } = "";
+	public string Code { get; init; } = "";
+	public int YouthRating { get; set; }
+	public string Development { get; set; } = "";
+	public string Importance { get; set; } = "";
+	public int EconomicFactor { get; set; }
+	public string Search { get; init; } = "";
+}
+
+public sealed class CompRow
+{
+	public ulong Address { get; init; }
+	public uint Uid { get; init; }
+	public string Name { get; init; } = "";
+	public string ShortName { get; init; } = "";
+	public string Code { get; init; } = "";
+	public int Reputation { get; set; }
+	public int Reputation10000 { get; set; }
+	public string Search { get; init; } = "";
+}
+
 /// <summary>A connected game: the layout session plus fast in-memory lists for search and squads.</summary>
 public sealed class GameData : IDisposable
 {
@@ -107,6 +132,8 @@ public sealed class GameData : IDisposable
 		PlayerDef = session.Layout.GetEntity("Player");
 		ClubDef = session.Layout.GetEntity("Club");
 		StaffDef = session.Layout.GetEntity("Staff");
+		NationDef = session.Layout.Entities.FirstOrDefault(e => e.Name == "Nation");
+		CompDef = session.Layout.Entities.FirstOrDefault(e => e.Name == "Competition");
 	}
 
 	public ProcessMemory Memory { get; }
@@ -115,8 +142,12 @@ public sealed class GameData : IDisposable
 	public EntityDef PlayerDef { get; }
 	public EntityDef ClubDef { get; }
 	public EntityDef StaffDef { get; }
+	public EntityDef? NationDef { get; }
+	public EntityDef? CompDef { get; }
 	public IReadOnlyList<StaffRow> Staff { get; private set; } = Array.Empty<StaffRow>();
 	public ILookup<ulong, StaffRow> StaffByClub { get; private set; } = Array.Empty<StaffRow>().ToLookup(s => s.ClubAddress);
+	public IReadOnlyList<NationRow> Nations { get; private set; } = Array.Empty<NationRow>();
+	public IReadOnlyList<CompRow> Competitions { get; private set; } = Array.Empty<CompRow>();
 
 	/// <summary>Today in the game: the newest "last update" date among players.</summary>
 	public DateTime GameDate { get; private set; } = DateTime.Today;
@@ -371,7 +402,65 @@ public sealed class GameData : IDisposable
 					club.League = Read(squad.OrderByDescending(p => p.CA).First().Address, PlayerDef, "League");
 				}
 			}
+			var nationList = new List<NationRow>();
+			if (NationDef != null)
+			{
+				try
+				{
+					FieldDef devF = Field(NationDef, "State of Development");
+					FieldDef impF = Field(NationDef, "Game Importance");
+					foreach (ulong a in Session.GetCollectionItems("Nations"))
+					{
+						string name = Read(a, NationDef, "Name");
+						if (name.Length == 0) continue;
+						string code = Read(a, NationDef, "Code");
+						string devK = Read(a, NationDef, "State of Development");
+						string impK = Read(a, NationDef, "Game Importance");
+						nationList.Add(new NationRow
+						{
+							Address = a,
+							Uid = (uint)ReadInt(a, NationDef, "Unique ID"),
+							Name = name,
+							Code = code,
+							YouthRating = ReadInt(a, NationDef, "Youth Rating"),
+							Development = devF.Options.TryGetValue(devK, out string? dv) ? Layout.Text(Loc.Instance.Language, dv) : devK,
+							Importance = impF.Options.TryGetValue(impK, out string? iv) ? Layout.Text(Loc.Instance.Language, iv) : impK,
+							EconomicFactor = ReadInt(a, NationDef, "Economic Factor"),
+							Search = Normalize($"{name} {code}")
+						});
+					}
+				}
+				catch (Exception) { }
+			}
+			var compList = new List<CompRow>();
+			if (CompDef != null)
+			{
+				try
+				{
+					foreach (ulong a in Session.GetCollectionItems("Competitions"))
+					{
+						string name = Read(a, CompDef, "Name");
+						if (name.Length == 0) continue;
+						string shortName = Read(a, CompDef, "Short Name");
+						string code = Read(a, CompDef, "Code");
+						compList.Add(new CompRow
+						{
+							Address = a,
+							Uid = (uint)ReadInt(a, CompDef, "Unique ID"),
+							Name = name,
+							ShortName = shortName,
+							Code = code,
+							Reputation = ReadInt(a, CompDef, "Reputation"),
+							Reputation10000 = ReadInt(a, CompDef, "Reputation (10000)"),
+							Search = Normalize($"{name} {shortName} {code}")
+						});
+					}
+				}
+				catch (Exception) { }
+			}
 			_reader = Session;
+			Nations = nationList;
+			Competitions = compList;
 			Staff = staffList;
 			StaffByClub = staffList.Where(s => s.ClubAddress != 0).ToLookup(s => s.ClubAddress);
 			Players = playerList;

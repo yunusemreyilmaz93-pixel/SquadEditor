@@ -939,6 +939,8 @@ public sealed class HomePage : UserControl, IPage
 			("players", Build.T("Oyuncular", "Players")),
 			("staff", Build.T("Personel", "Staff")),
 			("clubs", Build.T("Kulüpler", "Clubs")),
+			("nations", Build.T("Ülkeler", "Nations")),
+			("comps", Build.T("Ligler", "Competitions")),
 			("frozen", Build.T("❄ Dondurulanlar", "❄ Frozen"))
 		})
 		{
@@ -1197,6 +1199,12 @@ public sealed class HomePage : UserControl, IPage
 		{
 		case "clubs":
 			_host.Content = ClubPage.ClubGrid(_data.Clubs.Where(c => c.SquadSize > 0 && (q.Length == 0 || c.Search.Contains(q))).OrderByDescending(c => c.AverageCA), _nav);
+			break;
+		case "nations":
+			_host.Content = NationPage.Grid(_data.Nations.Where(n => q.Length == 0 || n.Search.Contains(q)).OrderByDescending(n => n.YouthRating), _nav);
+			break;
+		case "comps":
+			_host.Content = CompPage.Grid(_data.Competitions.Where(c => q.Length == 0 || c.Search.Contains(q)).OrderByDescending(c => c.Reputation), _nav);
 			break;
 		case "staff":
 		{

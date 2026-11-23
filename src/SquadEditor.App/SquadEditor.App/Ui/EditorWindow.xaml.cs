@@ -455,6 +455,22 @@ public partial class EditorWindow : Window, INavigator
 		}
 	}
 
+	public void OpenNation(ulong address)
+	{
+		if (_data != null && _data.Nations.FirstOrDefault(n => n.Address == address) is { } nation)
+		{
+			OpenPage(_pages.FirstOrDefault(p => p.Key == "nation:" + address) ?? new NationPage(_data, nation, this));
+		}
+	}
+
+	public void OpenComp(ulong address)
+	{
+		if (_data != null && _data.Competitions.FirstOrDefault(c => c.Address == address) is { } comp)
+		{
+			OpenPage(_pages.FirstOrDefault(p => p.Key == "comp:" + address) ?? new CompPage(_data, comp, this));
+		}
+	}
+
 	private void OpenPage(IPage page)
 	{
 		if (!_pages.Contains(page))
@@ -601,6 +617,32 @@ public partial class EditorWindow : Window, INavigator
 				Badge = Build.T("Personel", "Staff"),
 				BadgeBrush = Build.Res("Muted"),
 				Open = () => OpenStaff(staff.Address)
+			});
+		}
+		foreach (NationRow n in _data.Nations.Where(n => n.Search.Contains(q)).OrderByDescending(n => n.YouthRating).Take(3))
+		{
+			NationRow nation = n;
+			hits.Add(new SearchHit
+			{
+				Title = n.Name,
+				Subtitle = $"{n.Code}  ·  {Build.T("Gençlik", "Youth")} {n.YouthRating}  ·  {n.Development}",
+				Corner = new CornerRadius(6),
+				Badge = Build.T("Ülke", "Nation"),
+				BadgeBrush = Build.Res("Muted"),
+				Open = () => OpenNation(nation.Address)
+			});
+		}
+		foreach (CompRow c in _data.Competitions.Where(c => c.Search.Contains(q)).OrderByDescending(c => c.Reputation).Take(3))
+		{
+			CompRow comp = c;
+			hits.Add(new SearchHit
+			{
+				Title = c.Name,
+				Subtitle = $"{c.ShortName}  ·  {Build.T("İtibar", "Rep")} {c.Reputation}",
+				Corner = new CornerRadius(6),
+				Badge = Build.T("Lig", "Comp"),
+				BadgeBrush = Build.Res("Muted"),
+				Open = () => OpenComp(comp.Address)
 			});
 		}
 		SearchResults.ItemsSource = hits;

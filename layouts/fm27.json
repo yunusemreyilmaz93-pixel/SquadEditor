@@ -33,6 +33,18 @@
       "scope": "module",
       "resolve": "rttiVtable",
       "typeName": ".?AVCLUB@db@@"
+    },
+    {
+      "name": "NationVtable",
+      "scope": "module",
+      "resolve": "rttiVtable",
+      "typeName": ".?AVNATION@db@@"
+    },
+    {
+      "name": "CompVtable",
+      "scope": "module",
+      "resolve": "rttiVtable",
+      "typeName": ".?AVCOMP@db@@"
     }
   ],
   "collections": [
@@ -63,6 +75,20 @@
       "anchor": "ClubVtable",
       "scan": true,
       "maxCount": 500000
+    },
+    {
+      "name": "Nations",
+      "entity": "Nation",
+      "anchor": "NationVtable",
+      "scan": true,
+      "maxCount": 5000
+    },
+    {
+      "name": "Competitions",
+      "entity": "Competition",
+      "anchor": "CompVtable",
+      "scan": true,
+      "maxCount": 100000
     }
   ],
   "entities": [
@@ -1791,6 +1817,68 @@
           "max": 200000000,
           "format": "money",
           "currency": "£"
+        },
+        {
+          "name": "Remaining Wage Budget",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x80C"
+          ],
+          "type": "i32",
+          "min": -200000000,
+          "max": 200000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Current Wage Spend",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x810"
+          ],
+          "type": "i32",
+          "readOnly": true,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Max Allowed Wage",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x844"
+          ],
+          "type": "i32",
+          "min": 0,
+          "max": 50000000,
+          "format": "money",
+          "currency": "£"
+        },
+        {
+          "name": "Transfer Revenue %",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x7D0"
+          ],
+          "type": "i32",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "name": "Season Ticket Price",
+          "group": "Finances",
+          "path": [
+            "0x150",
+            "0x8B8"
+          ],
+          "type": "f32",
+          "min": 0,
+          "max": 50000,
+          "format": "money",
+          "currency": "£"
         }
       ]
     },
@@ -2322,6 +2410,142 @@
           "max": 20
         }
       ]
+    },
+    {
+      "name": "Nation",
+      "displayField": "Name",
+      "fields": [
+        {
+          "name": "Unique ID",
+          "group": "General",
+          "path": ["0xC"],
+          "type": "u32",
+          "readOnly": true
+        },
+        {
+          "name": "Name",
+          "group": "General",
+          "path": ["0x18"],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Short Name",
+          "group": "General",
+          "path": ["0x20"],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Code",
+          "group": "General",
+          "path": ["0x28"],
+          "type": "lenUtf8Ptr",
+          "maxLength": 16
+        },
+        {
+          "name": "Nationality",
+          "group": "General",
+          "path": ["0x30"],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Youth Rating",
+          "group": "Development",
+          "path": ["0x178"],
+          "type": "u8",
+          "min": 1,
+          "max": 200
+        },
+        {
+          "name": "State of Development",
+          "group": "Development",
+          "path": ["0x1EC"],
+          "type": "u8",
+          "min": 1,
+          "max": 3,
+          "options": {
+            "1": "Developed",
+            "2": "Developing",
+            "3": "Underdeveloped"
+          }
+        },
+        {
+          "name": "Game Importance",
+          "group": "Development",
+          "path": ["0x1ED"],
+          "type": "u8",
+          "min": 1,
+          "max": 5,
+          "options": {
+            "1": "Unimportant",
+            "2": "Fairly Unimportant",
+            "3": "Important",
+            "4": "Very Important",
+            "5": "Crucial"
+          }
+        },
+        {
+          "name": "Economic Factor",
+          "group": "Development",
+          "path": ["0x1F0"],
+          "type": "u8",
+          "min": 1,
+          "max": 20
+        }
+      ]
+    },
+    {
+      "name": "Competition",
+      "displayField": "Name",
+      "fields": [
+        {
+          "name": "Unique ID",
+          "group": "General",
+          "path": ["0xC"],
+          "type": "u32",
+          "readOnly": true
+        },
+        {
+          "name": "Name",
+          "group": "General",
+          "path": ["0x40"],
+          "type": "lenUtf8Ptr",
+          "maxLength": 96
+        },
+        {
+          "name": "Short Name",
+          "group": "General",
+          "path": ["0x48"],
+          "type": "lenUtf8Ptr",
+          "maxLength": 64
+        },
+        {
+          "name": "Code",
+          "group": "General",
+          "path": ["0x50"],
+          "type": "lenUtf8Ptr",
+          "maxLength": 16
+        },
+        {
+          "name": "Reputation",
+          "group": "General",
+          "path": ["0x188"],
+          "mirrors": [["0x18A"]],
+          "type": "u16",
+          "min": 1,
+          "max": 200
+        },
+        {
+          "name": "Reputation (10000)",
+          "group": "General",
+          "path": ["0x162"],
+          "type": "u16",
+          "min": 1,
+          "max": 10000
+        }
+      ]
     }
   ],
   "presets": [
@@ -2464,6 +2688,27 @@
   "strings": {
     "tr": {
       "Players": "Oyuncular",
+      "Transfer Revenue %": "Transfer Gelir Yüzdesi (%)",
+      "Remaining Wage Budget": "Kalan Maaş Bütçesi",
+      "Current Wage Spend": "Mevcut Maaş Harcaması",
+      "Max Allowed Wage": "Maks. İzin Verilen Maaş",
+      "Season Ticket Price": "Kombine Bilet Fiyatı",
+      "Code": "Kod",
+      "Nationality": "Uyruk Adı",
+      "Youth Rating": "Gençlik Reytingi (1-200)",
+      "State of Development": "Gelişmişlik Durumu",
+      "Game Importance": "Futbolun Önemi",
+      "Economic Factor": "Ekonomik Faktör (1-20)",
+      "Developed": "Gelişmiş",
+      "Developing": "Gelişmekte",
+      "Underdeveloped": "Az Gelişmiş",
+      "Unimportant": "Önemsiz",
+      "Fairly Unimportant": "Az Önemli",
+      "Important": "Önemli",
+      "Very Important": "Çok Önemli",
+      "Crucial": "Hayati",
+      "Reputation": "İtibar (1-200)",
+      "Reputation (10000)": "İtibar (1-10000)",
       "Clubs": "Kulüpler",
       "Club": "Kulüp",
       "League": "Lig",
