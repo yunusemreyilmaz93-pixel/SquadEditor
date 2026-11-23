@@ -734,7 +734,7 @@ public sealed class PlayerPage : UserControl, IPage
 					_nav.SetStatus(Build.T($"✓ {Name}: {current.TargetName} ilişkisi silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed relation with {current.TargetName}. Ctrl+Z undoes it."));
 					Fill();
 				};
-				var strBox = new TextBox { Text = current.Strength.ToString(), Width = 46, Height = 24, FontSize = 11.5, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, IsReadOnly = !canWrite };
+				var strBox = new TextBox { Text = current.Strength.ToString(), Width = 50, Height = 26, FontSize = 12, Padding = new Thickness(4, 0, 4, 0), HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, IsReadOnly = !canWrite };
 				strBox.KeyDown += (_, e) =>
 				{
 					if (e.Key == System.Windows.Input.Key.Enter && byte.TryParse(strBox.Text.Trim(), out byte v))

@@ -134,9 +134,10 @@ public static class ClubRelationships
 					var strBox = new TextBox
 					{
 						Text = current.Strength.ToString(),
-						Width = 52,
-						Height = 25,
+						Width = 54,
+						Height = 26,
 						FontSize = 12,
+						Padding = new Thickness(4, 0, 4, 0),
 						HorizontalContentAlignment = HorizontalAlignment.Center,
 						VerticalContentAlignment = VerticalAlignment.Center,
 						IsReadOnly = !canWrite,
