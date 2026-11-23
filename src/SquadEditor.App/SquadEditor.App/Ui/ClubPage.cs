@@ -41,6 +41,7 @@ public sealed class ClubPage : UserControl, IPage
 		_root.Children.Add(_header);
 		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
 		Build.NavItem(menu, Build.T("Kadro", "Squad"), () => content.Content = _squadView ??= Squad(), isChecked: true);
+		Build.NavItem(menu, Build.T("En İyi 11", "Best XI"), () => content.Content = ClubBestXi.BuildView(_data, _club, _nav));
 		Build.NavItem(menu, Build.T("Personel", "Staff"), () => content.Content = StaffList());
 		Build.NavItem(menu, Build.T("Finans", "Finances"), () => content.Content = Finances());
 		Build.NavItem(menu, Build.T("Bilgi ve tesisler", "Info & facilities"), () => content.Content = Info());
@@ -1053,7 +1054,7 @@ public sealed class HomePage : UserControl, IPage
 	private readonly TextBox _search;
 	private readonly Border _filterBar;
 	private readonly Border _staffFilterBar;
-	private readonly ComboBox _pos;
+	private readonly ComboBox _pos, _region;
 	private readonly ComboBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
 	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly, _previewToggle;
 	private readonly Button _advFilterBtn;
@@ -1154,6 +1155,21 @@ public sealed class HomePage : UserControl, IPage
 		_pos.SelectedValue = "";
 		_pos.SelectionChanged += (_, _) => Apply();
 
+		_region = new ComboBox { Width = 112, Height = 28, FontSize = 12, VerticalAlignment = VerticalAlignment.Center, ToolTip = Build.T("Bölgesel uyruk / yabancı kuralı filtresi", "Regional nationality filter") };
+		_region.ItemsSource = new[]
+		{
+			new KeyValuePair<string, string>("", Build.T("Tüm Bölgeler", "All Regions")),
+			new KeyValuePair<string, string>("TR", Build.T("🇹🇷 Türkiye", "🇹🇷 Türkiye")),
+			new KeyValuePair<string, string>("EU", Build.T("🇪🇺 AB (EU)", "🇪🇺 EU Nationals")),
+			new KeyValuePair<string, string>("SA", Build.T("🌎 Güney Amerika", "🌎 South America")),
+			new KeyValuePair<string, string>("BALKAN", Build.T("🌍 Balkanlar", "🌍 Balkans")),
+			new KeyValuePair<string, string>("AFRICA", Build.T("🌍 Afrika", "🌍 Africa"))
+		};
+		_region.DisplayMemberPath = "Value";
+		_region.SelectedValuePath = "Key";
+		_region.SelectedValue = "";
+		_region.SelectionChanged += (_, _) => Apply();
+
 		ComboBox RangeCombo(string tip, double w, IEnumerable<string> items)
 		{
 			var cb = new ComboBox
@@ -1249,6 +1265,7 @@ public sealed class HomePage : UserControl, IPage
 		void ResetAllFilters()
 		{
 			_pos.SelectedValue = "";
+			_region.SelectedValue = "";
 			foreach (ComboBox cb in new[] { _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM })
 			{
 				cb.SelectedIndex = -1;
@@ -1302,6 +1319,8 @@ public sealed class HomePage : UserControl, IPage
 		row1.Children.Add(_paMin);
 		row1.Children.Add(Lbl(Build.T($"Değer ≤M{Money.Current.Symbol}", $"Val ≤M{Money.Current.Symbol}")));
 		row1.Children.Add(_maxValM);
+		row1.Children.Add(Lbl(Build.T("Bölge", "Region")));
+		row1.Children.Add(_region);
 
 		var row2 = new DockPanel();
 		DockPanel.SetDock(_matchCount, Dock.Right);
@@ -1476,6 +1495,7 @@ public sealed class HomePage : UserControl, IPage
 		default:
 		{
 			string pos = _pos.SelectedValue as string ?? "";
+			string region = _region.SelectedValue as string ?? "";
 			int? ageMin = ParseInt(_ageMin), ageMax = ParseInt(_ageMax), caMin = ParseInt(_caMin), caMax = ParseInt(_caMax), paMin = ParseInt(_paMin);
 			double? maxValM = ParseDouble(_maxValM);
 			long? maxValGbp = maxValM.HasValue ? (long)Math.Round(Money.FromDisplay(maxValM.Value * 1_000_000.0, false)) : null;
@@ -1490,6 +1510,7 @@ public sealed class HomePage : UserControl, IPage
 			IEnumerable<PlayerRow> query = _data.Players;
 			if (q.Length > 0) query = query.Where(p => p.Search.Contains(q));
 			if (pos.Length > 0) query = query.Where(p => p.Positions.Split(' ', '/', ',').Any(tok => tok == pos));
+			if (region.Length > 0) query = query.Where(p => MatchesRegion(p.Nation, region));
 			if (ageMin.HasValue) query = query.Where(p => p.Age >= ageMin.Value);
 			if (ageMax.HasValue) query = query.Where(p => p.Age > 0 && p.Age <= ageMax.Value);
 			if (caMin.HasValue) query = query.Where(p => p.CA >= caMin.Value);
@@ -1517,6 +1538,22 @@ public sealed class HomePage : UserControl, IPage
 		}
 		}
 		UpdatePreviewVisibility();
+	}
+
+	private static readonly Dictionary<string, string[]> RegionNations = new()
+	{
+		["TR"] = new[] { "turkiye", "turkey" },
+		["EU"] = new[] { "almanya", "germany", "fransa", "france", "ispanya", "spain", "italya", "italy", "hollanda", "netherlands", "portekiz", "portugal", "belcika", "belgium", "avusturya", "austria", "hirvatistan", "croatia", "polonya", "poland", "danimarka", "denmark", "isvec", "sweden", "cekya", "czech", "macaristan", "hungary", "yunanistan", "greece", "romanya", "romania", "bulgaristan", "bulgaria", "slovenya", "slovenia", "slovakya", "slovakia", "finlandiya", "finland", "irlanda", "ireland" },
+		["SA"] = new[] { "brezilya", "brazil", "arjantin", "argentina", "uruguay", "kolombiya", "colombia", "sili", "chile", "ekvador", "ecuador", "paraguay", "peru", "venezuela", "bolivya", "bolivia" },
+		["BALKAN"] = new[] { "sirbistan", "serbia", "hirvatistan", "croatia", "bosna", "bosnia", "karadag", "montenegro", "arnavutluk", "albania", "kosova", "kosovo", "kuzey makedonya", "north macedonia", "yunanistan", "greece", "bulgaristan", "bulgaria", "slovenya", "slovenia", "romanya", "romania" },
+		["AFRICA"] = new[] { "nijerya", "nigeria", "fas", "morocco", "senegal", "fildisi", "ivory", "gana", "ghana", "kamerun", "cameroon", "misir", "egypt", "cezayir", "algeria", "mali", "tunus", "tunisia", "gine", "guinea", "burkina", "kongo", "congo", "guney afrika", "south africa" }
+	};
+
+	private static bool MatchesRegion(string nation, string region)
+	{
+		if (!RegionNations.TryGetValue(region, out string[]? keys) || nation.Length == 0) return false;
+		string norm = GameData.Normalize(nation);
+		return keys.Any(k => norm.Contains(k));
 	}
 
 	private void UpdatePreviewVisibility()

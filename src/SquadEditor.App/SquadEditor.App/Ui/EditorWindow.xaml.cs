@@ -88,6 +88,7 @@ public partial class EditorWindow : Window, INavigator
 			_data?.Dispose();
 		};
 		InputBindings.Add(new KeyBinding(new RelayCommand(() => { TopSearch.Focus(); TopSearch.SelectAll(); }), Key.F, ModifierKeys.Control));
+		InputBindings.Add(new KeyBinding(new RelayCommand(OpenCommandPalette), Key.K, ModifierKeys.Control));
 		InputBindings.Add(new KeyBinding(new RelayCommand(Undo), Key.Z, ModifierKeys.Control));
 		InputBindings.Add(new KeyBinding(new RelayCommand(() => { if (_current != null && _current.Key != "home") ClosePage(_current); }), Key.W, ModifierKeys.Control));
 		InputBindings.Add(new KeyBinding(new RelayCommand(ReloadSave), Key.F5, ModifierKeys.None));
@@ -786,6 +787,28 @@ public partial class EditorWindow : Window, INavigator
 			_toastTimer.Stop();
 			_toastTimer.Start();
 		}
+	}
+
+	private void OpenCommandPalette()
+	{
+		if (_data == null) return;
+		var dlg = new CommandPaletteWindow(_data, this,
+			() => Backup_Click(this, new RoutedEventArgs()),
+			ReloadSave,
+			() => Settings_Click(this, new RoutedEventArgs()),
+			() => History_Click(this, new RoutedEventArgs()),
+			() => Frozen_Click(this, new RoutedEventArgs()),
+			Undo,
+			theme =>
+			{
+				AppSettings.Current.UiTheme = theme;
+				AppSettings.Current.Save();
+				Theme.ApplyLive(theme, AppSettings.Current.Accent);
+				DarkTitleBar();
+				SetStatus(Build.T($"✓ Tema değiştirildi: {theme}", $"✓ Theme switched: {theme}"));
+			})
+		{ Owner = this };
+		dlg.ShowDialog();
 	}
 
 	private Task _graphics = Task.CompletedTask;

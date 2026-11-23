@@ -431,6 +431,16 @@ public sealed class PlayerPage : UserControl, IPage
 			};
 			compare.Click += (_, _) => OpenComparePicker();
 			panel.Children.Add(compare);
+
+			var pngBtn = new Button
+			{
+				Content = Build.T("📸 Kart PNG", "📸 Card PNG"),
+				ToolTip = Build.T("Paylaşılabilir FM oyuncu kartını PNG olarak kaydet ve panoya kopyala", "Save shareable FM player card as PNG and copy to clipboard"),
+				Padding = new Thickness(9, 4, 9, 4),
+				Margin = new Thickness(0, 0, 6, 0)
+			};
+			pngBtn.Click += (_, _) => PlayerCardExport.Export(_data, Address, Name, Uid, _nav);
+			panel.Children.Add(pngBtn);
 			if (Transfers.Loan(_data.Memory, Address) is { } loan)
 			{
 				string from = _data.ClubsByAddress.TryGetValue(loan.FromClub, out ClubRow? f) ? f.Name : "?";
