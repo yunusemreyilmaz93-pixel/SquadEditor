@@ -1067,6 +1067,7 @@ public sealed class HomePage : UserControl, IPage
 	private readonly ContentControl _host = new ContentControl();
 	private readonly Border _previewCard = new Border { Width = 282, Margin = new Thickness(10, 0, 0, 12), Visibility = Visibility.Collapsed };
 	private readonly ContentControl _previewContent = new ContentControl();
+	private readonly WrapPanel _activeChips = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0), Visibility = Visibility.Collapsed };
 	private readonly System.Windows.Threading.DispatcherTimer _debounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
 	private List<PlayerRow> _lastPlayers = new List<PlayerRow>();
 	private string _mode = "players";
@@ -1237,8 +1238,15 @@ public sealed class HomePage : UserControl, IPage
 			menu.IsOpen = true;
 		};
 
-		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(2, 0, 0, 0) };
-		clear.Click += (_, _) =>
+		var presetsBtn = new Button
+		{
+			Content = Build.T("⚡ Şablonlar ▾", "⚡ Presets ▾"),
+			Padding = new Thickness(9, 4, 9, 4),
+			FontSize = 12,
+			Margin = new Thickness(0, 0, 6, 0),
+			ToolTip = Build.T("Tek tıkla hazır scout arama şablonlarını uygula", "Apply 1-click ready-made scout search presets")
+		};
+		void ResetAllFilters()
 		{
 			_pos.SelectedValue = "";
 			foreach (ComboBox cb in new[] { _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM })
@@ -1246,11 +1254,31 @@ public sealed class HomePage : UserControl, IPage
 				cb.SelectedIndex = -1;
 				cb.Text = "";
 			}
+			_search.Text = "";
 			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = _shortlistOnly.IsChecked = false;
 			_scoutFilter.Clear();
 			_advFilterBtn.Style = (Style)Application.Current.FindResource(typeof(Button));
-			Apply();
+		}
+		presetsBtn.Click += (_, _) =>
+		{
+			var menu = new ContextMenu();
+			void AddPreset(string tr, string en, Action setup)
+			{
+				var mi = new MenuItem { Header = Build.T(tr, en) };
+				mi.Click += (_, _) => { ResetAllFilters(); setup(); Apply(); };
+				menu.Items.Add(mi);
+			}
+			AddPreset("⭐ Ucuz Wonderkidler (Yaş ≤ 20 · PA ≥ 155 · ≤ 15M)", "⭐ Bargain Wonderkids (Age ≤ 20 · PA ≥ 155 · ≤ 15M)", () => { _ageMax.Text = "20"; _paMin.Text = "155"; _maxValM.Text = "15"; });
+			AddPreset("⭐ Sözleşmesi Biten Yıldızlar (CA ≥ 145 · Sözl. ≤ 1y)", "⭐ Expiring Stars (CA ≥ 145 · Exp ≤ 1y)", () => { _caMin.Text = "145"; _expiringOnly.IsChecked = true; });
+			AddPreset("⭐ Yerli Genç Yetenekler (Türkiye · Yaş ≤ 21 · PA ≥ 135)", "⭐ Turkish Wonderkids (Türkiye · Age ≤ 21 · PA ≥ 135)", () => { _search.Text = "Türkiye"; _ageMax.Text = "21"; _paMin.Text = "135"; });
+			AddPreset("⭐ Genç Kaleciler (GK · Yaş ≤ 23 · PA ≥ 150)", "⭐ Young Goalkeepers (GK · Age ≤ 23 · PA ≥ 150)", () => { _pos.SelectedValue = "GK"; _ageMax.Text = "23"; _paMin.Text = "150"; });
+			AddPreset("⭐ Boştaki Yıldızlar (Serbest · CA ≥ 125)", "⭐ Best Free Agents (Free · CA ≥ 125)", () => { _freeOnly.IsChecked = true; _caMin.Text = "125"; });
+			menu.PlacementTarget = presetsBtn;
+			menu.IsOpen = true;
 		};
+
+		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(2, 0, 0, 0) };
+		clear.Click += (_, _) => { ResetAllFilters(); Apply(); };
 		var exportCsv = new Button { Content = Build.T("CSV", "CSV"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered list to CSV") };
 		exportCsv.Click += (_, _) => ExportPlayersCsv();
 
@@ -1285,6 +1313,7 @@ public sealed class HomePage : UserControl, IPage
 		row2.Children.Add(exportCsv);
 		row2.Children.Add(colBtn);
 		var chips = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+		chips.Children.Add(presetsBtn);
 		chips.Children.Add(_freeOnly);
 		chips.Children.Add(_expiringOnly);
 		chips.Children.Add(_injuredOnly);
@@ -1297,6 +1326,7 @@ public sealed class HomePage : UserControl, IPage
 		var filterStack = new StackPanel();
 		filterStack.Children.Add(row1);
 		filterStack.Children.Add(row2);
+		filterStack.Children.Add(_activeChips);
 
 		_filterBar = new Border
 		{
@@ -1474,6 +1504,7 @@ public sealed class HomePage : UserControl, IPage
 			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp));
 			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
 			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
+			RebuildActiveChips(pos, ageMin, ageMax, caMin, caMax, paMin, maxValM, freeOnly, expiringOnly, injuredOnly, wonderkid, shortlistOnly);
 			var pg = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
 			pg.SelectionChanged += (_, _) =>
 			{
@@ -1491,6 +1522,41 @@ public sealed class HomePage : UserControl, IPage
 	private void UpdatePreviewVisibility()
 	{
 		_previewCard.Visibility = _mode == "players" && _previewToggle.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+	}
+
+	private void RebuildActiveChips(string pos, int? ageMin, int? ageMax, int? caMin, int? caMax, int? paMin, double? maxValM,
+		bool freeOnly, bool expiringOnly, bool injuredOnly, bool wonderkid, bool shortlistOnly)
+	{
+		_activeChips.Children.Clear();
+		void Chip(string text, Action remove)
+		{
+			var btn = new Button
+			{
+				Content = text + "  ✕",
+				Background = Build.Res("AccentSoft"),
+				BorderBrush = Build.Res("Accent"),
+				Foreground = Build.Res("Text"),
+				FontSize = 11,
+				Padding = new Thickness(8, 2, 8, 2),
+				Margin = new Thickness(0, 0, 5, 2)
+			};
+			btn.Click += (_, _) => { remove(); Apply(); };
+			_activeChips.Children.Add(btn);
+		}
+		if (pos.Length > 0) Chip(Build.T($"Mevki: {pos}", $"Pos: {pos}"), () => _pos.SelectedValue = "");
+		if (ageMin.HasValue) Chip(Build.T($"Yaş ≥ {ageMin}", $"Age ≥ {ageMin}"), () => { _ageMin.SelectedIndex = -1; _ageMin.Text = ""; });
+		if (ageMax.HasValue) Chip(Build.T($"Yaş ≤ {ageMax}", $"Age ≤ {ageMax}"), () => { _ageMax.SelectedIndex = -1; _ageMax.Text = ""; });
+		if (caMin.HasValue) Chip($"CA ≥ {caMin}", () => { _caMin.SelectedIndex = -1; _caMin.Text = ""; });
+		if (caMax.HasValue) Chip($"CA ≤ {caMax}", () => { _caMax.SelectedIndex = -1; _caMax.Text = ""; });
+		if (paMin.HasValue) Chip($"PA ≥ {paMin}", () => { _paMin.SelectedIndex = -1; _paMin.Text = ""; });
+		if (maxValM.HasValue) Chip($"≤ {maxValM:0.#}M{Money.Current.Symbol}", () => { _maxValM.SelectedIndex = -1; _maxValM.Text = ""; });
+		if (freeOnly) Chip(Build.T("Serbest", "Free"), () => _freeOnly.IsChecked = false);
+		if (expiringOnly) Chip(Build.T("Sözl. ≤1y", "Exp. ≤1y"), () => _expiringOnly.IsChecked = false);
+		if (injuredOnly) Chip(Build.T("Sakat/Cezalı", "Inj/Ban"), () => _injuredOnly.IsChecked = false);
+		if (wonderkid) Chip("Wonderkid", () => _wonderkid.IsChecked = false);
+		if (shortlistOnly) Chip(Build.T("★ Kısa Liste", "★ Shortlist"), () => _shortlistOnly.IsChecked = false);
+		if (_scoutFilter.IsActive) Chip(Build.T("🔍 Gelişmiş", "🔍 Advanced"), () => { _scoutFilter.Clear(); _advFilterBtn.Style = (Style)Application.Current.FindResource(typeof(Button)); });
+		_activeChips.Visibility = _activeChips.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 	}
 
 	private void ShowPreview(PlayerRow p, DataGrid grid)

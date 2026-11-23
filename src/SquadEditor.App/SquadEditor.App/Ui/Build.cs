@@ -125,8 +125,81 @@ public static class Build
 			box.SetBinding(Control.ForegroundProperty, new Binding(nameof(EditField.ValueBrush)) { Source = field });
 		}
 		FieldBox.SetField(box, field);
-		Grid.SetColumn(box, 1);
-		grid.Children.Add(box);
+		if (field.IsDate && !field.IsReadOnly)
+		{
+			box.Width = 104;
+			var calBtn = new Button
+			{
+				Content = "📅",
+				Width = 26,
+				Height = 25,
+				Padding = new Thickness(0),
+				Margin = new Thickness(2, 0, 0, 0),
+				FontSize = 11.5,
+				ToolTip = T("Takvimden seç veya +1/+3/+5 yıl ekle", "Pick from calendar or add +1/+3/+5 years")
+			};
+			var popup = new System.Windows.Controls.Primitives.Popup
+			{
+				PlacementTarget = calBtn,
+				Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+				StaysOpen = false,
+				AllowsTransparency = true
+			};
+			calBtn.Click += (_, _) =>
+			{
+				DateTime cur = GameData.ParseDate(field.Value) ?? DateTime.Today;
+				var cal = new Calendar { SelectedDate = cur, DisplayDate = cur };
+				cal.SelectedDatesChanged += (_, _) =>
+				{
+					if (cal.SelectedDate is DateTime picked)
+					{
+						string txt = picked.ToString("dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+						if (field.Commit(txt, FieldBox.EntityLabel)) box.Text = field.Display;
+						popup.IsOpen = false;
+					}
+				};
+				var quick = new System.Windows.Controls.Primitives.UniformGrid { Columns = 4, Margin = new Thickness(4, 4, 4, 4) };
+				void AddQuick(string lbl, Func<DateTime, DateTime> fn)
+				{
+					var b = new Button { Content = lbl, Padding = new Thickness(4, 3, 4, 3), Margin = new Thickness(2), FontSize = 11 };
+					b.Click += (_, _) =>
+					{
+						DateTime next = fn(GameData.ParseDate(field.Value) ?? DateTime.Today);
+						string txt = next.ToString("dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+						if (field.Commit(txt, FieldBox.EntityLabel)) box.Text = field.Display;
+						popup.IsOpen = false;
+					};
+					quick.Children.Add(b);
+				}
+				AddQuick("+1y", d => d.AddYears(1));
+				AddQuick("+3y", d => d.AddYears(3));
+				AddQuick("+5y", d => d.AddYears(5));
+				AddQuick("30.06", d => new DateTime(d.Year, 6, 30));
+				var popStack = new StackPanel();
+				popStack.Children.Add(cal);
+				popStack.Children.Add(quick);
+				popup.Child = new Border
+				{
+					Background = Res("Panel"),
+					BorderBrush = Res("Stroke"),
+					BorderThickness = new Thickness(1),
+					CornerRadius = new CornerRadius(8),
+					Padding = new Thickness(4),
+					Child = popStack
+				};
+				popup.IsOpen = true;
+			};
+			var dateRow = new StackPanel { Orientation = Orientation.Horizontal };
+			dateRow.Children.Add(box);
+			dateRow.Children.Add(calBtn);
+			Grid.SetColumn(dateRow, 1);
+			grid.Children.Add(dateRow);
+		}
+		else
+		{
+			Grid.SetColumn(box, 1);
+			grid.Children.Add(box);
+		}
 		var wrap = new Border
 		{
 			Margin = new Thickness(6, 0, 6, 0),

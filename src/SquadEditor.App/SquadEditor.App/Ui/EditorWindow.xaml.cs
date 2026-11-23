@@ -34,6 +34,7 @@ public partial class EditorWindow : Window, INavigator
 	private readonly DispatcherTimer _liveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
 	private readonly DispatcherTimer _freezeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
 	private readonly DispatcherTimer _searchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+	private readonly DispatcherTimer _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(3600) };
 	private GameData? _data;
 	private IPage? _current;
 	private bool _connecting;
@@ -45,7 +46,9 @@ public partial class EditorWindow : Window, INavigator
 		Title = "SquadEditor";
 		// Number and date formats in grids follow the app language (576.610 in Turkish).
 		Language = System.Windows.Markup.XmlLanguage.GetLanguage(Loc.Instance.Language == "tr" ? "tr-TR" : "en-GB");
-		TopSearchHint.Text = Build.T("Oyuncu veya kulüp ara…  (Ctrl+F)", "Search players or clubs…  (Ctrl+F)");
+		TopSearchHint.Text = Build.T("Oyuncu, kulüp, ülke veya lig ara…  (Ctrl+F)", "Search players, clubs, nations or leagues…  (Ctrl+F)");
+		ToastUndoBtn.Content = Build.T("↶ Geri Al", "↶ Undo");
+		_toastTimer.Tick += (_, _) => { _toastTimer.Stop(); ToastBanner.Visibility = Visibility.Collapsed; };
 		UndoText.Text = Build.T("Geri al", "Undo");
 		ConnectButton.Content = Build.T("Bağlan", "Connect");
 		ReadOnlyBadge.ToolTip = Build.T("Salt okunur mod: oyuna hiçbir şey yazılmaz", "Read-only mode: nothing is written to the game");
@@ -579,6 +582,32 @@ public partial class EditorWindow : Window, INavigator
 			return;
 		}
 		var hits = new List<SearchHit>();
+		foreach (NationRow n in _data.Nations.Where(n => n.Search.Contains(q)).OrderByDescending(n => n.Search.StartsWith(q)).ThenByDescending(n => n.YouthRating).Take(3))
+		{
+			NationRow nation = n;
+			hits.Add(new SearchHit
+			{
+				Title = n.Name,
+				Subtitle = Build.T($"Gençlik {n.YouthRating}  ·  {n.Development}", $"Youth {n.YouthRating}  ·  {n.Development}"),
+				Corner = new CornerRadius(6),
+				Badge = Build.T("Ülke", "Nation"),
+				BadgeBrush = Build.Res("Positive"),
+				Open = () => OpenNation(nation.Address)
+			});
+		}
+		foreach (CompRow comp in _data.Competitions.Where(c => c.Search.Contains(q)).OrderByDescending(c => c.Search.StartsWith(q)).ThenByDescending(c => c.Reputation).Take(3))
+		{
+			CompRow league = comp;
+			hits.Add(new SearchHit
+			{
+				Title = comp.Name,
+				Subtitle = Build.T($"İtibar {comp.Reputation} / 200", $"Reputation {comp.Reputation} / 200"),
+				Corner = new CornerRadius(6),
+				Badge = Build.T("Lig", "League"),
+				BadgeBrush = Build.Res("Accent"),
+				Open = () => OpenComp(league.Address)
+			});
+		}
 		foreach (ClubRow c in _data.Clubs.Where(c => c.SquadSize > 0 && c.Search.Contains(q)).OrderByDescending(c => c.Search.StartsWith(q)).ThenByDescending(c => c.AverageCA).Take(5))
 		{
 			ClubRow club = c;
@@ -746,7 +775,18 @@ public partial class EditorWindow : Window, INavigator
 		UndoText.Text = changes > 0 ? Build.T($"Geri al ({changes})", $"Undo ({changes})") : Build.T("Geri al", "Undo");
 	}
 
-	public void SetStatus(string text) => Message.Text = text;
+	public void SetStatus(string text)
+	{
+		Message.Text = text;
+		if (text.Length > 0 && (text.StartsWith("✓") || text.StartsWith("★") || text.StartsWith("⚡") || text.StartsWith("❄") || text.StartsWith("💀")))
+		{
+			ToastText.Text = text;
+			ToastUndoBtn.Visibility = UndoButton.IsEnabled ? Visibility.Visible : Visibility.Collapsed;
+			ToastBanner.Visibility = Visibility.Visible;
+			_toastTimer.Stop();
+			_toastTimer.Start();
+		}
+	}
 
 	private Task _graphics = Task.CompletedTask;
 

@@ -595,18 +595,21 @@ public sealed class PlayerPage : UserControl, IPage
 		grid.Children.Add(label);
 
 		ulong curAddr = PlayerIdentity.ReadPrimaryNation(_data.Memory, Address);
-		var nations = _data.Nations.OrderBy(n => n.Name).ToList();
+		var allNations = _data.Nations.OrderBy(n => n.Name).ToList();
 		var combo = new ComboBox
 		{
 			Width = 180,
 			Height = 26,
 			FontSize = 12.5,
-			IsEnabled = !AppSettings.Current.ReadOnlyMode && nations.Count > 0,
-			ItemsSource = nations,
+			IsEditable = true,
+			IsTextSearchEnabled = true,
+			StaysOpenOnEdit = true,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode && allNations.Count > 0,
+			ItemsSource = allNations,
 			DisplayMemberPath = nameof(NationRow.Name),
 			SelectedValuePath = nameof(NationRow.Address),
 			SelectedValue = curAddr,
-			ToolTip = Build.T("Oyuncunun ana uyruğunu değiştir (Ctrl+Z geri alır)", "Change player's primary nationality (Ctrl+Z undoes)")
+			ToolTip = Build.T("Ülke adı yazarak ara veya listeden seç (Ctrl+Z geri alır)", "Type to search or pick a nation (Ctrl+Z undoes)")
 		};
 		combo.SelectionChanged += (_, _) =>
 		{
