@@ -1050,32 +1050,11 @@ public sealed class HomePage : UserControl, IPage
 		var root = new DockPanel { Margin = new Thickness(16, 12, 16, 0) };
 
 		var top = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
-		var leftHeader = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 		var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
 		title.Children.Add(Build.Text(Build.T("Veritabanı", "Database"), 17, Build.Res("Text"), FontWeights.SemiBold));
 		title.Children.Add(Build.Text($"{data.Players.Count:N0} {Build.T("oyuncu", "players")}  ·  {data.Staff.Count:N0} {Build.T("personel", "staff")}  ·  {data.Clubs.Count:N0} {Build.T("kulüp", "clubs")}  ·  {data.GameDate:dd.MM.yyyy}", 12, Build.Res("Muted")));
-		leftHeader.Children.Add(title);
-		if (AppSettings.Current.LastClubUid > 0 && data.Clubs.FirstOrDefault(c => c.Uid == AppSettings.Current.LastClubUid) is { } lastClub)
-		{
-			var clubBtn = new Button
-			{
-				Margin = new Thickness(14, 0, 0, 0),
-				Padding = new Thickness(10, 4, 10, 4),
-				VerticalAlignment = VerticalAlignment.Center,
-				ToolTip = Build.T("Son açtığın kulübe hızlı git", "Jump to your last opened club")
-			};
-			var cbRow = new StackPanel { Orientation = Orientation.Horizontal };
-			if (ImageLookup.Graphics.Club(lastClub.Uid) is { } logo)
-			{
-				cbRow.Children.Add(new Image { Source = logo, Width = 16, Height = 16, Margin = new Thickness(0, 0, 6, 0) });
-			}
-			cbRow.Children.Add(Build.Text(lastClub.Name, 12, Build.Res("Text"), FontWeights.SemiBold));
-			clubBtn.Content = cbRow;
-			clubBtn.Click += (_, _) => _nav.OpenClub(lastClub.Address);
-			leftHeader.Children.Add(clubBtn);
-		}
-		DockPanel.SetDock(leftHeader, Dock.Left);
-		top.Children.Add(leftHeader);
+		DockPanel.SetDock(title, Dock.Left);
+		top.Children.Add(title);
 
 		var segments = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 		RadioButton? frozenBtn = null;
@@ -1098,13 +1077,32 @@ public sealed class HomePage : UserControl, IPage
 			}
 		}
 		_frozenTab = frozenBtn!;
-		_search = new TextBox { Style = Build.StyleOf("SearchBox"), Width = 280, Height = 32, Margin = new Thickness(12, 0, 0, 0), ToolTip = Build.T("İsim, kulüp veya ülke yaz (aksan fark etmez)", "Type name, club or nation (accents ignored)") };
+		_search = new TextBox { Style = Build.StyleOf("SearchBox"), Width = 260, Height = 32, Margin = new Thickness(10, 0, 0, 0), ToolTip = Build.T("İsim, kulüp veya ülke yaz (aksan fark etmez)", "Type name, club or nation (accents ignored)") };
 		_search.TextChanged += (_, _) => ScheduleApply();
 		_debounce.Tick += (_, _) => { _debounce.Stop(); Apply(); };
 		var searchHost = new Grid { VerticalAlignment = VerticalAlignment.Center };
 		searchHost.Children.Add(_search);
-		searchHost.Children.Add(new TextBlock { Text = "⌕", FontSize = 15, Foreground = Build.Res("Muted"), Margin = new Thickness(22, 0, 0, 1), VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false });
-		var right = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+		searchHost.Children.Add(new TextBlock { Text = "⌕", FontSize = 15, Foreground = Build.Res("Muted"), Margin = new Thickness(20, 0, 0, 1), VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false });
+		var right = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+		if (AppSettings.Current.LastClubUid > 0 && data.Clubs.FirstOrDefault(c => c.Uid == AppSettings.Current.LastClubUid) is { } lastClub)
+		{
+			var clubBtn = new Button
+			{
+				Margin = new Thickness(0, 0, 10, 0),
+				Padding = new Thickness(10, 5, 10, 5),
+				VerticalAlignment = VerticalAlignment.Center,
+				ToolTip = Build.T("Son açtığın kulübe hızlı git", "Jump to your last opened club")
+			};
+			var cbRow = new StackPanel { Orientation = Orientation.Horizontal };
+			if (ImageLookup.Graphics.Club(lastClub.Uid) is { } logo)
+			{
+				cbRow.Children.Add(new Image { Source = logo, Width = 16, Height = 16, Margin = new Thickness(0, 0, 6, 0) });
+			}
+			cbRow.Children.Add(Build.Text(lastClub.Name, 12, Build.Res("Text"), FontWeights.SemiBold));
+			clubBtn.Content = cbRow;
+			clubBtn.Click += (_, _) => _nav.OpenClub(lastClub.Address);
+			right.Children.Add(clubBtn);
+		}
 		right.Children.Add(segments);
 		right.Children.Add(searchHost);
 		top.Children.Add(right);
@@ -1127,7 +1125,7 @@ public sealed class HomePage : UserControl, IPage
 		_pos.SelectedValue = "";
 		_pos.SelectionChanged += (_, _) => Apply();
 
-		ComboBox PresetCombo(string tip, double w, params string[] presets)
+		ComboBox RangeCombo(string tip, double w, IEnumerable<string> items)
 		{
 			var cb = new ComboBox
 			{
@@ -1136,22 +1134,22 @@ public sealed class HomePage : UserControl, IPage
 				FontSize = 12.5,
 				IsEditable = true,
 				VerticalAlignment = VerticalAlignment.Center,
+				ItemsSource = items.ToList(),
 				ToolTip = tip
 			};
-			foreach (string p in presets)
-			{
-				cb.Items.Add(p);
-			}
 			cb.SelectionChanged += (_, _) => ScheduleApply();
 			cb.AddHandler(System.Windows.Controls.Primitives.TextBoxBase.TextChangedEvent, new TextChangedEventHandler((_, _) => ScheduleApply()));
 			return cb;
 		}
-		_ageMin = PresetCombo(Build.T("En az yaş (yaz veya seç)", "Min age (type or pick)"), 62, "15", "17", "19", "21", "24", "28", "30");
-		_ageMax = PresetCombo(Build.T("En fazla yaş (yaz veya seç)", "Max age (type or pick)"), 62, "18", "20", "21", "23", "25", "28", "30", "35");
-		_caMin = PresetCombo(Build.T("En az CA (0-200, yaz veya seç)", "Min CA (0-200, type or pick)"), 68, "0", "80", "100", "120", "130", "140", "150", "160", "170", "180", "190", "200");
-		_caMax = PresetCombo(Build.T("En fazla CA (0-200, yaz veya seç)", "Max CA (0-200, type or pick)"), 68, "100", "120", "140", "150", "160", "170", "180", "190", "200");
-		_paMin = PresetCombo(Build.T("En az PA (0-200, yaz veya seç)", "Min PA (0-200, type or pick)"), 68, "0", "120", "130", "140", "150", "160", "170", "180", "190", "200");
-		_maxValM = PresetCombo(Build.T($"En fazla değer — milyon {Money.Current.Symbol} (yaz veya seç)", $"Max value in million {Money.Current.Symbol} (type or pick)"), 68, "1", "5", "10", "20", "35", "50", "100");
+		var ages0to99 = Enumerable.Range(0, 100).Select(i => i.ToString()).ToList();
+		var ability0to200 = Enumerable.Range(0, 201).Select(i => i.ToString()).ToList();
+		var valuePresets = new[] { "0", "1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50", "75", "100", "150", "200", "300" };
+		_ageMin = RangeCombo(Build.T("En az yaş (0–99, seç veya yaz)", "Min age (0–99, pick or type)"), 66, ages0to99);
+		_ageMax = RangeCombo(Build.T("En fazla yaş (0–99, seç veya yaz)", "Max age (0–99, pick or type)"), 66, ages0to99);
+		_caMin = RangeCombo(Build.T("En az CA (0–200, seç veya yaz)", "Min CA (0–200, pick or type)"), 72, ability0to200);
+		_caMax = RangeCombo(Build.T("En fazla CA (0–200, seç veya yaz)", "Max CA (0–200, pick or type)"), 72, ability0to200);
+		_paMin = RangeCombo(Build.T("En az PA (0–200, seç veya yaz)", "Min PA (0–200, pick or type)"), 72, ability0to200);
+		_maxValM = RangeCombo(Build.T($"En fazla değer — milyon {Money.Current.Symbol} (seç veya yaz)", $"Max value in million {Money.Current.Symbol} (pick or type)"), 72, valuePresets);
 
 		_freeOnly = new CheckBox { Content = Build.T("Serbest", "Free"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
 		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year") };

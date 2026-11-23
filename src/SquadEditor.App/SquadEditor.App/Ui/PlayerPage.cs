@@ -547,7 +547,7 @@ public sealed class PlayerPage : UserControl, IPage
 		if (_data.Memory.TryRead(Address + 0x150, raw69))
 		{
 			radarCard = Build.Card(Build.T("Özellik Radarı", "Attribute Radar"),
-				new Border { Padding = new Thickness(4, 0, 4, 6), Child = PlayerVisuals.RadarChart(214, PlayerVisuals.ComputeRadar8(raw69)) });
+				new Border { Padding = new Thickness(4, 2, 4, 8), Child = PlayerVisuals.RadarChart(214, PlayerVisuals.ComputeRadar8(raw69)) });
 		}
 
 		AddColumn(grid, 0, Build.Card(Build.T("Teknik", "Technical"), host, toggle),
@@ -561,10 +561,9 @@ public sealed class PlayerPage : UserControl, IPage
 		{
 			Build.Card(Build.T("Yetenek", "Ability"), abilityStack),
 			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
-			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),
-			Build.Card(Build.T("Mevki", "Position"), MiniPitch(244))
+			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price")))
 		};
-		if (radarCard != null) col3.Insert(1, radarCard);
+		if (radarCard != null) col3.Add(radarCard);
 		AddColumn(grid, 3, col3.ToArray());
 		return Build.Scroll(grid);
 	}
@@ -742,10 +741,10 @@ public sealed class PlayerPage : UserControl, IPage
 
 	private UIElement Positions()
 	{
-		var grid = new Grid { HorizontalAlignment = HorizontalAlignment.Left };
+		var grid = new Grid { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(340) });
-		Border pitchCard = Build.Card(Build.T("Saha", "Pitch"), MiniPitch(345));
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(360) });
+		Border pitchCard = Build.Card(Build.T("Saha", "Pitch"), MiniPitch(360));
 		pitchCard.VerticalAlignment = VerticalAlignment.Stretch;
 		Border ratingsCard = Build.Card(Build.T("Mevki puanları (1-20)", "Position ratings (1-20)"), Build.Rows(Group("Positions")));
 		ratingsCard.VerticalAlignment = VerticalAlignment.Stretch;
