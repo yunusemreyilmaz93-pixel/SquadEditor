@@ -102,7 +102,7 @@ public sealed class StaffFilterWindow : Window
 	public StaffFilterWindow(StaffFilter filter, IEnumerable<string> nations)
 	{
 		Title = Build.T("Gelişmiş Personel Filtresi (Antrenör · Gözlemci · Fizyoterapist)", "Advanced Staff Filter (Coach · Scout · Physio)");
-		Width = 720;
+		Width = 760;
 		SizeToContent = SizeToContent.Height;
 		ResizeMode = ResizeMode.NoResize;
 		WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -170,6 +170,7 @@ public sealed class StaffFilterWindow : Window
 		var pCat = Labeled(Build.T("Görev Kategorisi", "Role Category"), cCat);
 		var pAge = Labeled(Build.T("Maks. Yaş", "Max Age"), bAge);
 		var pWage = Labeled(Build.T($"Maks. Maaş ({Money.Current.Code}{Money.WageSuffix})", $"Max Wage ({Money.Current.Code}{Money.WageSuffix})"), bWage);
+		pWage.Margin = new Thickness(0);
 		Grid.SetColumn(pCat, 1);
 		Grid.SetColumn(pAge, 2);
 		Grid.SetColumn(pWage, 3);
@@ -257,16 +258,16 @@ public sealed class StaffFilterWindow : Window
 		}
 		void PresetBtn(string label, Action fill)
 		{
-			var b = new Button { Content = label, Padding = new Thickness(9, 4, 9, 4), Margin = new Thickness(0, 0, 6, 4), FontSize = 11.5 };
+			var b = new Button { Content = label, Padding = new Thickness(8, 4, 8, 4), Margin = new Thickness(0, 0, 6, 4), FontSize = 11.5 };
 			b.Click += (_, _) => { ClearBoxes(); cbNoMgr.IsChecked = true; fill(); };
 			presetRow.Children.Add(b);
 		}
 		PresetBtn(Build.T("⭐ 5★ Antrenör", "⭐ 5★ Coach"), () => { cCat.SelectedValue = "coaching"; bDet.Text = "15"; bMot.Text = "15"; bMan.Text = "14"; });
 		PresetBtn(Build.T("🧤 Kaleci Antrenörü", "🧤 GK Coach"), () => { cCat.SelectedValue = "coaching"; bGk.Text = "16"; bDet.Text = "14"; bMot.Text = "14"; });
-		PresetBtn(Build.T("🏋 Kondisyoner", "🏋 Fitness Coach"), () => { cCat.SelectedValue = "coaching"; bFit.Text = "16"; bDet.Text = "14"; bMot.Text = "14"; });
-		PresetBtn(Build.T("🎓 Gençlik Antrenörü", "🎓 Youth Coach"), () => { cCat.SelectedValue = "coaching"; bWwy.Text = "16"; bDet.Text = "14"; });
-		PresetBtn(Build.T("🔍 Süper Gözlemci", "🔍 Elite Scout"), () => { cCat.SelectedValue = "scouting"; bJpa.Text = "16"; bJpp.Text = "16"; });
-		PresetBtn(Build.T("🏥 Süper Fizyoterapist", "🏥 Elite Physio"), () => { cCat.SelectedValue = "medical"; bPhy.Text = "17"; });
+		PresetBtn(Build.T("🏋 Kondisyoner", "🏋 Fitness"), () => { cCat.SelectedValue = "coaching"; bFit.Text = "16"; bDet.Text = "14"; bMot.Text = "14"; });
+		PresetBtn(Build.T("🎓 Gençlik", "🎓 Youth"), () => { cCat.SelectedValue = "coaching"; bWwy.Text = "16"; bDet.Text = "14"; });
+		PresetBtn(Build.T("🔍 Gözlemci", "🔍 Scout"), () => { cCat.SelectedValue = "scouting"; bJpa.Text = "16"; bJpp.Text = "16"; });
+		PresetBtn(Build.T("🏥 Fizyoterapist", "🏥 Physio"), () => { cCat.SelectedValue = "medical"; bPhy.Text = "17"; });
 		stack.Children.Add(presetRow);
 		stack.Children.Add(cols);
 

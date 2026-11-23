@@ -252,7 +252,7 @@ public static class Build
 				Text = initials,
 				FontSize = size * 0.34,
 				FontWeight = FontWeights.Bold,
-				Foreground = Brushes.White,
+				Foreground = Res("Text"),
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center
 			};
