@@ -6,6 +6,7 @@
     <UseWPF>True</UseWPF>
     <TargetFramework>net10.0-windows7.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <LangVersion>14.0</LangVersion>
@@ -19,6 +20,8 @@
   <ItemGroup>
     <None Remove="Lang\*.json" />
     <EmbeddedResource Include="Lang\*.json" LogicalName="SquadEditor.App.Lang.%(Filename).json" />
+    <Resource Include="Assets\logo.png" />
+    <Resource Include="Assets\app.ico" />
     <ApplicationDefinition Remove="SquadEditor.App\App.xaml" />
     <ApplicationDefinition Include="SquadEditor.App\App.xaml" Generator="MSBuild:Compile" SubType="Designer" LogicalName="app.xaml" />
   </ItemGroup>

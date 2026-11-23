@@ -57,7 +57,7 @@ public partial class EditorWindow : Window, INavigator
 		ApplyPreferences();
 		_connectTimer.Tick += (_, _) => TryConnect();
 		_liveTimer.Tick += (_, _) => LiveRefresh();
-		_freezeTimer.Tick += (_, _) => _data?.Session.Freezer.Tick(_data.Memory);
+		_freezeTimer.Tick += (_, _) => { if (!AppSettings.Current.ReadOnlyMode) _data?.Session.Freezer.Tick(_data.Memory); };
 		_searchTimer.Tick += (_, _) => { _searchTimer.Stop(); RunSearch(); };
 		EditField.Written += (_, f) => UpdateCounts();
 		SourceInitialized += (_, _) => DarkTitleBar();
@@ -137,6 +137,7 @@ public partial class EditorWindow : Window, INavigator
 			await data.LoadAsync(progress);
 			await _graphics;
 			_data = data;
+			Build.Translator = s => data.Layout.Text(Loc.Instance.Language, s);
 			_data.Session.History.Changed += (_, _) => Dispatcher.Invoke(UpdateCounts);
 			_data.Session.Freezer.Changed += (_, _) => Dispatcher.Invoke(UpdateCounts);
 			StatusDot.Fill = Build.Res("Positive");

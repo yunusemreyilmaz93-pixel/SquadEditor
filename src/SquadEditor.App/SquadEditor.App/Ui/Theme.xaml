@@ -131,7 +131,7 @@
             </Trigger>
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="b" Property="Background" Value="{DynamicResource Selection}"/>
-              <Setter Property="Foreground" Value="White"/>
+              <Setter Property="Foreground" Value="{DynamicResource Text}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -181,7 +181,7 @@
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
               <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
-              <Setter Property="Foreground" Value="White"/>
+              <Setter Property="Foreground" Value="{DynamicResource Text}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>

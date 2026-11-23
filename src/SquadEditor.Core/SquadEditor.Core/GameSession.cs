@@ -172,10 +172,10 @@ public sealed class GameSession
 		}
 	}
 
-	public int FreezeEntity(ulong entity, string label, EntityDef def)
+	public int FreezeEntity(ulong entity, string label, EntityDef def, IReadOnlySet<string>? groups = null)
 	{
 		List<(ulong, int)> list = new List<(ulong, int)>();
-		foreach (FieldDef item in def.Fields.Where((FieldDef f) => f.IsWritable && f.IsNumeric))
+		foreach (FieldDef item in def.Fields.Where((FieldDef f) => f.IsWritable && f.IsNumeric && (groups == null || groups.Contains(f.GroupKey))))
 		{
 			try
 			{

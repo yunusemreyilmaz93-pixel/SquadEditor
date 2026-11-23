@@ -38,6 +38,11 @@ public sealed class PlayerPage : UserControl, IPage
 		("SW", 0.5, 0.83), ("GK", 0.5, 0.94)
 	};
 
+	public static readonly HashSet<string> FreezeGroups = new HashSet<string>
+	{
+		"Technical", "Goalkeeping", "Mental", "Physical", "Feet", "Positions", "Hidden", "Personality"
+	};
+
 	private readonly GameData _data;
 	private readonly INavigator _nav;
 	private readonly Dictionary<string, EditField> _f;
@@ -241,7 +246,7 @@ public sealed class PlayerPage : UserControl, IPage
 				}
 				else
 				{
-					int count = _data.Session.FreezeEntity(Address, Name, _data.PlayerDef);
+					int count = _data.Session.FreezeEntity(Address, Name, _data.PlayerDef, FreezeGroups);
 					_nav.SetStatus(Build.T($"{Name} donduruldu ({count} alan kilitlendi).", $"{Name} frozen ({count} fields locked)."));
 				}
 				Fill();

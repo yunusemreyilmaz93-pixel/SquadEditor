@@ -244,7 +244,7 @@ public sealed class ClubPage : UserControl, IPage
 			int done = 0;
 			foreach (PlayerRow row in rows)
 			{
-				if (data.Session.FreezeEntity(row.Address, row.Name, data.PlayerDef) > 0)
+				if (data.Session.FreezeEntity(row.Address, row.Name, data.PlayerDef, PlayerPage.FreezeGroups) > 0)
 				{
 					done++;
 				}
@@ -367,6 +367,11 @@ public sealed class ClubPage : UserControl, IPage
 /// <summary>Staff member page: personal details and contract.</summary>
 public sealed class StaffPage : UserControl, IPage
 {
+	private static readonly HashSet<string> StaffFreezeGroups = new HashSet<string>
+	{
+		"Coaching", "Medical", "Mental", "Knowledge", "Personality"
+	};
+
 	private readonly Dictionary<string, EditField> _f;
 
 	private readonly GameData _data;
@@ -465,7 +470,7 @@ public sealed class StaffPage : UserControl, IPage
 			}
 			else
 			{
-				int count = _data.Session.FreezeEntity(Row.Address, Row.Name, _data.StaffDef);
+				int count = _data.Session.FreezeEntity(Row.Address, Row.Name, _data.StaffDef, StaffFreezeGroups);
 				_nav.SetStatus(Build.T($"{Row.Name} donduruldu ({count} alan kilitlendi).", $"{Row.Name} frozen ({count} fields locked)."));
 			}
 			UpdateFreeze();
