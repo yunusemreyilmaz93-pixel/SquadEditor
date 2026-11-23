@@ -69,7 +69,7 @@ public sealed class AppSettings
 	{
 		get
 		{
-			string text = Language;
+			string? text = Language;
 			if (text == null)
 			{
 				if (!(CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "tr"))
@@ -86,7 +86,10 @@ public sealed class AppSettings
 	{
 		try
 		{
-			Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
+			if (Path.GetDirectoryName(FilePath) is { } dir)
+			{
+				Directory.CreateDirectory(dir);
+			}
 			File.WriteAllText(FilePath, JsonSerializer.Serialize(this));
 		}
 		catch (Exception ex) when ((ex is IOException || ex is UnauthorizedAccessException) ? true : false)

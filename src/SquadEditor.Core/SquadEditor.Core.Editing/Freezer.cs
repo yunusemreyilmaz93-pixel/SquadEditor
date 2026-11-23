@@ -77,7 +77,7 @@ public sealed class Freezer
 
 	internal void Follow(ulong address, byte[] bytes)
 	{
-		if (_values.TryGetValue(address, out Frozen value) && value.Bytes.Length == bytes.Length)
+		if (_values.TryGetValue(address, out Frozen? value) && value.Bytes.Length == bytes.Length)
 		{
 			_values[address] = value with
 			{

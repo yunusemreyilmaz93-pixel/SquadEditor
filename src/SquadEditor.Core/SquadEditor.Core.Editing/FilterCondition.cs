@@ -10,7 +10,7 @@ public sealed record FilterCondition(string Field, FilterOp Op, double Value)
 {
 	public bool Matches(GameSession session, ulong entity, EntityDef def)
 	{
-		FieldDef fieldDef = def.Fields.FirstOrDefault((FieldDef f) => f.Name == Field);
+		FieldDef? fieldDef = def.Fields.FirstOrDefault((FieldDef f) => f.Name == Field);
 		if (fieldDef == null || !fieldDef.IsNumeric)
 		{
 			return false;

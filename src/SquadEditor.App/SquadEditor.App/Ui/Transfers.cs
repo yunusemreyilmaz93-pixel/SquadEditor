@@ -35,11 +35,13 @@ public sealed record MovePlan(string Summary, IReadOnlyList<string> Steps, IRead
 /// Only simple cases move: a player under a plain contract with the club he plays for (no
 /// loans, no player-coaches).
 /// </summary>
-public static class Transfers
+public static partial class Transfers
 {
 	private const long PlayerTeam = 0x130, PlayerContract = 0x330, PersonBlock = 0x288, PersonId = 0x290;
 	private const long ContractOwner = 0x08, ContractTeam = 0x10, ContractSenior = 0x18, ContractJob = 0x26;
 	private const long ContractJoined = 0x4C, ContractListing = 0x57, ContractNumber = 0x5D;
+	private const long LoanRecord = 0x338;
+	private const int ContractSize = 0xC8;
 	private const long TeamClub = 0x30, TeamPlayers = 0x38, TeamCaptain = 0x88, TeamVice = 0x90;
 	private const long ClubTeams = 0x18, ClubWomen = 0xB9;
 	private const uint Empty = 0xFFFFFFFF;
@@ -55,9 +57,21 @@ public static class Transfers
 		string name = data.Read(player, data.PlayerDef, "Name");
 		ulong team = m.ReadPointer(player + PlayerTeam);
 		ulong contract = m.ReadPointer(player + PlayerContract);
+		if (team == 0 && contract == 0)
+		{
+			if (club == 0)
+			{
+				throw Refuse("Oyuncu zaten serbest.", "The player is a free agent already.");
+			}
+			return Sign(data, player, club, name);
+		}
 		if (team == 0 || contract == 0)
 		{
-			throw Refuse("Oyuncu serbest; serbest oyuncuyu kulübe almak henüz desteklenmiyor.", "The player is a free agent; signing free agents is not supported yet.");
+			throw Refuse("Oyuncunun takımı ya da sözleşmesi eksik.", "The player has a team or a contract missing.");
+		}
+		if (LoanContract(m, player) != 0)
+		{
+			throw Refuse("Oyuncu kiralık; kiralık işlemleri için Kiralık kartını kullan.", "The player is on loan; use the Loan card.");
 		}
 		ulong block = player + PersonBlock;
 		if (m.ReadPointer(contract + ContractOwner) != block || m.Read<byte>(contract + ContractJob) != 1)
@@ -149,16 +163,7 @@ public static class Transfers
 			{
 				throw Refuse("Oyuncu zaten o takımın listesinde.", "The player is in that team's list already.");
 			}
-			ulong room = Room(m, target);
-			if ((ulong)target.Items.Length >= room)
-			{
-				throw Refuse($"{newName} A takım listesi dolu ({target.Items.Length} oyuncu) ve oyunun belleğinde yer yok. Önce o takımdan bir oyuncuyu serbest bırak, sonra tekrar dene.",
-					$"{newName}'s senior list is full ({target.Items.Length} players) and the game's memory has no room. Release one of its players first, then try again.");
-			}
-			ulong slot = target.End;
-			writes.Add(new PlannedWrite(slot, m.ReadBytes(slot, 8), GameWrite.U64(player), field));
-			ulong newEnd = target.End + 8;
-			writes.Add(new PlannedWrite(target.Header + 8, Concat(target.End, target.Capacity), Concat(newEnd, Math.Max(target.Capacity, newEnd)), field));
+			Append(m, target, player, newName, writes, field);
 			steps.Add(Build.T($"{newName} A takım listesine eklenir ({target.Items.Length} → {target.Items.Length + 1}).",
 				$"Joins {newName}'s senior team ({target.Items.Length} → {target.Items.Length + 1})."));
 
@@ -238,13 +243,16 @@ public static class Transfers
 	/// How many pointers the list's memory holds: its capacity, or the whole allocator block
 	/// when the capacity falls inside one of the measured block sizes and the rest is unused (zero).
 	/// </summary>
-	private static ulong Room(IMemory m, PlayerList list)
+	private static ulong Room(IMemory m, PlayerList list) => Room(m, list.Begin, list.Capacity);
+
+	/// <summary>The same for any list of pointers (begin, capacity).</summary>
+	internal static ulong Room(IMemory m, ulong begin, ulong capacityEnd)
 	{
-		if (list.Begin == 0)
+		if (begin == 0)
 		{
 			return 0;
 		}
-		ulong bytes = list.Capacity - list.Begin;
+		ulong bytes = capacityEnd - begin;
 		ulong capacity = bytes / 8;
 		if (bytes <= BlockSizes[0] || bytes > BlockSizes[^1])
 		{
@@ -255,7 +263,7 @@ public static class Transfers
 		{
 			return capacity;
 		}
-		byte[] spare = m.ReadBytes(list.Capacity, (int)(block - bytes));
+		byte[] spare = m.ReadBytes(capacityEnd, (int)(block - bytes));
 		return spare.All(b => b == 0) ? block / 8 : capacity;
 	}
 

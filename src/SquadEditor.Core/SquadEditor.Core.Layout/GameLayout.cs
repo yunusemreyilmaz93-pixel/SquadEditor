@@ -44,7 +44,7 @@ public sealed class GameLayout
 
 	public string Text(string language, string key)
 	{
-		if (!Strings.TryGetValue(language, out Dictionary<string, string> value) || !value.TryGetValue(key, out var value2))
+		if (!Strings.TryGetValue(language, out Dictionary<string, string>? value) || !value.TryGetValue(key, out var value2))
 		{
 			return key;
 		}
@@ -80,7 +80,7 @@ public sealed class GameLayout
 
 	public static GameLayout Parse(string json)
 	{
-		GameLayout gameLayout;
+		GameLayout? gameLayout;
 		try
 		{
 			gameLayout = JsonSerializer.Deserialize<GameLayout>(json, JsonOptions);
@@ -210,7 +210,7 @@ public sealed class GameLayout
 			}
 			foreach (string name2 in item4.Fields)
 			{
-				FieldDef fieldDef = entity.Fields.FirstOrDefault((FieldDef f) => f.Name == name2);
+				FieldDef? fieldDef = entity.Fields.FirstOrDefault((FieldDef f) => f.Name == name2);
 				if (fieldDef == null)
 				{
 					errors.Add($"Entity '{name}': profile axis '{item4.Name}' contains unknown field '{name2}'.");
@@ -271,7 +271,7 @@ public sealed class GameLayout
 	private void ValidatePreset(PresetDef preset, List<string> errors)
 	{
 		string text = "Preset '" + preset.Name + "'";
-		EntityDef entityDef = Entities.FirstOrDefault((EntityDef e) => e.Name == preset.Entity);
+		EntityDef? entityDef = Entities.FirstOrDefault((EntityDef e) => e.Name == preset.Entity);
 		if (entityDef == null)
 		{
 			errors.Add(text + ": unknown entity '" + preset.Entity + "'.");

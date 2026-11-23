@@ -192,9 +192,9 @@ public sealed class GameSession
 	{
 		if (anchor.Resolve == AnchorResolve.RttiVtable)
 		{
-			if (!Memory.TryGetModule(Layout.Module, out var rttiModule))
+			if (string.IsNullOrEmpty(Layout.Module) || !Memory.TryGetModule(Layout.Module, out var rttiModule))
 			{
-				throw new LayoutException(CoreText.Get("ModuleNotFound", Layout.Module));
+				throw new LayoutException(CoreText.Get("ModuleNotFound", Layout.Module ?? ""));
 			}
 			return Rtti.FindVtable(Memory, rttiModule, anchor.TypeName!, anchor.ColOffset) ?? throw new LayoutException(CoreText.Get("AnchorNotFound", anchor.Name));
 		}
@@ -202,9 +202,9 @@ public sealed class GameSession
 		IEnumerable<MemoryRegion> regions;
 		if (anchor.Scope == AnchorScope.Module)
 		{
-			if (!Memory.TryGetModule(Layout.Module, out var module))
+			if (string.IsNullOrEmpty(Layout.Module) || !Memory.TryGetModule(Layout.Module, out var module))
 			{
-				throw new LayoutException(CoreText.Get("ModuleNotFound", Layout.Module));
+				throw new LayoutException(CoreText.Get("ModuleNotFound", Layout.Module ?? ""));
 			}
 			regions = PatternScanner.Clip(Memory.GetRegions(), module);
 		}

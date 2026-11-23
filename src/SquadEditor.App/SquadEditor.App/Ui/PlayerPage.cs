@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using SquadEditor.Core.Editing;
+using SquadEditor.Core.Memory;
 using SquadEditor.Core.Layout;
 
 namespace SquadEditor.App.Ui;
@@ -74,7 +75,7 @@ public sealed class PlayerPage : UserControl, IPage
 
 	public ulong Address { get; }
 	public new string Name { get; private set; }
-	public uint Uid { get; }
+	public new uint Uid { get; }
 	public string Key => "player:" + Address;
 	public string Title => Name;
 	public ImageSource? Icon => ImageLookup.Graphics.Person(Uid);
@@ -154,7 +155,7 @@ public sealed class PlayerPage : UserControl, IPage
 		{
 			pills.Add(Build.Pill(Dates.Show(_f["Contract Expires"].Value), Build.T("Sözleşme bitişi", "Contract ends")));
 		}
-		return Build.Header(Build.Avatar(Icon, Name, 92, round: true), Name, line1, line2, pills);
+		return Build.Header(Build.Avatar(Icon, Name, 74, round: true), Name, line1, line2, pills);
 	}
 
 	/// <summary>Attributes are listed alphabetically in the user's language, like the game.</summary>
@@ -211,39 +212,101 @@ public sealed class PlayerPage : UserControl, IPage
 		return host;
 	}
 
-	/// <summary>Rename, move to another club, release.</summary>
+	/// <summary>Freeze, rename, move to another club, release, loan actions.</summary>
 	private UIElement ActionsPanel()
 	{
-		var panel = new WrapPanel { Margin = new Thickness(14, 0, 14, 12) };
-		bool canWrite = !AppSettings.Current.ReadOnlyMode;
-		var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
-		rename.Click += (_, _) =>
+		var host = new ContentControl();
+		void Fill()
 		{
-			var dialog = new RenameWindow(_data, Address + 0x288, Name) { Owner = Window.GetWindow(this) };
-			if (dialog.ShowDialog() == true)
+			var panel = new WrapPanel { Margin = new Thickness(12, 0, 12, 10) };
+			bool canWrite = !AppSettings.Current.ReadOnlyMode;
+			bool frozen = _data.Session.Freezer.IsFrozen(Address);
+			var freeze = new Button
 			{
-				string old = Name;
-				RefreshValues();
-				RebuildHeader();
-				_data.Renamed(Address, Name);
-				_nav.SetStatus(Build.T($"{old} → {Name}. Ctrl+Z geri alır. Oyunda görmek için profili yeniden aç.", $"{old} → {Name}. Ctrl+Z undoes it. Reopen the profile in the game to see it."));
-			}
-		};
-		var move = new Button { Content = Build.T("Kulübe taşı", "Move to club"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
-		move.Click += (_, _) =>
-		{
-			var dialog = new MoveWindow(_data, Address, Name) { Owner = Window.GetWindow(this) };
-			if (dialog.ShowDialog() == true && dialog.Done is { } done)
+				Content = frozen ? Build.T("❄ Donduruldu", "❄ Frozen") : Build.T("❄ Dondur", "❄ Freeze"),
+				ToolTip = Build.T("Oyuncunun özelliklerini oyun değiştiremesin diye kilitle", "Lock player attributes so the game cannot lower them"),
+				Margin = new Thickness(0, 0, 6, 6),
+				IsEnabled = canWrite || frozen
+			};
+			if (frozen)
 			{
-				_data.PlayerMoved(Address, done.NewClub, done.NewTeam);
-				RefreshValues();
-				RebuildHeader();
-				_nav.SetStatus(done.Summary + Build.T(" Ctrl+Z geri alır.", " Ctrl+Z undoes it."));
+				freeze.Style = Build.StyleOf("AccentButton");
 			}
-		};
-		panel.Children.Add(rename);
-		panel.Children.Add(move);
-		return panel;
+			freeze.Click += (_, _) =>
+			{
+				if (_data.Session.Freezer.IsFrozen(Address))
+				{
+					_data.Session.Freezer.Unfreeze(Address);
+					_nav.SetStatus(Build.T($"{Name} artık dondurulmuş değil.", $"{Name} unfrozen."));
+				}
+				else
+				{
+					int count = _data.Session.FreezeEntity(Address, Name, _data.PlayerDef);
+					_nav.SetStatus(Build.T($"{Name} donduruldu ({count} alan kilitlendi).", $"{Name} frozen ({count} fields locked)."));
+				}
+				Fill();
+			};
+			var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+			rename.Click += (_, _) =>
+			{
+				var dialog = new RenameWindow(_data, Address + 0x288, Name) { Owner = Window.GetWindow(this) };
+				if (dialog.ShowDialog() == true)
+				{
+					string old = Name;
+					RefreshValues();
+					RebuildHeader();
+					_data.Renamed(Address, Name);
+					_nav.SetStatus(Build.T($"{old} → {Name}. Ctrl+Z geri alır. Oyunda görmek için profili yeniden aç.", $"{old} → {Name}. Ctrl+Z undoes it. Reopen the profile in the game to see it."));
+				}
+			};
+			var move = new Button { Content = Build.T("Kulübe taşı", "Move to club"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+			move.Click += (_, _) =>
+			{
+				bool freeAgent = _data.Memory.Read<ulong>(Address + 0x130) == 0 && _data.Memory.Read<ulong>(Address + 0x330) == 0;
+				var dialog = MoveWindow.ForPlayer(_data, Address, Name, freeAgent);
+				dialog.Owner = Window.GetWindow(this);
+				if (dialog.ShowDialog() == true && dialog.Done is { } done)
+				{
+					_data.PlayerMoved(Address, done.NewClub, done.NewTeam);
+					RefreshValues();
+					RebuildHeader();
+					Fill();
+					_nav.SetStatus(done.Summary + Build.T(" Ctrl+Z geri alır.", " Ctrl+Z undoes it."));
+				}
+			};
+			panel.Children.Add(freeze);
+			panel.Children.Add(rename);
+			panel.Children.Add(move);
+			if (Transfers.Loan(_data.Memory, Address) is { } loan)
+			{
+				string from = _data.ClubsByAddress.TryGetValue(loan.FromClub, out ClubRow? f) ? f.Name : "?";
+				string to = _data.ClubsByAddress.TryGetValue(loan.ToClub, out ClubRow? t) ? t.Name : "?";
+				var info = Build.Text(Build.T($"Kiralık: {from} → {to}", $"On loan: {from} → {to}") + (loan.Until is { } u ? Build.T($", {u:dd.MM.yyyy} tarihine kadar", $", until {u:dd.MM.yyyy}") : "")
+					+ (loan.OptionFee > 0 ? Build.T($" · satın alma opsiyonu {Money.Format(loan.OptionFee, false)}", $" · option to buy {Money.Format(loan.OptionFee, false)}") : ""), 12.5, Build.Res("Muted"));
+				info.TextWrapping = TextWrapping.Wrap;
+				info.Width = 240;
+				info.Margin = new Thickness(0, 4, 0, 6);
+				panel.Children.Add(info);
+				var recall = new Button { Content = Build.T("Kiradan geri çağır", "Recall from loan"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+				recall.Click += (_, _) => { if (PlanConfirm.Run(Window.GetWindow(this), _data, () => Transfers.PlanRecall(_data, Address), _nav)) { RefreshValues(); Fill(); } };
+				var permanent = new Button { Content = Build.T("Kalıcı yap", "Make permanent"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = canWrite };
+				permanent.Click += (_, _) =>
+				{
+					if (PlanConfirm.Run(Window.GetWindow(this), _data, () => Transfers.PlanPermanent(_data, Address), _nav))
+					{
+						_data.PlayerMoved(Address, loan.ToClub, _data.Memory.Read<ulong>(Address + 0x130));
+						RefreshValues();
+						RebuildHeader();
+						Fill();
+					}
+				};
+				panel.Children.Add(recall);
+				panel.Children.Add(permanent);
+			}
+			host.Content = panel;
+		}
+		Fill();
+		return host;
 	}
 
 	private void RebuildHeader()

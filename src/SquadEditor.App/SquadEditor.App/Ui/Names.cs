@@ -377,61 +377,11 @@ public sealed class NameIndex
 		return best;
 	}
 
-	/// <summary>
-	/// Finds the pool that holds <paramref name="anyEntry"/> among the statics of game_plugin.dll:
-	/// (begin, end, capacity) of chunk pointers, +0x18 first free slot, +0x20 u32 free, +0x24 u32
-	/// used, +0x28 u32 slot size (24), +0x2C u32 slots of the first chunk, +0x30 of later ones.
-	/// </summary>
+	/// <summary>Finds the pool of 24-byte name entries that holds <paramref name="anyEntry"/> and indexes it.</summary>
 	public static NameIndex Create(IMemory memory, ulong anyEntry)
 	{
-		if (anyEntry == 0 || !memory.TryGetModule("game_plugin.dll", out MemoryRegion module))
-		{
-			throw new InvalidOperationException(SquadEditor.App.Ui.Build.T("İsim tablosu bulunamadı.", "The name table was not found."));
-		}
-		foreach (MemoryRegion region in PatternScanner.Clip(memory.GetRegions(), module).Where(r => r.IsWritable))
-		{
-			byte[] buffer = new byte[region.Size];
-			if (!memory.TryRead(region.Start, buffer))
-			{
-				continue;
-			}
-			for (int i = 0; i + 0x38 <= buffer.Length; i += 8)
-			{
-				if (BitConverter.ToUInt32(buffer, i + 0x28) != EntrySize)
-				{
-					continue;
-				}
-				ulong begin = BitConverter.ToUInt64(buffer, i), end = BitConverter.ToUInt64(buffer, i + 8), cap = BitConverter.ToUInt64(buffer, i + 16);
-				if (begin == 0 || end <= begin || cap < end || (end - begin) % 8 != 0 || (end - begin) / 8 > 4096)
-				{
-					continue;
-				}
-				uint free = BitConverter.ToUInt32(buffer, i + 0x20), used = BitConverter.ToUInt32(buffer, i + 0x24);
-				uint first = BitConverter.ToUInt32(buffer, i + 0x2C), later = BitConverter.ToUInt32(buffer, i + 0x30);
-				int count = (int)((end - begin) / 8);
-				if (first == 0 || later == 0 || (ulong)free + used != first + (ulong)later * (ulong)(count - 1))
-				{
-					continue;
-				}
-				ulong[] chunkStarts;
-				try
-				{
-					byte[] raw = memory.ReadBytes(begin, count * 8);
-					chunkStarts = Enumerable.Range(0, count).Select(k => BitConverter.ToUInt64(raw, k * 8)).ToArray();
-				}
-				catch (MemoryAccessException)
-				{
-					continue;
-				}
-				var chunks = chunkStarts.Select((s, k) => (Start: s, End: s + (ulong)(k == 0 ? first : later) * EntrySize)).ToList();
-				if (!chunks.Any(c => anyEntry >= c.Start && anyEntry < c.End && (anyEntry - c.Start) % EntrySize == 0))
-				{
-					continue;
-				}
-				return Index(memory, region.Start + (ulong)i, buffer.AsSpan(i, 0x38).ToArray(), chunks);
-			}
-		}
-		throw new InvalidOperationException(SquadEditor.App.Ui.Build.T("İsim tablosu bulunamadı.", "The name table was not found."));
+		GamePool pool = GamePool.Find(memory, EntrySize, anyEntry);
+		return Index(memory, pool.Address, memory.ReadBytes(pool.Address, 0x38), pool.Chunks.ToList());
 	}
 
 	private static NameIndex Index(IMemory memory, ulong pool, byte[] header, List<(ulong Start, ulong End)> chunks)

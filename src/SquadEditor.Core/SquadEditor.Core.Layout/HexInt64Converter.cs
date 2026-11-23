@@ -17,7 +17,7 @@ internal sealed class HexInt64Converter : JsonConverter<long>
 		{
 			throw new JsonException("Expected a number or a hex string like \"0x1A4\".");
 		}
-		string text = reader.GetString().Trim();
+		string text = (reader.GetString() ?? "").Trim();
 		bool flag = text.StartsWith('-');
 		if (flag)
 		{

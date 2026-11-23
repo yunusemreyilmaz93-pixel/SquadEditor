@@ -1882,7 +1882,8 @@
           "name": "Club Ref",
           "group": "Internal",
           "path": [
-            "-0xA0",
+            "0xA8",
+            "0x10",
             "0x30"
           ],
           "type": "u64",
@@ -1892,7 +1893,8 @@
           "name": "Club",
           "group": "Contract",
           "path": [
-            "-0xA0",
+            "0xA8",
+            "0x10",
             "0x30",
             "0xC8"
           ],

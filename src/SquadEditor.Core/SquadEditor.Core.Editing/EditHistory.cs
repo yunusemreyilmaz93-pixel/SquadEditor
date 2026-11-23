@@ -27,7 +27,7 @@ public sealed class EditHistory
 
 	private int? _openBatch;
 
-	private readonly Dictionary<int, string?> _batchLabels = new Dictionary<int, string>();
+	private readonly Dictionary<int, string?> _batchLabels = new Dictionary<int, string?>();
 
 	private bool _changedWhileOpen;
 
@@ -56,14 +56,16 @@ public sealed class EditHistory
 		return new BatchScope(this);
 	}
 
-	public void Apply(IMemory memory, ulong address, byte[] newBytes, EditInfo info)
+	/// <param name="guarded">The write is part of a change to the game's own structures (lists, pools): it is only
+	/// undone while the game still holds what was written, otherwise the undo is refused.</param>
+	public void Apply(IMemory memory, ulong address, byte[] newBytes, EditInfo info, bool guarded = false)
 	{
 		byte[] array = memory.ReadBytes(address, newBytes.Length);
 		if (!((ReadOnlySpan<byte>)array.AsSpan()).SequenceEqual((ReadOnlySpan<byte>)newBytes))
 		{
 			memory.WriteBytes(address, newBytes);
 			Written?.Invoke(address, newBytes);
-			_entries.Add(new EditRecord(address, array, newBytes, info, _openBatch ?? _nextBatch++, DateTime.Now));
+			_entries.Add(new EditRecord(address, array, newBytes, info, _openBatch ?? _nextBatch++, DateTime.Now, guarded));
 			int? openBatch = _openBatch;
 			if (!openBatch.HasValue)
 			{
@@ -84,6 +86,18 @@ public sealed class EditHistory
 		}
 		IReadOnlyList<EditBatch> batches = Batches;
 		EditBatch editBatch = batches[batches.Count - 1];
+		foreach (EditRecord guarded in editBatch.Entries.Where(r => r.Guarded))
+		{
+			if (!((ReadOnlySpan<byte>)memory.ReadBytes(guarded.Address, guarded.NewBytes.Length)).SequenceEqual(guarded.NewBytes))
+			{
+				foreach (EditRecord r in editBatch.Entries)
+				{
+					_entries.Remove(r);
+				}
+				Changed?.Invoke(this, EventArgs.Empty);
+				throw new GuardedUndoException(editBatch);
+			}
+		}
 		for (int num = editBatch.Entries.Count - 1; num >= 0; num--)
 		{
 			EditRecord editRecord = editBatch.Entries[num];
@@ -98,7 +112,7 @@ public sealed class EditHistory
 	public int UndoAll(IMemory memory)
 	{
 		int num = 0;
-		while ((object)UndoLast(memory) != null)
+		while (UndoLast(memory) != null)
 		{
 			num++;
 		}
@@ -119,4 +133,10 @@ public sealed class EditHistory
 			Changed?.Invoke(this, EventArgs.Empty);
 		}
 	}
+}
+
+/// <summary>The game changed what a guarded batch wrote: the batch is dropped from the history instead of undone.</summary>
+public sealed class GuardedUndoException(EditBatch batch) : InvalidOperationException("The game has changed this data since; it was not undone.")
+{
+	public EditBatch Batch { get; } = batch;
 }

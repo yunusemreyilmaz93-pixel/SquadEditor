@@ -32,15 +32,15 @@
   <!-- Text -->
   <Style x:Key="H1" TargetType="TextBlock">
     <Setter Property="FontFamily" Value="{StaticResource DisplayFont}"/>
-    <Setter Property="FontSize" Value="26"/>
+    <Setter Property="FontSize" Value="22"/>
     <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Foreground" Value="White"/>
   </Style>
   <Style x:Key="CardTitle" TargetType="TextBlock">
-    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="FontSize" Value="11"/>
     <Setter Property="FontWeight" Value="SemiBold"/>
     <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
-    <Setter Property="Margin" Value="14,12,14,6"/>
+    <Setter Property="Margin" Value="12,9,12,4"/>
   </Style>
   <Style x:Key="MutedText" TargetType="TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
@@ -52,8 +52,8 @@
     <Setter Property="Background" Value="{DynamicResource Card}"/>
     <Setter Property="BorderBrush" Value="{DynamicResource StrokeSoft}"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="10"/>
-    <Setter Property="Margin" Value="0,0,12,12"/>
+    <Setter Property="CornerRadius" Value="6"/>
+    <Setter Property="Margin" Value="0,0,10,10"/>
   </Style>
 
   <!-- Buttons -->
@@ -62,14 +62,14 @@
     <Setter Property="Background" Value="{DynamicResource Card}"/>
     <Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="Padding" Value="12,6"/>
+    <Setter Property="Padding" Value="10,5"/>
     <Setter Property="Cursor" Value="Hand"/>
-    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="FontSize" Value="12.5"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
           <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
           <ControlTemplate.Triggers>
@@ -114,12 +114,12 @@
   <!-- Left menu -->
   <Style x:Key="NavItem" TargetType="RadioButton">
     <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
-    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="FontSize" Value="12.5"/>
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="RadioButton">
-          <Border x:Name="b" Background="Transparent" CornerRadius="7" Padding="12,8" Margin="8,1">
+          <Border x:Name="b" Background="Transparent" CornerRadius="5" Padding="10,7" Margin="6,1">
             <Grid>
               <ContentPresenter/>
             </Grid>
@@ -147,12 +147,40 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="RadioButton">
-          <Border x:Name="b" Background="Transparent" CornerRadius="6" Padding="10,4" Margin="2">
+          <Border x:Name="b" Background="Transparent" CornerRadius="4" Padding="9,4" Margin="1">
             <ContentPresenter/>
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsChecked" Value="True">
               <Setter TargetName="b" Property="Background" Value="{DynamicResource Accent}"/>
+              <Setter Property="Foreground" Value="White"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Filter toggle chip -->
+  <Style x:Key="FilterChip" TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Border x:Name="b" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="4" Padding="8,3">
+            <ContentPresenter VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="b" Property="Background" Value="{DynamicResource CardHover}"/>
+              <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="b" Property="Background" Value="{DynamicResource AccentSoft}"/>
+              <Setter TargetName="b" Property="BorderBrush" Value="{DynamicResource Accent}"/>
               <Setter Property="Foreground" Value="White"/>
             </Trigger>
           </ControlTemplate.Triggers>
@@ -175,7 +203,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="TextBox">
           <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
           </Border>
           <ControlTemplate.Triggers>

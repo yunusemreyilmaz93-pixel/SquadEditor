@@ -152,7 +152,7 @@ public static class Medical
 		{
 			throw new InvalidOperationException(Build.T("Salt okunur mod açık.", "Read-only mode is on."));
 		}
-		data.Session.History.Apply(data.Memory, address, bytes, new EditInfo(label, field, oldText, newText));
+		data.Session.History.Apply(data.Memory, address, bytes, new EditInfo(label, field, oldText, newText), guarded: true);
 	}
 
 	private static DateTime? Date(IMemory memory, ulong address)

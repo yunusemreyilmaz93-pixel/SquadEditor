@@ -38,7 +38,7 @@ public static class GameWrite
 		{
 			foreach (PlannedWrite w in writes)
 			{
-				history.Apply(data.Memory, w.Address, w.Bytes, new EditInfo(label, w.Field, w.OldText, w.NewText));
+				history.Apply(data.Memory, w.Address, w.Bytes, new EditInfo(label, w.Field, w.OldText, w.NewText), guarded: true);
 				byte[] back = data.Memory.ReadBytes(w.Address, w.Bytes.Length);
 				if (!back.AsSpan().SequenceEqual(w.Bytes))
 				{

@@ -153,21 +153,21 @@ public static class Build
 	public static Border Pill(string value, string caption, Brush? valueBrush = null)
 	{
 		var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
-		var v = Text(value, 18, valueBrush ?? Brushes.White, FontWeights.Bold);
+		var v = Text(value, 16, valueBrush ?? Brushes.White, FontWeights.Bold);
 		v.HorizontalAlignment = HorizontalAlignment.Center;
-		var c = Text(caption, 11, new SolidColorBrush(Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF)));
+		var c = Text(caption, 10.5, new SolidColorBrush(Color.FromArgb(0xB0, 0xFF, 0xFF, 0xFF)));
 		c.HorizontalAlignment = HorizontalAlignment.Center;
 		stack.Children.Add(v);
 		stack.Children.Add(c);
 		return new Border
 		{
-			Background = new SolidColorBrush(Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF)),
-			BorderBrush = new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)),
+			Background = new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF)),
+			BorderBrush = new SolidColorBrush(Color.FromArgb(0x28, 0xFF, 0xFF, 0xFF)),
 			BorderThickness = new Thickness(1),
-			CornerRadius = new CornerRadius(10),
-			Padding = new Thickness(16, 8, 16, 8),
-			Margin = new Thickness(8, 0, 0, 0),
-			MinWidth = 110,
+			CornerRadius = new CornerRadius(6),
+			Padding = new Thickness(12, 6, 12, 6),
+			Margin = new Thickness(6, 0, 0, 0),
+			MinWidth = 96,
 			Child = stack
 		};
 	}
@@ -175,11 +175,11 @@ public static class Build
 	/// <summary>The coloured band at the top of a page.</summary>
 	public static Border Header(FrameworkElement avatar, string title, UIElement subtitle, UIElement? subtitle2, IEnumerable<UIElement> pills)
 	{
-		var grid = new Grid { Margin = new Thickness(24, 18, 24, 18) };
+		var grid = new Grid { Margin = new Thickness(20, 12, 20, 12) };
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-		avatar.Margin = new Thickness(0, 0, 18, 0);
+		avatar.Margin = new Thickness(0, 0, 14, 0);
 		grid.Children.Add(avatar);
 		var texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
 		texts.Children.Add(new TextBlock { Text = title, Style = StyleOf("H1"), TextTrimming = TextTrimming.CharacterEllipsis });
@@ -204,12 +204,12 @@ public static class Build
 	public static Grid PageBody(out StackPanel nav, out ContentControl content)
 	{
 		var grid = new Grid();
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(176) });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-		nav = new StackPanel { Margin = new Thickness(0, 12, 0, 0) };
+		nav = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
 		var navBorder = new Border { Background = Res("Chrome"), BorderBrush = Res("StrokeSoft"), BorderThickness = new Thickness(0, 0, 1, 0), Child = nav };
 		grid.Children.Add(navBorder);
-		content = new ContentControl { Margin = new Thickness(16, 16, 4, 0) };
+		content = new ContentControl { Margin = new Thickness(12, 12, 4, 0) };
 		Grid.SetColumn(content, 1);
 		grid.Children.Add(content);
 		return grid;

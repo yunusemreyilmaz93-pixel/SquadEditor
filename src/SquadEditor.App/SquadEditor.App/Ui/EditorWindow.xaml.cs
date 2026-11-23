@@ -51,6 +51,8 @@ public partial class EditorWindow : Window, INavigator
 		ReadOnlyBadge.ToolTip = Build.T("Salt okunur mod: oyuna hiçbir şey yazılmaz", "Read-only mode: nothing is written to the game");
 		((TextBlock)ReadOnlyBadge.Child).Text = Build.T("🔒 Salt okunur", "🔒 Read-only");
 		UndoButton.ToolTip = Build.T("Son değişikliği geri al (Ctrl+Z)", "Undo the last change (Ctrl+Z)");
+		ReloadButton.ToolTip = Build.T("Kaydı yeniden oku (F5)", "Reload save from game (F5)");
+		FrozenButton.ToolTip = Build.T("Dondurulan kayıtları göster", "Show frozen records");
 		_graphics = ReloadGraphicsAsync();
 		ApplyPreferences();
 		_connectTimer.Tick += (_, _) => TryConnect();
@@ -76,6 +78,7 @@ public partial class EditorWindow : Window, INavigator
 		InputBindings.Add(new KeyBinding(new RelayCommand(() => { TopSearch.Focus(); TopSearch.SelectAll(); }), Key.F, ModifierKeys.Control));
 		InputBindings.Add(new KeyBinding(new RelayCommand(Undo), Key.Z, ModifierKeys.Control));
 		InputBindings.Add(new KeyBinding(new RelayCommand(() => { if (_current != null && _current.Key != "home") ClosePage(_current); }), Key.W, ModifierKeys.Control));
+		InputBindings.Add(new KeyBinding(new RelayCommand(ReloadSave), Key.F5, ModifierKeys.None));
 	}
 
 	// ---------------------------------------------------------------- connection
@@ -135,9 +138,11 @@ public partial class EditorWindow : Window, INavigator
 			await _graphics;
 			_data = data;
 			_data.Session.History.Changed += (_, _) => Dispatcher.Invoke(UpdateCounts);
+			_data.Session.Freezer.Changed += (_, _) => Dispatcher.Invoke(UpdateCounts);
 			StatusDot.Fill = Build.Res("Positive");
 			StatusText.Text = $"{layout.Game}  ·  {layout.GameVersion}";
 			StatusPill.ToolTip = $"PID {pid}";
+			ReloadButton.Visibility = Visibility.Visible;
 			Overlay.Visibility = Visibility.Collapsed;
 			_pages.Clear();
 			OpenPage(new HomePage(data, this));
@@ -160,7 +165,9 @@ public partial class EditorWindow : Window, INavigator
 		{
 			_failedPid = pid;
 			OverlayTitle.Text = Build.T("Bağlanılamadı", "Could not connect");
-			OverlayText.Text = ex.Message + "\n\n" + Build.T("Kaydın yüklü olduğundan emin ol. Oyunu yeniden başlatırsan tekrar denerim.", "Make sure a save is loaded. Restart the game and I will try again.");
+			OverlayText.Text = ex.Message + "\n\n" + Build.T("Kaydın yüklü olduğundan emin ol, sonra Tekrar dene'ye bas.", "Make sure a save is loaded, then press Retry.");
+			ConnectButton.Content = Build.T("Tekrar dene", "Retry");
+			ConnectButton.Visibility = Visibility.Visible;
 			OverlayProgress.Visibility = Visibility.Collapsed;
 		}
 		finally
@@ -201,6 +208,8 @@ public partial class EditorWindow : Window, INavigator
 		_current = null;
 		Host.Content = null;
 		TabStrip.Children.Clear();
+		ReloadButton.Visibility = Visibility.Collapsed;
+		FrozenButton.Visibility = Visibility.Collapsed;
 		ShowWaiting();
 		SetStatus(reason);
 	}
@@ -230,7 +239,31 @@ public partial class EditorWindow : Window, INavigator
 	private void Connect_Click(object sender, RoutedEventArgs e)
 	{
 		_failedPid = 0;
+		ConnectButton.Visibility = AppSettings.Current.AutoConnect ? Visibility.Collapsed : Visibility.Visible;
 		TryConnect();
+	}
+
+	private void Reload_Click(object sender, RoutedEventArgs e) => ReloadSave();
+
+	private void ReloadSave()
+	{
+		if (_data == null || _connecting)
+		{
+			return;
+		}
+		RememberTabs();
+		Disconnect(Build.T("Kayıt yeniden okunuyor…", "Reloading save…"));
+		_failedPid = 0;
+		TryConnect();
+	}
+
+	private void Frozen_Click(object sender, RoutedEventArgs e)
+	{
+		if (_pages.OfType<HomePage>().FirstOrDefault() is { } home)
+		{
+			OpenPage(home);
+			home.ShowFrozen();
+		}
 	}
 
 	/// <summary>Open tabs are remembered by unique ID: memory addresses change every session.</summary>
@@ -529,7 +562,18 @@ public partial class EditorWindow : Window, INavigator
 		{
 			return;
 		}
-		var batch = _data.Session.History.UndoLast(_data.Memory);
+		SquadEditor.Core.Editing.EditBatch? batch;
+		try
+		{
+			batch = _data.Session.History.UndoLast(_data.Memory);
+		}
+		catch (SquadEditor.Core.Editing.GuardedUndoException ex)
+		{
+			SetStatus(Build.T($"\"{ex.Batch.Label}\" geri alınamadı: oyun bu arada değiştirdi (Devam'a basıldı). Geçmişten çıkarıldı; geri dönmek için yedeği yükle.",
+				$"\"{ex.Batch.Label}\" could not be undone: the game has changed it since. It was dropped from the history; load your backup to go back."));
+			UpdateCounts();
+			return;
+		}
 		_current?.RefreshValues();
 		SetStatus(batch == null ? Build.T("Geri alınacak değişiklik yok.", "Nothing to undo.") : Build.T("Geri alındı.", "Undone."));
 		UpdateCounts();
@@ -542,8 +586,11 @@ public partial class EditorWindow : Window, INavigator
 			return;
 		}
 		int changes = _data.Session.History.Entries.Count;
-		Counts.Text = Build.T($"Oyuncu {_data.Players.Count:N0}  ·  Kulüp {_data.Clubs.Count:N0}  ·  Değişiklik {changes}  ·  Logo {ImageLookup.Graphics.ClubLogos:N0}  ·  Yüz {ImageLookup.Graphics.Faces:N0}",
-			$"Players {_data.Players.Count:N0}  ·  Clubs {_data.Clubs.Count:N0}  ·  Changes {changes}  ·  Logos {ImageLookup.Graphics.ClubLogos:N0}  ·  Faces {ImageLookup.Graphics.Faces:N0}");
+		int frozen = _data.Session.Freezer.Entities.Count;
+		FrozenText.Text = $"❄ {frozen}";
+		FrozenButton.Visibility = frozen > 0 ? Visibility.Visible : Visibility.Collapsed;
+		Counts.Text = Build.T($"Oyuncu {_data.Players.Count:N0}  ·  Kulüp {_data.Clubs.Count:N0}  ·  Değişiklik {changes}" + (frozen > 0 ? $"  ·  Dondurulan {frozen}" : "") + $"  ·  Logo {ImageLookup.Graphics.ClubLogos:N0}  ·  Yüz {ImageLookup.Graphics.Faces:N0}",
+			$"Players {_data.Players.Count:N0}  ·  Clubs {_data.Clubs.Count:N0}  ·  Changes {changes}" + (frozen > 0 ? $"  ·  Frozen {frozen}" : "") + $"  ·  Logos {ImageLookup.Graphics.ClubLogos:N0}  ·  Faces {ImageLookup.Graphics.Faces:N0}");
 		UndoButton.IsEnabled = changes > 0;
 	}
 

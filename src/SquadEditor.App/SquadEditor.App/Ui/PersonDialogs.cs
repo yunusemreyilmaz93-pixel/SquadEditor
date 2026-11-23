@@ -145,18 +145,38 @@ public sealed class RenameWindow : ActionWindow
 public sealed class MoveWindow : ActionWindow
 {
 	private readonly GameData _data;
-	private readonly ulong _player;
+	private readonly Func<ulong, MovePlan> _planner;
 	private readonly TextBox _search = new TextBox { Height = 32, FontSize = 14 };
 	private readonly ListBox _clubs = new ListBox { Height = 220, Background = Build.Res("Field"), Foreground = Build.Res("Text"), BorderBrush = Build.Res("Stroke") };
 	private readonly RadioButton _move, _release;
 	private MovePlan? _plan;
 
-	public MoveWindow(GameData data, ulong player, string who) : base(Build.T("Kulübe taşı", "Move to club") + " · " + who, Build.T("Uygula", "Apply"))
+	/// <summary>A player: moved, signed when he is a free agent, or released.</summary>
+	public static MoveWindow ForPlayer(GameData data, ulong player, string who, bool freeAgent)
+	{
+		return new MoveWindow(data, club => Transfers.Plan(data, player, club), who,
+			freeAgent ? Build.T("Kulübe imzalat", "Sign for a club") : Build.T("Başka kulübe taşı (bonservissiz)", "Move to another club (free transfer)"),
+			freeAgent ? null : Build.T("Serbest bırak (sözleşmesi feshedilir)", "Release (contract ended)"),
+			freeAgent ? Build.T("Oyunun kendi sözleşme havuzundan yeni bir sözleşme alır; A takıma katılır.", "Gets a new contract from the game's own contract pool and joins the senior team.")
+				: Build.T("Oyuncu A takıma katılır; sözleşmesi (maaş, bitiş) aynı kalır. Sadece oyunun belleğinde yeri olan kadrolara taşınır.",
+					"He joins the senior team on his contract (same wage and end date). Only squads with room in the game's memory take him."));
+	}
+
+	/// <summary>A member of staff (person block): moved keeping his job, or released.</summary>
+	public static MoveWindow ForStaff(GameData data, ulong block, string who)
+	{
+		return new MoveWindow(data, club => StaffMoves.Plan(data, block, club), who,
+			Build.T("Başka kulübe taşı (görevi aynı)", "Move to another club (same job)"), Build.T("Görevden al (kulüpsüz kalır)", "Release (no club)"),
+			Build.T("Aynı personel listelerine (antrenör, sağlık, gözlemci) eklenir; sözleşmesi aynı kalır.", "Joins the same staff lists (coaching, medical, scouting); same contract."));
+	}
+
+	private MoveWindow(GameData data, Func<ulong, MovePlan> planner, string who, string moveText, string? releaseText, string hintText)
+		: base(Build.T("Kulübe taşı", "Move to club") + " · " + who, Build.T("Uygula", "Apply"))
 	{
 		_data = data;
-		_player = player;
-		_move = new RadioButton { Content = Build.T("Başka kulübe taşı (bonservissiz)", "Move to another club (free transfer)"), IsChecked = true, GroupName = "mv", Margin = new Thickness(0, 0, 0, 4) };
-		_release = new RadioButton { Content = Build.T("Serbest bırak (sözleşmesi feshedilir)", "Release (contract ended)"), GroupName = "mv" };
+		_planner = planner;
+		_move = new RadioButton { Content = moveText, IsChecked = true, GroupName = "mv", Margin = new Thickness(0, 0, 0, 4) };
+		_release = new RadioButton { Content = releaseText ?? "", GroupName = "mv", Visibility = releaseText == null ? Visibility.Collapsed : Visibility.Visible };
 		Body.Children.Add(_move);
 		Body.Children.Add(_release);
 		Body.Children.Add(Label(Build.T("Kulüp ara", "Search club")));
@@ -164,8 +184,7 @@ public sealed class MoveWindow : ActionWindow
 		_clubs.Margin = new Thickness(0, 6, 0, 0);
 		_clubs.DisplayMemberPath = nameof(ClubRow.Name);
 		Body.Children.Add(_clubs);
-		var hint = Build.Text(Build.T("Oyuncu A takıma katılır; sözleşmesi (maaş, bitiş) aynı kalır. Sadece oyunun belleğinde yeri olan kadrolara taşınır.",
-			"He joins the senior team on his contract (same wage and end date). Only squads with room in the game's memory take him."), 12, Build.Res("Muted"));
+		var hint = Build.Text(hintText, 12, Build.Res("Muted"));
 		hint.TextWrapping = TextWrapping.Wrap;
 		hint.Margin = new Thickness(0, 8, 0, 0);
 		Body.Children.Add(hint);
@@ -204,7 +223,7 @@ public sealed class MoveWindow : ActionWindow
 			Cursor = System.Windows.Input.Cursors.Wait;
 			Result.Foreground = Build.Res("Muted");
 			Result.Text = Build.T("Kontrol ediliyor...", "Checking...");
-			MovePlan plan = await System.Threading.Tasks.Task.Run(() => Transfers.Plan(_data, _player, club));
+			MovePlan plan = await System.Threading.Tasks.Task.Run(() => _planner(club));
 			if (mine != _checks)
 			{
 				return;
@@ -235,13 +254,48 @@ public sealed class MoveWindow : ActionWindow
 		}
 		try
 		{
-			GameWrite.Apply(_data, _release.IsChecked == true ? Build.T("Serbest bırakma", "Release") : Build.T("Kulüp değişikliği", "Club move"), _plan.Writes);
+			GameWrite.Apply(_data, _plan.Summary, _plan.Writes);
 			Done = _plan;
 			DialogResult = true;
 		}
 		catch (Exception e)
 		{
 			ShowError(e);
+		}
+	}
+}
+
+/// <summary>Shows a plan and asks before writing it (loan recall, loan made permanent).</summary>
+public static class PlanConfirm
+{
+	public static bool Run(Window owner, GameData data, Func<MovePlan> planner, INavigator nav)
+	{
+		MovePlan plan;
+		try
+		{
+			plan = planner();
+		}
+		catch (Exception e)
+		{
+			MessageBox.Show(owner, e.Message, "SquadEditor", MessageBoxButton.OK, MessageBoxImage.Warning);
+			return false;
+		}
+		string text = plan.Summary + "\n\n" + string.Join("\n", plan.Steps.Select(s => "•  " + s)) + "\n\n" +
+			Build.T("Kaydın yedeği alındı mı? Yazılsın mı?", "Is your save backed up? Write it?");
+		if (MessageBox.Show(owner, text, "SquadEditor", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+		{
+			return false;
+		}
+		try
+		{
+			GameWrite.Apply(data, plan.Summary, plan.Writes);
+			nav.SetStatus(plan.Summary + Build.T(" Ctrl+Z geri alır.", " Ctrl+Z undoes it."));
+			return true;
+		}
+		catch (Exception e)
+		{
+			MessageBox.Show(owner, e.Message, "SquadEditor", MessageBoxButton.OK, MessageBoxImage.Warning);
+			return false;
 		}
 	}
 }

@@ -13,8 +13,10 @@
 - **Oyuncular:** bütün teknik, zihinsel, fiziksel, kalecilik ve gizli özellikler, CA / PA, sahada mevki puanları, kondisyon, moral, değer, itibar (güncel, yerel, dünya), boy, doğum tarihi, maaş ve sözleşme bitişi.
 - **Personel:** menajer, antrenör, gözlemci, fizyoterapist ve diğerleri: antrenörlük, zihinsel, bilgi ve medikal özellikler, kişilik, CA / PA, itibar, görev, maaş ve sözleşme.
 - **Kulüpler:** A takım ve genç takımlara ayrılmış kadro, personel listesi, bakiye, transfer ve maaş bütçesi, bilet fiyatı, tesisler, stadyum, itibar ve taraftarlar.
-- **Oyuncu ve personelin adını değiştir, oyuncuyu başka kulübe taşı ya da serbest bırak** (A takıma bonservissiz, sözleşmesi aynı). Sadece oyunun kendi belleğinin izin verdiği yazılır: oyunda kayıtlı bir isim ya da eskisinin yerine yenisi.
-- **Her şeyi ara** (Ctrl+F). Aksan fark etmez: "fenerbahce" yazınca Fenerbahçe'yi bulur. Oyuncu, personel ve kulüpler sekmelerde açılır.
+- **İsim değiştirme, transfer, serbest oyuncu imzalama, kiralık ve personel taşıma:** oyuncu ve personelin adını değiştir, oyuncuyu başka kulübe taşı ya da serbest bırak, serbest oyuncu imzala, kiralık oyuncuyu geri çağır veya kalıcı yap, personeli başka kulübe taşı/görevden al. Sadece oyunun kendi belleğinin izin verdiği yazılır (oyunun kendi havuzları ve korumalı geri alma ile).
+- **Dondurma (❄):** oyuncu ve personel özelliklerini oyun motoru düşüremesin diye tek tek ya da topluca kilitle, üst çubuktaki **Dondurulanlar** sekmesinden yönet.
+- **Gözlemci filtreleri ve hızlı arama:** veritabanında mevki, yaş, CA/PA, serbest oyuncular, sakat/cezalı veya wonderkid filtreleri; aksan fark etmeyen genel arama (**Ctrl+F**) ve **F5** ile tek tık kayıt yenileme.
+- **Sakatlık ve cezalar:** oyuncunun sakatlıklarını iyileştir ve cezalarını kaldır (tekil ya da kadroda çoklu seçimle).
 - **Ön ayarlar** (Tam kondisyon ve moral, Wonderkid yap, Dünya yıldızı, Zengin patron, özellikleri fulle…): tek kayda ya da sağ tıkla kadroda seçtiğin bütün oyunculara.
 - **Geri alma:** her değişiklik Ctrl+Z ile geri alınır.
 - **Para senin istediğin gibi:** £, €, $ ya da ₺ (kur değiştirilebilir); maaşlar haftalık, aylık ya da yıllık.
@@ -47,8 +49,8 @@ Tersine mühendislik notları: [docs/fm27-notes.md](docs/fm27-notes.md). Bazı a
 
 ## Yol haritası
 
-- Serbest oyuncu almak, personel taşımak, kiralık
 - Yarışmalar ve uluslar
+- Kulüpsüz personel işe alma
 
 Katkı her zaman açık: bir alan eklemenin ya da yamadan sonra düzeltmenin en kolay yolu `layouts/fm27.json` ile pull request açmak.
 

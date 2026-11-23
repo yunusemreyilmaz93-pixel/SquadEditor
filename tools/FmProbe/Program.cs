@@ -329,7 +329,7 @@ switch (cmd)
         int shown = 0;
         foreach (var (vt, count) in hist.OrderByDescending(kv => kv.Value))
         {
-            string name = RttiName(vt, gp.Start);
+            string? name = RttiName(vt, gp.Start);
             if (name == null) continue;
             Console.WriteLine($"{count,9}  gp+{vt - gp.Start:X}  {name}");
             if (++shown >= top) break;

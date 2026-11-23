@@ -29,7 +29,7 @@ public sealed class Loc : INotifyPropertyChanged
 	{
 		get
 		{
-			if (!_strings.TryGetValue(key, out string value))
+			if (!_strings.TryGetValue(key, out string? value))
 			{
 				return _fallback.GetValueOrDefault(key, key);
 			}

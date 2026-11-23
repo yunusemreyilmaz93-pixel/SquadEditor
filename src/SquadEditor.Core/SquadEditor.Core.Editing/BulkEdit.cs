@@ -18,7 +18,7 @@ public static class BulkEdit
 	{
 		int num = 0;
 		int num2 = 0;
-		string text = null;
+		string? text = null;
 		using (session.History.BeginBatch(batchLabel))
 		{
 			foreach (BulkTarget target in targets)
@@ -72,7 +72,7 @@ public static class BulkEdit
 		}
 		int num = 0;
 		int num2 = 0;
-		string text = null;
+		string? text = null;
 		using (session.History.BeginBatch(batchLabel))
 		{
 			foreach (BulkTarget item2 in targets.Where((BulkTarget t) => t.Address != source))

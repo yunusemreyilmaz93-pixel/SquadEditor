@@ -13,8 +13,10 @@
 - **Players:** all technical, mental, physical, goalkeeping and hidden attributes, CA / PA, position ratings on a pitch, condition, morale, value, reputation (current, home, world), height, date of birth, wage and contract end.
 - **Staff:** managers, coaches, scouts, physios and the rest: coaching, mental, knowledge and medical attributes, personality, CA / PA, reputation, job, wage and contract.
 - **Clubs:** squad split into first team and youth teams, staff list, balance, transfer and wage budgets, ticket price, facilities, stadium, reputation and supporters.
-- **Rename players and staff, move a player to another club or release him** (free transfer to the senior team, his contract kept). Only what the game's own memory allows is written: a name the game already has, or a new one in place of the old.
-- **Search everything** (Ctrl+F) with accent-insensitive matching ("fenerbahce" finds Fenerbahçe). Open players, staff and clubs in tabs.
+- **Rename, transfer, sign free agents, loans & staff moves:** rename players and staff, move or release players, sign free agents, recall or make loans permanent, and move/release staff. Only what the game's own memory allows is written (using the game's own pools and guarded undo).
+- **Freeze players and staff (❄):** lock attributes so the game engine cannot lower them as days pass, individually or in bulk, with a dedicated Frozen list.
+- **Scout & filter:** filter players by position, age, CA/PA, free agents, injured/banned, or wonderkids right on the database screen; plus instant global search (**Ctrl+F**) with accent-insensitive matching ("fenerbahce" finds Fenerbahçe) and **F5** save reload.
+- **Injuries & bans:** inspect, heal injuries and lift bans on a profile or for a multi-row selection.
 - **Presets** (Heal and inspire, Wonderkid, World star, Rich owner, max attributes…) on one record or, with right-click, on every selected player of a squad.
 - **Undo** every change (Ctrl+Z).
 - **Your way of seeing money:** £, €, $ or ₺ with editable exchange rates; wages per week, month or year.
@@ -52,8 +54,8 @@ dotnet publish src/SquadEditor.App/SquadEditor.csproj -c Release -r win-x64 --se
 
 ## Roadmap
 
-- Signing free agents, moving staff, loans
 - Competitions and nations
+- Hiring unemployed staff
 
 Contributions are welcome: a pull request with an updated `layouts/fm27.json` is the easiest way to add a field or fix one after a game patch.
 
