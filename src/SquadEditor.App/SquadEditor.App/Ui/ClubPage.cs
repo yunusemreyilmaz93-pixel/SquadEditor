@@ -44,6 +44,7 @@ public sealed class ClubPage : UserControl, IPage
 		Build.NavItem(menu, Build.T("En İyi 11", "Best XI"), () => content.Content = ClubBestXi.BuildView(_data, _club, _nav));
 		Build.NavItem(menu, Build.T("Personel", "Staff"), () => content.Content = StaffList());
 		Build.NavItem(menu, Build.T("Finans", "Finances"), () => content.Content = Finances());
+		Build.NavItem(menu, Build.T("İlişkiler", "Relationships"), () => content.Content = ClubRelationships.BuildTab(_data, _club, _nav));
 		Build.NavItem(menu, Build.T("Bilgi ve tesisler", "Info & facilities"), () => content.Content = Info());
 		_root.Children.Add(body);
 		Content = _root;
@@ -456,7 +457,32 @@ public sealed class ClubPage : UserControl, IPage
 		left.Children.Add(Build.Card(Build.T("Genel", "General"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "General"))));
 		left.Children.Add(Build.Card(Build.T("Taraftarlar (1-20)", "Supporters (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Supporters"))));
 		var right = new StackPanel();
-		right.Children.Add(Build.Card(Build.T("Tesisler (1-20)", "Facilities (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Facilities"))));
+		var facQuick = new Button
+		{
+			Content = Build.T("⭐ Tüm Tesisleri 20 Yap", "⭐ Max All Facilities (20)"),
+			Padding = new Thickness(8, 2, 8, 2),
+			FontSize = 11,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode,
+			ToolTip = Build.T("Antrenman, Altyapı, Gençlik ve Stadyum Zeminini maksimuma çıkarır (Ctrl+Z geri alır)", "Maxes Training, Youth, Junior Coaching, Recruitment & Pitch Condition (Ctrl+Z undoes)")
+		};
+		facQuick.Click += (_, _) =>
+		{
+			using (_data.Session.History.BeginBatch(Build.T($"{_club.Name}: Tesisleri fulle", $"{_club.Name}: Max facilities")))
+			{
+				foreach (EditField ef in _fields.Where(f => f.Def.GroupKey == "Facilities" && f.Def.IsWritable && f.Def.Max.HasValue))
+				{
+					try { _data.Session.WriteField(_club.Address, ef.Def, ef.Def.Max.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
+				}
+				var pitch = _fields.FirstOrDefault(f => f.Key == "Pitch Condition" && f.Def.IsWritable);
+				if (pitch?.Def.Max is double pm)
+				{
+					try { _data.Session.WriteField(_club.Address, pitch.Def, pm.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
+				}
+			}
+			RefreshValues();
+			_nav.SetStatus(Build.T($"✓ {_club.Name}: Tüm tesisler ve saha zemini maksimuma çıkarıldı. Ctrl+Z geri alır.", $"✓ {_club.Name}: All facilities & pitch condition maxed. Ctrl+Z undoes it."));
+		};
+		right.Children.Add(Build.Card(Build.T("Tesisler (1-20)", "Facilities (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Facilities")), facQuick));
 		right.Children.Add(Build.Card(Build.T("Stadyum", "Stadium"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Stadium"))));
 		Grid.SetColumn(right, 1);
 		grid.Children.Add(left);
