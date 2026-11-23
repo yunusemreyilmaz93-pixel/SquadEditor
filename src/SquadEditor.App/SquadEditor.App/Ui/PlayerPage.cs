@@ -573,14 +573,118 @@ public sealed class PlayerPage : UserControl, IPage
 		var grid = new Grid { MaxWidth = 1080, HorizontalAlignment = HorizontalAlignment.Left };
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
-		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"),
-			Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "Nation", "City of Birth", "Height"))),
+		var personalRows = Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "City of Birth", "Height"));
+		personalRows.Children.Insert(6, NationPickerRow());
+		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"), personalRows),
+			Build.Card(Build.T("Konuştuğu Diller (1-10)", "Spoken Languages (1-10)"), LanguagesPanel()),
 			Build.Card(Build.T("Tercih Ettiği Hareketler", "Player Traits"), TraitsPanel()),
 			Build.Card(Build.T("Milli takım", "International"), Build.Rows(Group("International"))));
 		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
 			Build.Card(Build.T("Sözleşme Maddeleri ve Bonuslar", "Contract Clauses & Bonuses"), ClausesPanel()),
 			Build.Card(Build.T("İtibar (0-10000)", "Reputation (0-10000)"), Build.Rows(Named("Current Reputation", "Home Reputation", "World Reputation"))));
 		return Build.Scroll(grid);
+	}
+
+	private UIElement NationPickerRow()
+	{
+		var grid = new Grid { Margin = new Thickness(6, 0, 6, 0), Height = AppSettings.Current.Compact ? 25 : 30 };
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+		var label = Build.Text(Build.T("Uyruk", "Nation"), 13, Build.Res("Muted"));
+		label.Margin = new Thickness(8, 0, 8, 0);
+		grid.Children.Add(label);
+
+		ulong curAddr = PlayerIdentity.ReadPrimaryNation(_data.Memory, Address);
+		var nations = _data.Nations.OrderBy(n => n.Name).ToList();
+		var combo = new ComboBox
+		{
+			Width = 180,
+			Height = 26,
+			FontSize = 12.5,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode && nations.Count > 0,
+			ItemsSource = nations,
+			DisplayMemberPath = nameof(NationRow.Name),
+			SelectedValuePath = nameof(NationRow.Address),
+			SelectedValue = curAddr,
+			ToolTip = Build.T("Oyuncunun ana uyruğunu değiştir (Ctrl+Z geri alır)", "Change player's primary nationality (Ctrl+Z undoes)")
+		};
+		combo.SelectionChanged += (_, _) =>
+		{
+			if (combo.SelectedItem is NationRow nr && nr.Address != PlayerIdentity.ReadPrimaryNation(_data.Memory, Address))
+			{
+				string oldName = _f["Nation"].Value;
+				try
+				{
+					PlayerIdentity.SetPrimaryNation(_data, Address, nr.Address, oldName, nr.Name, Name);
+					_f["Nation"].Refresh();
+					RebuildHeader();
+					_nav.SetStatus(Build.T($"✓ {Name} uyruğu {nr.Name} olarak değiştirildi. Ctrl+Z geri alır.", $"✓ {Name}'s nation changed to {nr.Name}. Ctrl+Z undoes it."));
+				}
+				catch (Exception ex)
+				{
+					_nav.SetStatus(ex.Message);
+				}
+			}
+		};
+		Grid.SetColumn(combo, 1);
+		grid.Children.Add(combo);
+		return grid;
+	}
+
+	private UIElement LanguagesPanel()
+	{
+		var host = new ContentControl();
+		void Fill()
+		{
+			var stack = new StackPanel { Margin = new Thickness(12, 2, 12, 10) };
+			var langs = PlayerIdentity.ReadLanguages(_data.Memory, Address);
+			if (langs.Count == 0)
+			{
+				stack.Children.Add(Build.Text(Build.T("Kayıtlı ekstra dil yok (ana dili uyruğundan gelir).", "No extra languages recorded (native language comes from nation)."), 12, Build.Res("Muted")));
+			}
+			bool canWrite = !AppSettings.Current.ReadOnlyMode;
+			foreach (SpokenLanguage lang in langs)
+			{
+				SpokenLanguage current = lang;
+				var row = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
+				var del = new Button { Content = "✕", Style = Build.StyleOf("GhostButton"), Padding = new Thickness(6, 1, 6, 1), FontSize = 11, Margin = new Thickness(6, 0, 0, 0), IsEnabled = canWrite, ToolTip = Build.T("Dili sil (Ctrl+Z geri alır)", "Remove language (Ctrl+Z undoes)") };
+				del.Click += (_, _) =>
+				{
+					PlayerIdentity.RemoveLanguage(_data, Address, current.Index, current.Name, Name);
+					_nav.SetStatus(Build.T($"✓ {Name}: {current.Name} dili silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed {current.Name}. Ctrl+Z undoes it."));
+					Fill();
+				};
+				var fluencyBox = new ComboBox
+				{
+					Width = 110,
+					Height = 25,
+					FontSize = 11.5,
+					IsEnabled = canWrite,
+					ItemsSource = Enumerable.Range(1, 10).Select(v => new KeyValuePair<int, string>(v, v == 10 ? Build.T("10 (Akıcı)", "10 (Fluent)") : v >= 7 ? Build.T($"{v} (İyi)", $"{v} (Good)") : Build.T($"{v} (Temel)", $"{v} (Basic)"))).ToList(),
+					DisplayMemberPath = "Value",
+					SelectedValuePath = "Key",
+					SelectedValue = current.Fluency
+				};
+				fluencyBox.SelectionChanged += (_, _) =>
+				{
+					if (fluencyBox.SelectedValue is int v && v != current.Fluency)
+					{
+						PlayerIdentity.SetFluency(_data, current, v, Name);
+						_nav.SetStatus(Build.T($"✓ {Name} · {current.Name} akıcılığı {v}/10 yapıldı. Ctrl+Z geri alır.", $"✓ {Name} · {current.Name} fluency set to {v}/10. Ctrl+Z undoes it."));
+						Fill();
+					}
+				};
+				DockPanel.SetDock(del, Dock.Right);
+				DockPanel.SetDock(fluencyBox, Dock.Right);
+				row.Children.Add(del);
+				row.Children.Add(fluencyBox);
+				row.Children.Add(Build.Text(current.Name, 12.5, Build.Res("Text")));
+				stack.Children.Add(row);
+			}
+			host.Content = stack;
+		}
+		Fill();
+		return host;
 	}
 
 	private UIElement TraitsPanel()

@@ -19,6 +19,9 @@ public sealed class ClubPage : UserControl, IPage
 	private readonly DockPanel _root = new DockPanel();
 	private Border _header;
 	private string? _team;
+	private UIElement? _squadView;
+	private string? _squadSortMember;
+	private System.ComponentModel.ListSortDirection? _squadSortDir;
 
 	public ClubPage(GameData data, ClubRow club, INavigator nav)
 	{
@@ -37,7 +40,7 @@ public sealed class ClubPage : UserControl, IPage
 		DockPanel.SetDock(_header, Dock.Top);
 		_root.Children.Add(_header);
 		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
-		Build.NavItem(menu, Build.T("Kadro", "Squad"), () => content.Content = Squad(), isChecked: true);
+		Build.NavItem(menu, Build.T("Kadro", "Squad"), () => content.Content = _squadView ??= Squad(), isChecked: true);
 		Build.NavItem(menu, Build.T("Personel", "Staff"), () => content.Content = StaffList());
 		Build.NavItem(menu, Build.T("Finans", "Finances"), () => content.Content = Finances());
 		Build.NavItem(menu, Build.T("Bilgi ve tesisler", "Info & facilities"), () => content.Content = Info());
@@ -109,6 +112,31 @@ public sealed class ClubPage : UserControl, IPage
 			_team = team;
 			var rows = (team == null ? all : all.Where(p => p.Team == team)).OrderByDescending(p => p.CA);
 			currentGrid = PlayerGrid(_data, rows, _nav, showClub: false, showTeam: team == null);
+			// Remember user's sort column/direction across team tabs (A Takım / U19 / Tümü)
+			currentGrid.Sorting += (_, e) =>
+			{
+				string? path = e.Column.SortMemberPath;
+				if (!string.IsNullOrEmpty(path))
+				{
+					var nextDir = e.Column.SortDirection == System.ComponentModel.ListSortDirection.Ascending
+						? System.ComponentModel.ListSortDirection.Descending
+						: System.ComponentModel.ListSortDirection.Ascending;
+					_squadSortMember = path;
+					_squadSortDir = nextDir;
+				}
+			};
+			if (!string.IsNullOrEmpty(_squadSortMember) && _squadSortDir.HasValue)
+			{
+				currentGrid.Items.SortDescriptions.Clear();
+				currentGrid.Items.SortDescriptions.Add(new System.ComponentModel.SortDescription(_squadSortMember, _squadSortDir.Value));
+				foreach (var col in currentGrid.Columns)
+				{
+					if (col.SortMemberPath == _squadSortMember)
+					{
+						col.SortDirection = _squadSortDir.Value;
+					}
+				}
+			}
 			host.Content = new Border { Style = Build.StyleOf("CardBorder"), Padding = new Thickness(4), Child = currentGrid };
 		}
 		var everyone = new RadioButton { Content = Build.T($"Tümü ({all.Count})", $"All ({all.Count})"), Style = Build.StyleOf("Segment"), GroupName = "teams" + _club.Address };
