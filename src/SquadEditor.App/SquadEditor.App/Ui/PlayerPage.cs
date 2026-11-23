@@ -273,8 +273,8 @@ public sealed class PlayerPage : UserControl, IPage
 			};
 			var healMax = new Button
 			{
-				Content = Build.T("⚡ İyileştir & Fulle", "⚡ Heal & Max"),
-				ToolTip = Build.T("Sakatlık ve cezayı kaldırır, kondisyon/maç formu/morali %100 yapar", "Heals injuries, lifts bans, and maxes condition, sharpness & morale"),
+				Content = Build.T("⚡ Kondisyon & Moral Fulle", "⚡ Max Fitness & Morale"),
+				ToolTip = Build.T("Sadece sakatlık/cezayı kaldırır ve kondisyon, maç formu, morali %100 yapar (yetenek özelliklerine dokunmaz)", "Only heals injuries/bans and maxes condition, sharpness & morale (does not touch attributes)"),
 				Padding = new Thickness(10, 4, 10, 4),
 				Margin = new Thickness(0, 0, 6, 0),
 				IsEnabled = canWrite
@@ -416,15 +416,15 @@ public sealed class PlayerPage : UserControl, IPage
 
 		AddColumn(grid, 0, Build.Card(Build.T("Teknik", "Technical"), host, toggle),
 			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, RefreshValues, _nav));
-		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"))));
+		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"))),
+			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))));
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
-			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))));
+			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))),
+			Build.Card(Build.T("Mevki", "Position"), MiniPitch(220)));
 		AddColumn(grid, 3,
 			Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
 			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
-			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),
-			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))),
-			Build.Card(Build.T("Mevki", "Position"), MiniPitch(250)));
+			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))));
 		return Build.Scroll(grid);
 	}
 

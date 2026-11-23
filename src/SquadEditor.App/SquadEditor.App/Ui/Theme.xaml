@@ -111,6 +111,18 @@
     </Setter>
   </Style>
 
+  <!-- Default RadioButton & CheckBox foreground for dialogs -->
+  <Style TargetType="RadioButton">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+  <Style TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="FontSize" Value="13"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+
   <!-- Left menu -->
   <Style x:Key="NavItem" TargetType="RadioButton">
     <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
