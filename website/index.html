@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Squadeditor — Football Manager 27 için Ücretsiz Editör ve Scout</title>
+  <title>Squadeditor — FM27 için Hızlı ve Ücretsiz Gerçek Zamanlı Editör ve Scout</title>
   <meta name="description" content="Football Manager 27 için ücretsiz, hızlı ve açık kaynaklı gerçek zamanlı editör ve scout aracı. 12 dil, 4 canlı tema, gerçek regen ve 5 yıldızlı personel arama." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Squadeditor — Free Real-Time Editor &amp; Scout for FM27" />
+  <meta property="og:description" content="Edit players, staff, clubs and finances live while FM27 runs. 12 authentic FM languages, true regen &amp; 5-star coach finder, safe Ctrl+Z undo." />
+  <meta property="og:image" content="./assets/shot_player_overview.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@basitbioyun" />
+  <meta name="twitter:title" content="Squadeditor — Free Real-Time Editor &amp; Scout for FM27" />
+  <meta name="twitter:description" content="Free, open-source real-time editor and scout for Football Manager 27 on Windows. 12 languages, 4 live themes, safe undo." />
+  <meta name="twitter:image" content="./assets/shot_player_overview.png" />
   <link rel="icon" href="./assets/app.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -198,7 +207,7 @@
     .btn-sm { padding: 7px 14px; font-size: 13px; }
     .btn-lg { padding: 13px 24px; font-size: 15px; border-radius: 10px; }
 
-    /* Hero — centered clean typography & centered buttons */
+    /* Hero */
     .hero {
       padding: 68px 0 60px;
     }
@@ -242,8 +251,23 @@
       font-size: 13px;
       color: var(--ink-3);
     }
+    .hero-trust {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      font-size: 12.5px;
+      color: var(--ink-3);
+    }
+    .hero-trust a {
+      color: var(--ink-2);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .hero-trust a:hover { color: var(--ink); }
 
-    /* Auto-advancing Screen Showcase */
+    /* Auto-advancing Screen Showcase + Click-to-Zoom Lightbox */
     .showcase {
       background: var(--surface);
       border: 1px solid var(--line);
@@ -297,12 +321,13 @@
     .stage {
       position: relative;
       background: var(--surface-soft);
-      aspect-ratio: 16 / 9.4;
+      aspect-ratio: 16 / 9.2;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 20px;
       overflow: hidden;
+      cursor: zoom-in;
     }
     .stage img {
       max-width: 100%;
@@ -317,6 +342,21 @@
       opacity: 0;
       transform: scale(0.985);
     }
+    .zoom-hint {
+      position: absolute;
+      right: 16px;
+      bottom: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 7px;
+      background: rgba(14, 16, 20, 0.72);
+      color: #f3f5f8;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    .zoom-hint svg.ic { width: 14px; height: 14px; }
     .progress-track {
       height: 3px;
       background: var(--line);
@@ -327,6 +367,26 @@
       width: 0%;
       background: var(--accent);
       transition: width 0.1s linear;
+    }
+
+    /* Lightbox Modal */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(8, 10, 14, 0.88);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 96vw;
+      max-height: 92vh;
+      border-radius: 10px;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.65);
     }
 
     /* Sections */
@@ -408,6 +468,42 @@
       line-height: 1.55;
     }
 
+    /* 4-Step Quick Start (Casual-Friendly) */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px 22px;
+    }
+    .step-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--surface-soft);
+      color: var(--accent);
+      font-size: 13.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    .step-card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .step-card p {
+      font-size: 13.5px;
+      color: var(--ink-2);
+      line-height: 1.55;
+    }
+
     /* 12 Languages with Official 4:3 SVG Flags */
     .lang-grid {
       display: grid;
@@ -443,7 +539,7 @@
     /* About + FAQ Split */
     .split-2 {
       display: grid;
-      grid-template-columns: 0.95fr 1.05fr;
+      grid-template-columns: 0.92fr 1.08fr;
       gap: 48px;
       align-items: start;
     }
@@ -540,6 +636,11 @@
       color: var(--ink-2);
       font-size: 14.5px;
     }
+    .dl-meta {
+      margin-top: 8px;
+      font-size: 12.5px;
+      color: var(--ink-3);
+    }
 
     /* Footer */
     footer {
@@ -587,9 +688,13 @@
 
     @media (max-width: 920px) {
       .feat-groups, .split-2 { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: repeat(2, 1fr); }
       .lang-grid { grid-template-columns: repeat(2, 1fr); }
       nav { display: none; }
       .dl-box { padding: 28px 24px; }
+    }
+    @media (max-width: 560px) {
+      .steps-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -602,9 +707,10 @@
       </a>
       <nav>
         <a href="#features" data-i18n="nav.features">Özellikler</a>
+        <a href="#howto" data-i18n="nav.howto">Nasıl Kullanılır?</a>
         <a href="#languages" data-i18n="nav.languages">Diller</a>
         <a href="#about" data-i18n="nav.about">Hakkında</a>
-        <a href="#about" data-i18n="nav.faq">SSS</a>
+        <a href="#faq" data-i18n="nav.faq">SSS</a>
       </nav>
       <div class="bar-right">
         <button type="button" class="icon-btn" id="themeToggle" aria-label="Tema değiştir" title="Açık / Koyu Tema">
@@ -623,7 +729,7 @@
   </header>
 
   <main>
-    <!-- Hero + Auto-Advancing Real Screen Showcase -->
+    <!-- Hero + Real Live App Screen Showcase -->
     <div class="hero">
       <div class="wrap">
         <div class="hero-top">
@@ -640,6 +746,11 @@
             <a href="#features" class="btn btn-outline btn-lg" data-i18n="hero.explore">Tüm Özelliklere Bak</a>
           </div>
           <p class="hero-note" data-i18n="hero.note">Kurulum gerektirmez, tek dosya olarak çalışır.</p>
+          <div class="hero-trust">
+            <span id="releaseInfo">v1.0.0 · Açık Kaynak (MIT)</span>
+            <a id="sourceLink" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" data-i18n="trust.source">Kaynak Kodu (GitHub)</a>
+            <a href="#faq" data-i18n="trust.smartscreen">İlk açılışta SmartScreen uyarısı normaldir</a>
+          </div>
         </div>
 
         <div class="showcase" id="showcase">
@@ -655,8 +766,12 @@
               </button>
             </div>
           </div>
-          <div class="stage">
-            <img id="slideImg" src="./assets/shot_light.png" alt="Squadeditor ekran görüntüsü" />
+          <div class="stage" id="stageBox">
+            <img id="slideImg" src="./assets/shot_player_overview.png" alt="Squadeditor ekran görüntüsü" />
+            <span class="zoom-hint">
+              <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              <span data-i18n="zoom.hint">Büyütmek için tıklayın</span>
+            </span>
           </div>
           <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
         </div>
@@ -685,7 +800,7 @@
               </li>
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <div><strong data-i18n="g1.f2t">Gelişmiş Oyuncu Filtresi &amp; Hazır Şablonlar</strong><span data-i18n="g1.f2d">Uyruk, bölge, mevki, rol reytingi, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.</span></div>
+                <div><strong data-i18n="g1.f2t">Gelişmiş Oyuncu Filtresi &amp; Hazır Şablonlar</strong><span data-i18n="g1.f2d">Uyruk, bölge, mevki, rol uygunluğu, sözleşme bitişi, mevcut/potansiyel yetenek ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.</span></div>
               </li>
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -707,7 +822,7 @@
             <ul class="feat-list">
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <div><strong data-i18n="g2.f1t">5★ Antrenör, Gözlemci &amp; Fizyoterapist Filtresi</strong><span data-i18n="g2.f1d">1–20 personel özelliklerine göre doğrudan arama yapabilir, tek tıkla "TD Hariç" seçeneğiyle boştaki teknik direktörleri gizleyebilirsiniz.</span></div>
+                <div><strong data-i18n="g2.f1t">5★ Antrenör, Gözlemci &amp; Fizyoterapist Filtresi</strong><span data-i18n="g2.f1d">1–20 personel özelliklerine göre doğrudan arama yapabilir, tek tıkla "Teknik Direktörler Hariç" seçeneğiyle boştaki menajerleri gizleyebilirsiniz.</span></div>
               </li>
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -745,7 +860,7 @@
               </li>
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <div><strong data-i18n="g3.f4t">Toplu Düzenleme, Sözleşme Uzatma &amp; Dondurma</strong><span data-i18n="g3.f4d">Birden fazla oyuncunun özelliklerini toplu değiştirebilir, tüm kadronun sözleşmesini toplu uzatabilir veya seçtiğiniz değerleri sabit tutmak için dondurabilirsiniz.</span></div>
+                <div><strong data-i18n="g3.f4t">Toplu Düzenleme, Sözleşme Uzatma &amp; Değer Sabitleme</strong><span data-i18n="g3.f4d">Birden fazla oyuncunun özelliklerini toplu değiştirebilir, tüm kadronun sözleşmesini uzatabilir veya seçtiğiniz değerlerin düşmemesi için dondurabilirsiniz.</span></div>
               </li>
             </ul>
           </div>
@@ -759,19 +874,19 @@
             <ul class="feat-list">
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <div><strong data-i18n="g4.f1t">4 Canlı Tema &amp; Logo / Yüz Paketi Desteği</strong><span data-i18n="g4.f1d">FM Gece Laciverti, OLED Siyah, WTCS Kömür &amp; Altın ve Açık tema arasında anında geçiş yapabilirsiniz. FM graphics klasöründeki logolar ve yüzler otomatik yüklenir.</span></div>
+                <div><strong data-i18n="g4.f1t">4 Canlı Tema &amp; Logo / Yüz Paketi Desteği</strong><span data-i18n="g4.f1d">Gece, OLED Siyah, Kömür &amp; Altın ve Açık tema arasında anında geçiş yapabilirsiniz. Oyundaki logo ve yüz paketleriniz otomatik yüklenir.</span></div>
               </li>
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <div><strong data-i18n="g4.f2t">Komut Paleti, Global Arama &amp; Hızlı Kısayollar</strong><span data-i18n="g4.f2d">Oyuncu, kulüp, ülke ve liglerde anında arama yapabilir; fare tekeriyle sayıları hızla değiştirebilir; kısa liste (Shortlist) oluşturup CSV dışa aktarabilirsiniz.</span></div>
+                <div><strong data-i18n="g4.f2t">Hızlı Arama, Kısayollar &amp; Kısa Liste</strong><span data-i18n="g4.f2d">Oyuncu, kulüp, ülke ve liglerde anında arama yapabilir; fare tekeriyle sayıları hızla değiştirebilir; beğendiğiniz oyuncuları kısa listeye ekleyip dışa aktarabilirsiniz.</span></div>
               </li>
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <div><strong data-i18n="g4.f3t">Doğrulamalı Yazma &amp; Tam Geri Alma Geçmişi</strong><span data-i18n="g4.f3d">Yazmadan önce bellek adresi doğrulanır, yapılan her düzenleme oturum geçmişinde tutulur ve tek tuşla geri alınabilir.</span></div>
+                <div><strong data-i18n="g4.f3t">Otomatik Yazma Koruması &amp; Geri Alma Geçmişi</strong><span data-i18n="g4.f3d">Her değişiklik öncesinde doğrulama yapılır, yapılan tüm işlemler geçmişe kaydedilir ve istediğiniz zaman tek tuşla geri alınabilir.</span></div>
               </li>
               <li>
                 <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                <div><strong data-i18n="g4.f4t">Kayıt Yedekleme &amp; Salt Okunur Mod</strong><span data-i18n="g4.f4d">Üst bardan tek tıkla güncel kariyer kaydınızın yedeğini alabilir; sadece scout yapmak isterseniz Salt Okunur modu açabilirsiniz.</span></div>
+                <div><strong data-i18n="g4.f4t">Tek Tıkla Kayıt Yedekleme &amp; Sadece İnceleme Modu</strong><span data-i18n="g4.f4d">Üst bardan tek tıkla güncel kariyer kaydınızın yedeğini alabilir; oyuna hiç dokunmadan sadece oyuncu aramak için Salt Okunur modu açabilirsiniz.</span></div>
               </li>
             </ul>
           </div>
@@ -779,7 +894,39 @@
       </div>
     </section>
 
-    <!-- 12 Languages (Clean & Modest with Official SVG Flags) -->
+    <!-- 4-Step Quick Start -->
+    <section id="howto">
+      <div class="wrap">
+        <div class="sec-header">
+          <h2 data-i18n="how.h">Nasıl Kullanılır?</h2>
+          <p data-i18n="how.p">Dört basit adımda kariyerinize bağlanıp güvenle kullanmaya başlayabilirsiniz.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-badge">1</div>
+            <h3 data-i18n="st1.t">FM27'de kariyerinizi açın</h3>
+            <p data-i18n="st1.d">Önce Football Manager 27'yi başlatıp düzenlemek istediğiniz kariyer kaydını yükleyin.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-badge">2</div>
+            <h3 data-i18n="st2.t">Squadeditor'ı çalıştırın</h3>
+            <p data-i18n="st2.d">İndirdiğiniz dosyayı açın; program açık olan FM27'yi otomatik algılayıp saniyeler içinde bağlanır.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-badge">3</div>
+            <h3 data-i18n="st3.t">Tek tıkla yedeğinizi alın</h3>
+            <p data-i18n="st3.d">Büyük bir değişiklik yapmadan önce üst bardaki Yedek butonuna basarak kaydınızı güvenceye alın.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-badge">4</div>
+            <h3 data-i18n="st4.t">Scout yapın veya düzenleyin</h3>
+            <p data-i18n="st4.d">Yaptığınız her işlem anında oyuna yansır; vazgeçerseniz Ctrl+Z ile anında geri alabilirsiniz.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 Languages -->
     <section id="languages">
       <div class="wrap">
         <div class="sec-header">
@@ -790,7 +937,7 @@
       </div>
     </section>
 
-    <!-- About + FAQ -->
+    <!-- About + FAQ (Separate Anchors) -->
     <section id="about">
       <div class="wrap split-2">
         <div class="about-card">
@@ -803,41 +950,41 @@
           </p>
           <div class="about-sign">
             <span><span data-i18n="about.by">Geliştiren</span> <strong>Yunus Emre Yılmaz</strong></span>
-            <a id="aboutGh" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" class="btn btn-outline btn-sm" aria-label="GitHub">
+            <a id="aboutGh" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
               <svg class="ic" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
               <span data-i18n="about.repo">GitHub Deposu</span>
             </a>
           </div>
         </div>
 
-        <div class="faq-stack">
+        <div id="faq" class="faq-stack">
           <details class="faq" open>
             <summary>
               <span data-i18n="q1.q">Tamamen ücretsiz mi?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q1.a">Evet. Squadeditor tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.</p>
+            <p data-i18n="q1.a">Evet. Squadeditor MIT lisansı altında tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.</p>
           </details>
           <details class="faq">
             <summary>
               <span data-i18n="q2.q">Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q2.a">Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. "Ek bilgi → Yine de çalıştır" adımıyla güvenle açabilirsiniz.</p>
+            <p data-i18n="q2.a">Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. "Ek bilgi → Yine de çalıştır" adımıyla güvenle açabilir, dilerseniz GitHub üzerinden tüm kaynak kodunu inceleyebilirsiniz.</p>
           </details>
           <details class="faq">
             <summary>
-              <span data-i18n="q3.q">Kariyer kaydıma zarar verir mi?</span>
+              <span data-i18n="q3.q">Kariyer kaydıma zarar verir mi? Dondurma (Freeze) nasıl çalışır?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q3.a">Her yazma öncesinde bellek doğrulaması yapılır ve tüm değişiklikler geri alınabilir. Yine de büyük düzenlemelerden önce üst bardaki Yedek butonuyla kaydınızın kopyasını almanız en güvenli yöntemdir.</p>
+            <p data-i18n="q3.a">Oyuna herhangi bir DLL enjeksiyonu yapılmaz; tüm okumalar/yazmalar doğrulamalı bellek erişimiyle çalışır, Dondurma özelliği periyodik kontrolle değerleri korur ve tüm işlemler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce Yedek butonuyla kaydınızı yedeklemeniz önerilir.</p>
           </details>
           <details class="faq">
             <summary>
-              <span data-i18n="q4.q">Nasıl kullanılır ve hangi sürümle uyumlu?</span>
+              <span data-i18n="q4.q">Hangi sürümle uyumlu? FM27'ye yeni yama gelirse ne olur?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q4.a">Windows üzerinde Football Manager 27 (27.0.1) ile uyumludur. Oyunda kariyerinizi yükledikten sonra Squadeditor'ı açmanız yeterli; otomatik bağlanır.</p>
+            <p data-i18n="q4.a">Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. Bellek adresleri kod içine gömülü değildir; harici JSON düzeni ve dinamik tarama kullanıldığı için yeni FM27 yamalarında hızlıca güncellenir.</p>
           </details>
         </div>
       </div>
@@ -850,6 +997,7 @@
           <div>
             <h2 data-i18n="cta.h">Hemen indir.</h2>
             <p data-i18n="cta.p">Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.</p>
+            <p class="dl-meta" id="dlMeta">Sürüm v1.0.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)</p>
           </div>
           <a id="bottomDl" href="#download" class="btn btn-primary btn-lg">
             <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -875,8 +1023,19 @@
     </div>
   </footer>
 
+  <!-- Fullscreen Image Lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
+    <img id="lightboxImg" src="" alt="" />
+  </div>
+
   <script>
+    // =========================================================================
+    // TEK NOKTA AYAR BLOĞU — Yayınlarken doğrudan .exe/.zip linkini buraya koy
+    // =========================================================================
     const SITE_CONFIG = {
+      version: "v1.0.0",
+      // GitHub Release oluşturunca direkt dosya linkini koyabilirsiniz:
+      // Örn: "https://github.com/basitbioyun/SquadEditor/releases/latest/download/SquadEditor.exe"
       downloadUrl: "https://github.com/basitbioyun/SquadEditor/releases/latest",
       repoUrl: "https://github.com/basitbioyun/SquadEditor",
       socials: [
@@ -909,32 +1068,38 @@
       { flag: "kr", name: "한국어" }
     ];
 
+    // 6 distinct real screenshots (no duplicate modals!)
     const SLIDES = [
-      { id: "light", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png", tr: "Açık Tema", en: "Light Theme", capTr: "Açık tema · Gelişmiş Personel Filtresi", capEn: "Light theme · Advanced Staff Filter" },
-      { id: "staff", srcTr: "./assets/shot_staff.png", srcEn: "./assets/shot_staff_en.png", tr: "Koyu Tema", en: "Dark Theme", capTr: "Koyu tema · 5★ Antrenör & TD Hariç", capEn: "Dark theme · 5★ Coach & No Managers" },
-      { id: "scout", srcTr: "./assets/shot_scout.png", srcEn: "./assets/shot_scout_en.png", tr: "Oyuncu Scout", en: "Player Scout", capTr: "Gizli özellikler, uyruk ve rol reytingi", capEn: "Hidden attributes, nationality & role rating" },
-      { id: "settings", srcTr: "./assets/shot_settings_light.png", srcEn: "./assets/shot_settings_light_en.png", tr: "Ayarlar", en: "Settings", capTr: "4 canlı tema, 12 dil, para birimi ve grafikler", capEn: "4 live themes, 12 languages, currency & graphics" },
-      { id: "de", srcTr: "./assets/shot_de.png", srcEn: "./assets/shot_de.png", tr: "Almanca", en: "Deutsch", capTr: "Almanca arayüz örneği", capEn: "German interface preview" },
-      { id: "ja", srcTr: "./assets/shot_ja.png", srcEn: "./assets/shot_ja.png", tr: "Japonca", en: "日本語", capTr: "Japonca arayüz örneği", capEn: "Japanese interface preview" }
+      { id: "overview", srcTr: "./assets/shot_player_overview.png", srcEn: "./assets/shot_player_overview.png", tr: "Oyuncu & Radar", en: "Player & Radar", capTr: "Canlı oyuncu profili, 8 eksenli radar, CA/PA çubuğu ve mevki sahası", capEn: "Live player profile, 8-axis radar, CA/PA bar & pitch map" },
+      { id: "personal", srcTr: "./assets/shot_player_personal.jpg", srcEn: "./assets/shot_player_personal.jpg", tr: "Sözleşme & Uyruk", en: "Contract & Traits", capTr: "Sözleşme maddeleri, ikinci uyruk, diller ve tercih edilen hareketler", capEn: "Contract clauses, second nationalities, languages & player traits" },
+      { id: "relations", srcTr: "./assets/shot_club_relations.png", srcEn: "./assets/shot_club_relations.png", tr: "Kulüp İlişkileri", en: "Club Relations", capTr: "Canlı rakip kulüpler, efsaneler, ikonlar ve sevilmeyen kişiler", capEn: "Live rival clubs, club legends, icons & disliked personnel" },
+      { id: "staffLight", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png", tr: "Personel (Açık Tema)", en: "Staff (Light Theme)", capTr: "Açık tema · 5★ Antrenör & Teknik Direktörler Hariç filtresi", capEn: "Light theme · 5★ Coach & Hide Managers filter" },
+      { id: "scout", srcTr: "./assets/shot_scout.png", srcEn: "./assets/shot_scout_en.png", tr: "Oyuncu Scout", en: "Player Scout", capTr: "Uyruk, rol uygunluğu ve gizli özellik filtreleri", capEn: "Nationality, role rating & hidden attribute filters" },
+      { id: "multilang", srcTr: "./assets/shot_ja.png", srcEn: "./assets/shot_de.png", tr: "12 Dil (Örnek)", en: "12 Languages", capTr: "12 dilde eksiksiz FM terminolojisi (Japonca örneği)", capEn: "Authentic FM terminology in 12 languages (German example)" }
     ];
 
     const I18N = {
       tr: {
-        "nav.features": "Özellikler", "nav.languages": "Diller", "nav.about": "Hakkında", "nav.faq": "SSS", "nav.dl": "İndir",
+        "_title": "Squadeditor — FM27 için Hızlı ve Ücretsiz Gerçek Zamanlı Editör ve Scout",
+        "_desc": "Football Manager 27 için ücretsiz, hızlı ve açık kaynaklı gerçek zamanlı editör ve scout aracı. 12 dil, 4 canlı tema, gerçek regen ve 5 yıldızlı personel arama.",
+        "_themeTip": "Açık / Koyu Tema", "_prev": "Önceki", "_next": "Sonraki",
+        "nav.features": "Özellikler", "nav.howto": "Nasıl Kullanılır?", "nav.languages": "Diller", "nav.about": "Hakkında", "nav.faq": "SSS", "nav.dl": "İndir",
         "hero.kicker": "Football Manager 27 · Ücretsiz Masaüstü Aracı",
         "hero.title": "FM27 için hızlı ve ücretsiz gerçek zamanlı editör ve scout.",
         "hero.lead": "Oyun açıkken oyuncuları, personelleri, kulüpleri ve finansı anında düzenleyebilir; gerçek regenleri ve 5 yıldızlı antrenörleri zahmetsizce bulabilirsiniz.",
         "hero.dl": "Windows için Ücretsiz İndir", "hero.explore": "Tüm Özelliklere Bak",
         "hero.note": "Kurulum gerektirmez, tek dosya olarak çalışır.",
+        "trust.source": "Kaynak Kodu (GitHub)", "trust.smartscreen": "İlk açılışta SmartScreen uyarısı normaldir",
+        "zoom.hint": "Büyütmek için tıklayın",
         "feat.h": "Bir editörden ve scout aracından beklediğiniz her şey.",
         "feat.p": "Oyuncu aramadan personel transferine, kulüp tesislerinden canlı tema geçişine kadar tüm araçlar tek çatı altında.",
         "g1.h": "Oyuncu Arama & Scout",
         "g1.f1t": "Gerçek Regen (Newgen) Filtresi", "g1.f1d": "Gerçek genç oyuncularla karışmadan sadece oyunun ürettiği yeni yetenekleri listeler.",
-        "g1.f2t": "Gelişmiş Oyuncu Filtresi & Hazır Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol reytingi, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.",
+        "g1.f2t": "Gelişmiş Oyuncu Filtresi & Hazır Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol uygunluğu, sözleşme bitişi, mevcut/potansiyel yetenek ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.",
         "g1.f3t": "8 Eksenli Radar, Karşılaştırma & Oyuncu Kartı", "g1.f3d": "İki oyuncuyu yan yana kıyaslayabilir, sağ panelden hızlı önizleme açabilir veya tek tıkla paylaşılabilir PNG oyuncu kartı oluşturabilirsiniz.",
         "g1.f4t": "Wonderkid Oluşturucu, Model Kişilik & Tercih Edilen Hareketler", "g1.f4d": "Tekrar zar atılabilen dengeli Wonderkid üretici, tek tıkla kişilik iyileştirme ve tüm oyuncu alışkanlıklarını (Traits) düzenleme imkanı sunar.",
         "g2.h": "Personel & Transfer Yönetimi",
-        "g2.f1t": "5★ Antrenör, Gözlemci & Fizyoterapist Filtresi", "g2.f1d": "1–20 personel özelliklerine göre doğrudan arama yapabilir, tek tıkla \"TD Hariç\" seçeneğiyle boştaki teknik direktörleri gizleyebilirsiniz.",
+        "g2.f1t": "5★ Antrenör, Gözlemci & Fizyoterapist Filtresi", "g2.f1d": "1–20 personel özelliklerine göre doğrudan arama yapabilir, tek tıkla \"Teknik Direktörler Hariç\" seçeneğiyle boştaki menajerleri gizleyebilirsiniz.",
         "g2.f2t": "Rol Seçerek Personel İşe Alma & Taşıma", "g2.f2d": "Boştaki veya sözleşmeli personeli istediğiniz göreve (Asistan Menajer, Kaleci Antrenörü, Gözlemci, Fizyoterapist vb.) atayarak kulübe ekleyebilirsiniz.",
         "g2.f3t": "Hızlı Oyuncu Transferi & Kiralık İşlemleri", "g2.f3d": "Bedelsiz veya bonservisli anında kulüp değişimi, serbest oyuncu imzalatma, kiralık oyuncuyu geri çağırma veya kalıcı transfer yapabilirsiniz.",
         "g2.f4t": "Sözleşme Maddeleri, İkinci Uyruk & Diller", "g2.f4d": "Serbest kalma bedeli ve bonus maddeleri ekleyip silebilir; oyuncunun ana uyruğunu, ikinci uyruklarını, konuştuğu dilleri ve favori kulüplerini düzenleyebilirsiniz.",
@@ -942,31 +1107,43 @@
         "g3.f1t": "Tek Tıkla Tüm Kadroyu Maça Hazırlama", "g3.f1d": "Sakatlıkları iyileştirebilir, cezaları kaldırabilir; kondisyon, maç formu, moral ve sözleşme memnuniyetini tüm takımda anında yükseltebilirsiniz.",
         "g3.f2t": "En İyi 11 & Kadro Derinliği", "g3.f2d": "Seçtiğiniz dizilişe göre kulübün en güçlü ilk 11'ini ve yedek derinliğini saha görünümünde otomatik çıkarır.",
         "g3.f3t": "Finans, Tesisler & Kulüp İlişkileri", "g3.f3d": "Bakiye, transfer ve maaş bütçesini düzenleyebilir; tüm tesisleri tek tıkla 20 yapabilir; rakip kulüpleri, efsaneleri ve sevilmeyen kişileri yönetebilirsiniz.",
-        "g3.f4t": "Toplu Düzenleme, Sözleşme Uzatma & Dondurma", "g3.f4d": "Birden fazla oyuncunun özelliklerini toplu değiştirebilir, tüm kadronun sözleşmesini toplu uzatabilir veya seçtiğiniz değerleri sabit tutmak için dondurabilirsiniz.",
+        "g3.f4t": "Toplu Düzenleme, Sözleşme Uzatma & Değer Sabitleme", "g3.f4d": "Birden fazla oyuncunun özelliklerini toplu değiştirebilir, tüm kadronun sözleşmesini uzatabilir veya seçtiğiniz değerlerin düşmemesi için dondurabilirsiniz.",
         "g4.h": "Kullanım Rahatlığı & Güvenlik",
-        "g4.f1t": "4 Canlı Tema & Logo / Yüz Paketi Desteği", "g4.f1d": "FM Gece Laciverti, OLED Siyah, WTCS Kömür & Altın ve Açık tema arasında anında geçiş yapabilirsiniz. FM graphics klasöründeki logolar ve yüzler otomatik yüklenir.",
-        "g4.f2t": "Komut Paleti, Global Arama & Hızlı Kısayollar", "g4.f2d": "Oyuncu, kulüp, ülke ve liglerde anında arama yapabilir; fare tekeriyle sayıları hızla değiştirebilir; kısa liste (Shortlist) oluşturup CSV dışa aktarabilirsiniz.",
-        "g4.f3t": "Doğrulamalı Yazma & Tam Geri Alma Geçmişi", "g4.f3d": "Yazmadan önce bellek adresi doğrulanır, yapılan her düzenleme oturum geçmişinde tutulur ve tek tuşla geri alınabilir.",
-        "g4.f4t": "Kayıt Yedekleme & Salt Okunur Mod", "g4.f4d": "Üst bardan tek tıkla güncel kariyer kaydınızın yedeğini alabilir; sadece scout yapmak isterseniz Salt Okunur modu açabilirsiniz.",
+        "g4.f1t": "4 Canlı Tema & Logo / Yüz Paketi Desteği", "g4.f1d": "Gece, OLED Siyah, Kömür & Altın ve Açık tema arasında anında geçiş yapabilirsiniz. Oyundaki logo ve yüz paketleriniz otomatik yüklenir.",
+        "g4.f2t": "Hızlı Arama, Kısayollar & Kısa Liste", "g4.f2d": "Oyuncu, kulüp, ülke ve liglerde anında arama yapabilir; fare tekeriyle sayıları hızla değiştirebilir; beğendiğiniz oyuncuları kısa listeye ekleyip dışa aktarabilirsiniz.",
+        "g4.f3t": "Otomatik Yazma Koruması & Geri Alma Geçmişi", "g4.f3d": "Her değişiklik öncesinde doğrulama yapılır, yapılan tüm işlemler geçmişe kaydedilir ve istediğiniz zaman tek tuşla geri alınabilir.",
+        "g4.f4t": "Tek Tıkla Kayıt Yedekleme & Sadece İnceleme Modu", "g4.f4d": "Üst bardan tek tıkla güncel kariyer kaydınızın yedeğini alabilir; oyuna hiç dokunmadan sadece oyuncu aramak için Salt Okunur modu açabilirsiniz.",
+        "how.h": "Nasıl Kullanılır?", "how.p": "Dört basit adımda kariyerinize bağlanıp güvenle kullanmaya başlayabilirsiniz.",
+        "st1.t": "FM27'de kariyerinizi açın", "st1.d": "Önce Football Manager 27'yi başlatıp düzenlemek istediğiniz kariyer kaydını yükleyin.",
+        "st2.t": "Squadeditor'ı çalıştırın", "st2.d": "İndirdiğiniz dosyayı açın; program açık olan FM27'yi otomatik algılayıp saniyeler içinde bağlanır.",
+        "st3.t": "Tek tıkla yedeğinizi alın", "st3.d": "Büyük bir değişiklik yapmadan önce üst bardaki Yedek butonuna basarak kaydınızı güvenceye alın.",
+        "st4.t": "Scout yapın veya düzenleyin", "st4.d": "Yaptığınız her işlem anında oyuna yansır; vazgeçerseniz Ctrl+Z ile anında geri alabilirsiniz.",
         "lang.h": "12 Dil", "lang.p": "Ayarlardan dilediğiniz dili seçip kullanabilirsiniz.",
         "about.h": "Hakkında",
         "about.p1": "Squadeditor, Football Manager topluluğu için tamamen ücretsiz ve açık kaynaklı bir alternatif sunmak amacıyla geliştirildi. Karmaşık arayüzler ve ücretli duvarlar olmadan; hızlı çalışan, kayda zarar vermeyen ve gerçekten oyuncunun işini gören bir araç olmasını hedefledim.",
         "about.p2": "Eklememi istediğiniz bir özellik, hoşunuza gitmeyen bir detay, öneri, şikayet veya memnuniyetiniz olursa sosyal medya hesaplarımdan ya da GitHub üzerinden bana doğrudan ulaşabilirsiniz.",
         "about.by": "Geliştiren", "about.repo": "GitHub Deposu",
-        "q1.q": "Tamamen ücretsiz mi?", "q1.a": "Evet. Squadeditor tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.",
-        "q2.q": "Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?", "q2.a": "Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. \"Ek bilgi → Yine de çalıştır\" adımıyla güvenle açabilirsiniz.",
-        "q3.q": "Kariyer kaydıma zarar verir mi?", "q3.a": "Her yazma öncesinde bellek doğrulaması yapılır ve tüm değişiklikler geri alınabilir. Yine de büyük düzenlemelerden önce üst bardaki Yedek butonuyla kaydınızın kopyasını almanız en güvenli yöntemdir.",
-        "q4.q": "Nasıl kullanılır ve hangi sürümle uyumlu?", "q4.a": "Windows üzerinde Football Manager 27 (27.0.1) ile uyumludur. Oyunda kariyerinizi yükledikten sonra Squadeditor'ı açmanız yeterli; otomatik bağlanır.",
+        "q1.q": "Tamamen ücretsiz mi?", "q1.a": "Evet. Squadeditor MIT lisansı altında tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.",
+        "q2.q": "Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?", "q2.a": "Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. \"Ek bilgi → Yine de çalıştır\" adımıyla güvenle açabilir, dilerseniz GitHub üzerinden tüm kaynak kodunu inceleyebilirsiniz.",
+        "q3.q": "Kariyer kaydıma zarar verir mi? Dondurma (Freeze) nasıl çalışır?", "q3.a": "Oyuna herhangi bir DLL enjeksiyonu yapılmaz; tüm okumalar/yazmalar doğrulamalı bellek erişimiyle çalışır, Dondurma özelliği periyodik kontrolle değerleri korur ve tüm işlemler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce Yedek butonuyla kaydınızı yedeklemeniz önerilir.",
+        "q4.q": "Hangi sürümle uyumlu? FM27'ye yeni yama gelirse ne olur?", "q4.a": "Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. Bellek adresleri kod içine gömülü değildir; harici JSON düzeni ve dinamik tarama kullanıldığı için yeni FM27 yamalarında hızlıca güncellenir.",
         "cta.h": "Hemen indir.", "cta.p": "Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.", "cta.btn": "Squadeditor İndir (Windows)",
+        "dl.meta": "Sürüm v1.0.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)",
+        "release.info": "v1.0.0 · Açık Kaynak (MIT)",
         "foot.legal": "Squadeditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
       },
       en: {
-        "nav.features": "Features", "nav.languages": "Languages", "nav.about": "About", "nav.faq": "FAQ", "nav.dl": "Download",
+        "_title": "Squadeditor — Fast, Free Real-Time Editor and Scout for FM27",
+        "_desc": "Free, open-source real-time editor and scout for Football Manager 27 on Windows. 12 authentic FM languages, 4 live themes, true regen and 5-star coach finder.",
+        "_themeTip": "Light / Dark Theme", "_prev": "Previous", "_next": "Next",
+        "nav.features": "Features", "nav.howto": "How It Works", "nav.languages": "Languages", "nav.about": "About", "nav.faq": "FAQ", "nav.dl": "Download",
         "hero.kicker": "Football Manager 27 · Free Desktop Tool",
         "hero.title": "A fast, free real-time editor and scout for FM27.",
         "hero.lead": "Edit players, staff, clubs and finances live while Football Manager 27 runs. Discover true regens and 5-star coaches effortlessly, with safe undo for every change.",
         "hero.dl": "Download Free for Windows", "hero.explore": "Explore All Features",
         "hero.note": "No installer required, runs as a single file.",
+        "trust.source": "Source Code (GitHub)", "trust.smartscreen": "SmartScreen notice on first run is normal",
+        "zoom.hint": "Click to zoom",
         "feat.h": "Everything you expect from a real-time editor and scout.",
         "feat.p": "From player scouting and role-based staff hiring to club facilities and live theme switching — all in one fast app.",
         "g1.h": "Player Search & Scouting",
@@ -985,20 +1162,27 @@
         "g3.f3t": "Finances, Facilities & Club Relationships", "g3.f3d": "Adjust balance, transfer and wage budgets; max all club facilities to 20; edit rival clubs, legends and disliked personnel.",
         "g3.f4t": "Mass Edit, Bulk Contract Extend & Freezing", "g3.f4d": "Bulk-edit attributes across selected players, extend contracts for the whole squad, or freeze values so the game never lowers them.",
         "g4.h": "Craft & Safety",
-        "g4.f1t": "4 Live Themes & FM Graphics Support", "g4.f1d": "Switch live between Midnight, OLED Black, WTCS Charcoal & Gold, and Light themes. Automatically loads logos and faces from your FM graphics folder.",
-        "g4.f2t": "Command Palette, Global Search & Shortcuts", "g4.f2d": "Search players, clubs, nations and leagues instantly; tweak numbers with the mouse wheel; manage shortlists and export CSV.",
-        "g4.f3t": "Verified Writes & Full Undo History", "g4.f3d": "Every memory write is validated beforehand, logged to session history, and reversible with one keystroke.",
-        "g4.f4t": "Save Backup & Read-Only Mode", "g4.f4d": "Back up your latest career save from the top bar in one click, or enable Read-Only mode for pure scouting.",
+        "g4.f1t": "4 Live Themes & FM Graphics Support", "g4.f1d": "Switch live between Midnight, OLED Black, Charcoal & Gold, and Light themes. Automatically loads logos and faces from your FM graphics folder.",
+        "g4.f2t": "Command Palette, Global Search & Shortlists", "g4.f2d": "Search players, clubs, nations and leagues instantly; tweak numbers with the mouse wheel; manage shortlists and export to CSV.",
+        "g4.f3t": "Verified Writes & Full Undo History", "g4.f3d": "Every write is validated before committing, logged to session history, and reversible with Ctrl+Z.",
+        "g4.f4t": "1-Click Save Backup & Read-Only Mode", "g4.f4d": "Back up your latest career save from the top bar in one click, or enable Read-Only mode for pure scouting.",
+        "how.h": "How It Works", "how.p": "Connect to your live FM27 save safely in four simple steps.",
+        "st1.t": "Load your FM27 save", "st1.d": "Start Football Manager 27 and load the career save you want to scout or edit.",
+        "st2.t": "Open Squadeditor", "st2.d": "Run the single executable — it detects FM27 automatically and indexes your database in seconds.",
+        "st3.t": "Back up in one click", "st3.d": "Hit the Backup button in the top bar before making major edits for complete peace of mind.",
+        "st4.t": "Scout or edit live", "st4.d": "Changes apply immediately in-game, and anything can be undone anytime with Ctrl+Z.",
         "lang.h": "12 Languages", "lang.p": "Pick any language from Settings whenever you like.",
         "about.h": "About",
         "about.p1": "Squadeditor was built to give the Football Manager community a genuinely free, open-source alternative — fast, clean, save-safe, and free of paywalls or clutter.",
         "about.p2": "If there is a feature you would like added, anything you dislike, or any feedback and suggestions, feel free to reach out directly via my social channels or GitHub.",
         "about.by": "Developed by", "about.repo": "GitHub Repository",
-        "q1.q": "Is it completely free?", "q1.a": "Yes. Squadeditor is completely free and open source — no license keys, subscriptions or locked features.",
-        "q2.q": "Why does Windows SmartScreen show a notice?", "q2.a": "Independent open-source Windows apps without a paid code-signing certificate trigger SmartScreen on first launch. Click \"More info → Run anyway\" to open safely.",
-        "q3.q": "Will it harm my save file?", "q3.a": "Memory addresses are verified before writing and every change is undoable. Taking a quick backup with the top-bar Backup button before major edits is always recommended.",
-        "q4.q": "How do I use it and which version is supported?", "q4.a": "Built for Football Manager 27 (27.0.1) on Windows. Simply load your save in FM27 and open Squadeditor — it connects automatically.",
+        "q1.q": "Is it completely free?", "q1.a": "Yes. Squadeditor is completely free and open source under the MIT license — no license keys, subscriptions or locked features.",
+        "q2.q": "Why does Windows SmartScreen show a notice?", "q2.a": "Independent open-source Windows apps without a paid code-signing certificate trigger SmartScreen on first launch. Click \"More info → Run anyway\" to open safely, or audit the full source on GitHub.",
+        "q3.q": "Will it harm my save? How does Freezing work?", "q3.a": "No DLL injection is used — all reads and writes are validated memory operations, Freezing works via lightweight polling, and every edit is undoable with Ctrl+Z. Backing up your save with the built-in Backup button before major changes is still recommended.",
+        "q4.q": "Which version is supported? What about FM27 patches?", "q4.a": "Verified on Windows 10/11 (64-bit) with Steam Football Manager 27 (27.0.1). Offsets live in an external JSON layout with dynamic RTTI scanning, so new FM27 patches can be supported quickly without rewriting the app.",
         "cta.h": "Download now.", "cta.p": "Single file for Windows, no installer needed, completely free.", "cta.btn": "Download Squadeditor (Windows)",
+        "dl.meta": "Version v1.0.0 · Windows 10/11 (64-bit) · Open Source (MIT)",
+        "release.info": "v1.0.0 · Open Source (MIT)",
         "foot.legal": "Squadeditor is an independent, free community tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
       }
     };
@@ -1008,7 +1192,7 @@
     let slideIdx = 0;
     let paused = false;
     let elapsed = 0;
-    const SLIDE_MS = 5200;
+    const SLIDE_MS = 5500;
 
     function applyTheme(next) {
       theme = next;
@@ -1052,6 +1236,15 @@
       document.documentElement.lang = lang;
       document.querySelectorAll(".lang-toggle button").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
       const dict = I18N[lang];
+      document.title = dict["_title"];
+      const desc = document.querySelector('meta[name="description"]');
+      if (desc) desc.setAttribute("content", dict["_desc"]);
+      document.getElementById("themeToggle").title = dict["_themeTip"];
+      document.getElementById("themeToggle").setAttribute("aria-label", dict["_themeTip"]);
+      document.getElementById("prevSlide").setAttribute("aria-label", dict["_prev"]);
+      document.getElementById("nextSlide").setAttribute("aria-label", dict["_next"]);
+      document.getElementById("dlMeta").textContent = dict["dl.meta"];
+      document.getElementById("releaseInfo").textContent = dict["release.info"];
       document.querySelectorAll("[data-i18n]").forEach(el => {
         const k = el.getAttribute("data-i18n");
         if (dict[k]) el.textContent = dict[k];
@@ -1059,35 +1252,45 @@
       renderSlides();
     }
 
-    // Render 12 languages with official 4:3 SVG flags
+    // 12 languages with official 4:3 SVG flags
     document.getElementById("langGrid").innerHTML = LANGUAGES.map(l => `
       <div class="lang-card">
         <img class="flag" src="./assets/flags/${l.flag}.svg" alt="${l.name}" />
         <strong>${l.name}</strong>
       </div>`).join("");
 
-    // Wire links & socials
+    // Links & socials
     ["navDl", "heroDl", "bottomDl"].forEach(id => {
       const a = document.getElementById(id);
       a.href = SITE_CONFIG.downloadUrl;
       if (SITE_CONFIG.downloadUrl.startsWith("http")) { a.target = "_blank"; a.rel = "noopener"; }
     });
     document.getElementById("aboutGh").href = SITE_CONFIG.repoUrl;
+    document.getElementById("sourceLink").href = SITE_CONFIG.repoUrl;
     document.getElementById("socialLinks").innerHTML = SITE_CONFIG.socials
       .map(s => `<a class="social-btn" href="${s.url}" target="_blank" rel="noopener">${SOCIAL_SVGS[s.id] || ""}<span>${s.label}</span></a>`)
       .join("");
 
-    // Controls
-    document.getElementById("themeToggle").addEventListener("click", () => {
-      applyTheme(theme === "dark" ? "light" : "dark");
-      goSlide(theme === "dark" ? 1 : 0);
+    // Lightbox
+    const lb = document.getElementById("lightbox");
+    const lbImg = document.getElementById("lightboxImg");
+    document.getElementById("stageBox").addEventListener("click", () => {
+      lbImg.src = document.getElementById("slideImg").src;
+      lbImg.alt = document.getElementById("slideImg").alt;
+      lb.classList.add("open");
+      paused = true;
     });
+    lb.addEventListener("click", () => { lb.classList.remove("open"); paused = false; });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && lb.classList.contains("open")) { lb.classList.remove("open"); paused = false; } });
+
+    // Controls
+    document.getElementById("themeToggle").addEventListener("click", () => applyTheme(theme === "dark" ? "light" : "dark"));
     document.querySelectorAll(".lang-toggle button").forEach(b => b.addEventListener("click", () => applyLang(b.dataset.lang)));
     document.getElementById("prevSlide").addEventListener("click", () => goSlide(slideIdx - 1));
     document.getElementById("nextSlide").addEventListener("click", () => goSlide(slideIdx + 1));
     const sc = document.getElementById("showcase");
     sc.addEventListener("mouseenter", () => paused = true);
-    sc.addEventListener("mouseleave", () => paused = false);
+    sc.addEventListener("mouseleave", () => { if (!lb.classList.contains("open")) paused = false; });
 
     setInterval(() => {
       if (paused) return;
@@ -1097,7 +1300,6 @@
     }, 100);
 
     applyTheme(theme);
-    slideIdx = theme === "dark" ? 1 : 0;
     applyLang(lang);
   </script>
 </body>
