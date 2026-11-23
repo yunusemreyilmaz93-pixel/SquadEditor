@@ -204,7 +204,8 @@
     <Setter Property="BorderThickness" Value="1"/>
     <Setter Property="CaretBrush" Value="{DynamicResource Text}"/>
     <Setter Property="SelectionBrush" Value="{DynamicResource Accent}"/>
-    <Setter Property="Padding" Value="6,3"/>
+    <Setter Property="Padding" Value="6,1"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
     <Setter Property="FontSize" Value="13"/>
     <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
     <Setter Property="Template">

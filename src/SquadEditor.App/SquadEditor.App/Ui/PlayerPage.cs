@@ -580,20 +580,24 @@ public sealed class PlayerPage : UserControl, IPage
 
 	private UIElement Personal()
 	{
-		var grid = new Grid { MaxWidth = 1080, HorizontalAlignment = HorizontalAlignment.Left };
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
+		var grid = new Grid();
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.05, GridUnitType.Star), MinWidth = 360 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.05, GridUnitType.Star), MinWidth = 360 });
 		var personalRows = Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "City of Birth", "Height"));
 		personalRows.Children.Insert(6, NationPickerRow());
-		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"), personalRows),
+		AddColumn(grid, 0,
+			Build.Card(Build.T("Kişisel bilgiler", "Personal details"), personalRows),
 			Build.Card(Build.T("🌍 İkinci Uyruklar", "🌍 Second Nationalities"), SecondNationsPanel()),
 			Build.Card(Build.T("Konuştuğu Diller (1-10)", "Spoken Languages (1-10)"), LanguagesPanel()),
-			Build.Card(Build.T("Tercih Ettiği Hareketler", "Player Traits"), TraitsPanel()),
 			Build.Card(Build.T("Milli takım", "International"), Build.Rows(Group("International"))));
-		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
+		AddColumn(grid, 1,
+			Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
 			Build.Card(Build.T("Sözleşme Maddeleri ve Bonuslar", "Contract Clauses & Bonuses"), ClausesPanel()),
-			Build.Card(Build.T("⭐ Favori Kulüpler & Kişiler", "⭐ Favoured Clubs & Personnel"), PlayerRelationsPanel()),
 			Build.Card(Build.T("İtibar (0-10000)", "Reputation (0-10000)"), Build.Rows(Named("Current Reputation", "Home Reputation", "World Reputation"))));
+		AddColumn(grid, 2,
+			Build.Card(Build.T("Tercih Ettiği Hareketler", "Player Traits"), TraitsPanel()),
+			Build.Card(Build.T("⭐ Favori Kulüpler & Kişiler", "⭐ Favoured Clubs & Personnel"), PlayerRelationsPanel()));
 		return Build.Scroll(grid);
 	}
 
