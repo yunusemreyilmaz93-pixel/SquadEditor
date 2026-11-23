@@ -147,7 +147,7 @@ public sealed class MoveWindow : ActionWindow
 	private readonly GameData _data;
 	private readonly Func<ulong, long, MovePlan> _planner;
 	private readonly TextBox _search = new TextBox { Height = 32, FontSize = 14 };
-	private readonly TextBox _fee = new TextBox { Height = 28, Width = 140, FontSize = 13, Text = "0", HorizontalAlignment = HorizontalAlignment.Left };
+	private readonly TextBox _fee = new TextBox { Height = 28, Width = 140, FontSize = 13, Text = "0", Padding = new Thickness(6, 1, 6, 1), VerticalContentAlignment = VerticalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
 	private readonly ListBox _clubs = new ListBox { Height = 200, Background = Build.Res("Field"), Foreground = Build.Res("Text"), BorderBrush = Build.Res("Stroke") };
 	private readonly RadioButton _move, _release;
 	private MovePlan? _plan;

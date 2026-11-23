@@ -33,10 +33,10 @@ public sealed class PlayerPage : UserControl, IPage
 {
 	private static readonly (string Code, double X, double Y)[] Pitch =
 	{
-		("ST", 0.5, 0.09), ("AML", 0.14, 0.24), ("AMC", 0.5, 0.24), ("AMR", 0.86, 0.24),
-		("ML", 0.14, 0.40), ("MC", 0.5, 0.40), ("MR", 0.86, 0.40),
-		("WBL", 0.14, 0.555), ("DM", 0.5, 0.555), ("WBR", 0.86, 0.555),
-		("DL", 0.14, 0.71), ("DC", 0.5, 0.71), ("DR", 0.86, 0.71),
+		("ST", 0.5, 0.09), ("AML", 0.21, 0.24), ("AMC", 0.5, 0.24), ("AMR", 0.79, 0.24),
+		("ML", 0.21, 0.40), ("MC", 0.5, 0.40), ("MR", 0.79, 0.40),
+		("WBL", 0.21, 0.555), ("DM", 0.5, 0.555), ("WBR", 0.79, 0.555),
+		("DL", 0.21, 0.71), ("DC", 0.5, 0.71), ("DR", 0.79, 0.71),
 		("SW", 0.5, 0.83), ("GK", 0.5, 0.94)
 	};
 
@@ -294,6 +294,10 @@ public sealed class PlayerPage : UserControl, IPage
 							try { _data.Session.WriteField(Address, ef.Def, ef.Def.Max.Value.ToString(CultureInfo.InvariantCulture), Name); } catch (Exception) { }
 						}
 					}
+					if (_f.TryGetValue("Jadedness", out EditField? jad))
+					{
+						try { _data.Session.WriteField(Address, jad.Def, "-500", Name); } catch (Exception) { }
+					}
 				}
 				RefreshValues();
 				_nav.SetStatus(Build.T($"✓ {Name} iyileştirildi ve maça hazırlandı. Ctrl+Z geri alır.", $"✓ {Name} healed and maxed. Ctrl+Z undoes it."));
@@ -422,7 +426,7 @@ public sealed class PlayerPage : UserControl, IPage
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))));
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))),
-			Build.Card(Build.T("Mevki", "Position"), MiniPitch(220)));
+			Build.Card(Build.T("Mevki", "Position"), MiniPitch(244)));
 		AddColumn(grid, 3,
 			Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
 			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
@@ -438,12 +442,11 @@ public sealed class PlayerPage : UserControl, IPage
 		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"),
 			Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "Nation", "City of Birth", "Height"))),
 			Build.Card(Build.T("Kişilik (1-20)", "Personality (1-20)"), Build.Rows(Group("Personality"))),
-			Build.Card(Build.T("Tercih Ettiği Hareketler (Traits)", "Player Traits"), TraitsPanel()),
+			Build.Card(Build.T("Tercih Ettiği Hareketler", "Player Traits"), TraitsPanel()),
 			Build.Card(Build.T("Milli takım", "International"), Build.Rows(Group("International"))));
 		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
 			Build.Card(Build.T("Sözleşme Maddeleri ve Bonuslar", "Contract Clauses & Bonuses"), ClausesPanel()),
-			Build.Card(Build.T("İtibar (0-10000)", "Reputation (0-10000)"), Build.Rows(Named("Current Reputation", "Home Reputation", "World Reputation"))),
-			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, RefreshValues, _nav));
+			Build.Card(Build.T("İtibar (0-10000)", "Reputation (0-10000)"), Build.Rows(Named("Current Reputation", "Home Reputation", "World Reputation"))));
 		return Build.Scroll(grid);
 	}
 
@@ -507,9 +510,11 @@ public sealed class PlayerPage : UserControl, IPage
 				var box = new TextBox
 				{
 					Text = current.ValueDisplay,
-					Width = 110,
-					Height = 24,
+					Width = 128,
+					Height = 26,
 					FontSize = 12,
+					Padding = new Thickness(6, 1, 6, 1),
+					VerticalContentAlignment = VerticalAlignment.Center,
 					IsReadOnly = !canWrite,
 					HorizontalContentAlignment = HorizontalAlignment.Right
 				};
@@ -571,7 +576,7 @@ public sealed class PlayerPage : UserControl, IPage
 		Canvas.SetTop(half, h / 2);
 		canvas.Children.Add(half);
 		bool large = width >= 320;
-		double bw = large ? 84 : 72, bh = large ? 30 : 26;
+		double bw = large ? 84 : 66, bh = large ? 30 : 24;
 		foreach (var (code, x, y) in Pitch)
 		{
 			EditField f = _f[code];

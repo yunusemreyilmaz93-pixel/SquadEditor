@@ -62,7 +62,7 @@ public static class Build
 		grid.Children.Add(label);
 		if (field.Def.Options.Count > 0 && !field.IsReadOnly)
 		{
-			var combo = new ComboBox { Width = 190, Height = 26, IsEditable = false };
+			var combo = new ComboBox { Width = 180, Height = 26, IsEditable = false };
 			var items = field.Def.Options.Select(o => new KeyValuePair<string, string>(o.Key, Loc.Instance.Language == "tr" ? Translate(field, o.Value) : o.Value)).ToList();
 			if (!items.Any(i => i.Key == field.Value) && field.Value.Length > 0)
 			{
@@ -85,11 +85,12 @@ public static class Build
 		}
 		var box = new TextBox
 		{
-			Width = field.IsAttribute ? 44 : (field.Def.IsString ? 190 : 140),
-			Height = 24,
+			Width = field.IsAttribute ? 44 : 180,
+			Height = 25,
 			HorizontalContentAlignment = field.IsAttribute ? HorizontalAlignment.Center : HorizontalAlignment.Left,
 			FontWeight = field.IsAttribute ? FontWeights.Bold : FontWeights.Normal,
-			Padding = new Thickness(4, 1, 4, 1)
+			Padding = new Thickness(6, 1, 6, 1),
+			VerticalContentAlignment = VerticalAlignment.Center
 		};
 		if (field.IsAttribute)
 		{
@@ -232,10 +233,10 @@ public static class Build
 		return item;
 	}
 
-	/// <summary>Buttons for the layout's presets of an entity. <paramref name="targets"/> gives what they apply to.</summary>
+	/// <summary>Buttons for the layout's presets of an entity in a neat 2-column grid.</summary>
 	public static Border PresetsCard(GameData data, string entity, Func<IReadOnlyList<SquadEditor.Core.Editing.BulkTarget>> targets, Action after, INavigator nav)
 	{
-		var panel = new WrapPanel { Margin = new Thickness(10, 0, 10, 12) };
+		var panel = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(10, 2, 10, 10) };
 		foreach (var preset in data.Layout.Presets.Where(p => p.Entity == entity))
 		{
 			string lang = Loc.Instance.Language;
@@ -244,9 +245,9 @@ public static class Build
 				Content = data.Layout.Text(lang, preset.Name),
 				ToolTip = preset.Description == null ? null : data.Layout.Text(lang, preset.Description),
 				IsEnabled = !AppSettings.Current.ReadOnlyMode,
-				Margin = new Thickness(4),
-				Padding = new Thickness(10, 5, 10, 5),
-				FontSize = 12
+				Margin = new Thickness(3),
+				Padding = new Thickness(8, 5, 8, 5),
+				FontSize = 11.5
 			};
 			button.Click += (_, _) =>
 			{

@@ -174,6 +174,11 @@ public sealed class ClubPage : UserControl, IPage
 							}
 						}
 					}
+					var jaded = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Jadedness" && f.IsWritable);
+					if (jaded != null)
+					{
+						try { _data.Session.WriteField(t.Address, jaded, "-500", t.Label); } catch (Exception) { }
+					}
 				}
 			}
 			Show(_team);
@@ -283,11 +288,11 @@ public sealed class ClubPage : UserControl, IPage
 		left.Children.Add(Build.Card(Build.T("Kadro Finans Özeti", "Squad Financial Summary"), summary));
 
 		var right = new StackPanel();
-		var quick = new WrapPanel { Margin = new Thickness(10, 0, 10, 12) };
+		var quick = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(10, 2, 10, 10) };
 		bool canWrite = !AppSettings.Current.ReadOnlyMode;
 		void QuickBtn(string label, Action act)
 		{
-			var b = new Button { Content = label, Margin = new Thickness(4), Padding = new Thickness(10, 5, 10, 5), FontSize = 12, IsEnabled = canWrite };
+			var b = new Button { Content = label, Margin = new Thickness(3), Padding = new Thickness(8, 6, 8, 6), FontSize = 12, IsEnabled = canWrite };
 			b.Click += (_, _) =>
 			{
 				act();
@@ -324,8 +329,21 @@ public sealed class ClubPage : UserControl, IPage
 			_data.Session.WriteField(_club.Address, tp.Def, "1", _club.Name);
 			_nav.SetStatus(Build.T($"✓ {_club.Name} bilet fiyatı 1 yapıldı.", $"✓ {_club.Name} ticket price set to 1."));
 		});
+		QuickBtn(Build.T("💎 Zengin Patron (+500M / +200M)", "💎 Rich Owner (+500M / +200M)"), () =>
+		{
+			using (_data.Session.History.BeginBatch(Build.T($"{_club.Name}: Zengin patron", $"{_club.Name}: Rich owner")))
+			{
+				AddMoney("Balance", (long)Math.Round(Money.FromDisplay(500_000_000, false)), "+500M");
+				AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(200_000_000, false)), "+200M");
+			}
+		});
+		QuickBtn(Build.T("Transfer Geliri %100", "Transfer Revenue 100%"), () =>
+		{
+			EditField tr = F("Transfer Revenue %");
+			_data.Session.WriteField(_club.Address, tr.Def, "100", _club.Name);
+			_nav.SetStatus(Build.T($"✓ {_club.Name} transfer gelir yüzdesi %100 yapıldı.", $"✓ {_club.Name} transfer revenue set to 100%."));
+		});
 		right.Children.Add(Build.Card(Build.T("Hızlı Finans İşlemleri", "Quick Finance Actions"), quick));
-		right.Children.Add(Build.PresetsCard(_data, "Club", () => new[] { new BulkTarget(_club.Address, _club.Name) }, () => { RefreshValues(); OnWritten(null, F("Balance")); }, _nav));
 
 		Grid.SetColumn(right, 1);
 		grid.Children.Add(left);

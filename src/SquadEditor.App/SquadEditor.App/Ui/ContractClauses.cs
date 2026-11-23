@@ -13,7 +13,8 @@ public sealed record ContractClause(int Index, ulong Address, int AmountGbp, sho
 
 	public string Label => TypeId switch
 	{
-		0x01 => Build.T("Serbest Kalma Bedeli", "Minimum Fee Release Clause"),
+		0x00 => Build.T("Serbest Kalma Bedeli", "Minimum Fee Release Clause"),
+		0x01 => Build.T("Serbest Kalma Bedeli (Yurtiçi)", "Minimum Fee Release Clause (Domestic)"),
 		0x02 => Build.T("Küme Düşme Serbest Kalma", "Relegation Release Clause"),
 		0x03 => Build.T("Yıllık Maaş Artışı (%)", "Yearly Wage Rise (%)"),
 		0x04 => Build.T("Küme Düşme Maaş Kesintisi (%)", "Relegation Wage Drop (%)"),
