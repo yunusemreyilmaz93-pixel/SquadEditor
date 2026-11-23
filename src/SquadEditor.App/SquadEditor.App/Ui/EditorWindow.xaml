@@ -27,13 +27,18 @@
           <TextBlock Text="SquadEditor" FontSize="14" FontWeight="SemiBold" Margin="9,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <Grid Grid.Column="1" Width="460" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid Width="450" VerticalAlignment="Center">
           <TextBox x:Name="TopSearch" Style="{StaticResource SearchBox}" Height="32"
                    TextChanged="TopSearch_TextChanged" PreviewKeyDown="TopSearch_PreviewKeyDown"/>
           <TextBlock Text="⌕" FontSize="15" Foreground="{DynamicResource Muted}" Margin="10,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
-          <TextBlock x:Name="TopSearchHint" Text="Oyuncu veya kulüp ara…  (Ctrl+F)" Foreground="{DynamicResource Faint}" FontSize="12.5" Margin="32,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+          <TextBlock x:Name="TopSearchHint" Text="Oyuncu, kulüp, ülke veya lig ara…" Foreground="{DynamicResource Faint}" FontSize="12.5" Margin="32,0,58,0" VerticalAlignment="Center" IsHitTestVisible="False" TextTrimming="CharacterEllipsis"/>
+          <Border x:Name="TopSearchShortcut" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" Padding="5,1" CornerRadius="4" Background="{DynamicResource Field}" BorderBrush="{DynamicResource StrokeSoft}" BorderThickness="1" IsHitTestVisible="False">
+            <TextBlock Text="Ctrl+F" FontSize="10.5" Foreground="{DynamicResource Faint}" FontFamily="Consolas"/>
+          </Border>
+          <Button x:Name="TopSearchClear" Content="✕" Style="{StaticResource GhostButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0" Padding="6,2" FontSize="11" Foreground="{DynamicResource Muted}" Visibility="Collapsed" Click="TopSearchClear_Click"/>
           <Popup x:Name="SearchPopup" PlacementTarget="{Binding ElementName=TopSearch}" Placement="Bottom" StaysOpen="False"
-                 AllowsTransparency="True" Width="460" VerticalOffset="4">
+                 AllowsTransparency="True" Width="450" VerticalOffset="4">
             <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="6" Padding="4">
               <ListBox x:Name="SearchResults" Background="Transparent" BorderThickness="0" MaxHeight="460"
                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -69,7 +74,7 @@
                       </Grid.ColumnDefinitions>
                       <Border Width="32" Height="32" CornerRadius="{Binding Corner}" Background="{DynamicResource AccentSoft}" ClipToBounds="True" HorizontalAlignment="Left">
                         <Grid>
-                          <TextBlock Text="{Binding Initials}" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding Initials}" Foreground="{DynamicResource Text}" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                           <Image Source="{Binding Image}" Stretch="UniformToFill"/>
                         </Grid>
                       </Border>
@@ -85,6 +90,12 @@
             </Border>
           </Popup>
         </Grid>
+        <Button x:Name="CommandButton" Style="{StaticResource GhostButton}" Margin="6,0,0,0" Padding="8,4" Height="32" Click="CommandButton_Click" ToolTip="Komut paleti (Ctrl+K)">
+          <Border Padding="5,1" CornerRadius="4" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1">
+            <TextBlock Text="⌘ Ctrl+K" FontSize="11" Foreground="{DynamicResource Muted}" FontFamily="Consolas"/>
+          </Border>
+        </Button>
+        </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
           <Border x:Name="StatusPill" CornerRadius="5" Padding="10,4" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1">

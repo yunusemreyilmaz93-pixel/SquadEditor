@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SquadEditor — Free Real-Time Editor & Scout for Football Manager 27</title>
+  <meta name="description" content="Free, fast, open-source real-time editor and scout tool for Football Manager 27 on Windows. 12 authentic FM languages, instant regen & 5★ staff finder, safe Ctrl+Z undo." />
+  <link rel="icon" href="./assets/app.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080c14;
+      --bg-elev: #0e1523;
+      --bg-card: #111a2b;
+      --bg-card-hover: #152136;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.14);
+      --text: #eef2f9;
+      --muted: #94a3bd;
+      --faint: #64748b;
+      --gold: #e0a82e;
+      --gold-soft: rgba(224, 168, 46, 0.14);
+      --emerald: #3dd6c0;
+      --emerald-soft: rgba(61, 214, 192, 0.12);
+      --radius: 14px;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle tactical pitch grid backdrop */
+    .pitch-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(224, 168, 46, 0.12), transparent 65%),
+        radial-gradient(ellipse 50% 40% at 85% 20%, rgba(61, 214, 192, 0.08), transparent 60%),
+        linear-gradient(to right, rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 64px 64px, 64px 64px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(8, 12, 20, 0.78);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav {
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      color: var(--text);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.18s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lang-switch {
+      display: inline-flex;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .lang-btn {
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+    .lang-btn.active {
+      background: var(--gold);
+      color: #0b0f17;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, #ebb63b 0%, #d4961b 100%);
+      color: #0a0e17;
+      box-shadow: 0 8px 28px rgba(224, 168, 46, 0.28);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 10px 34px rgba(224, 168, 46, 0.42);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.24);
+    }
+    .btn-lg {
+      padding: 14px 26px;
+      font-size: 15.5px;
+      border-radius: 12px;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 78px 0 48px;
+      text-align: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--gold-soft);
+      border: 1px solid rgba(224, 168, 46, 0.28);
+      color: #f4c65d;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 22px;
+    }
+    .eyebrow .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(36px, 6vw, 64px);
+      line-height: 1.06;
+      letter-spacing: -0.03em;
+      max-width: 860px;
+      margin: 0 auto 20px;
+    }
+    h1 .accent {
+      background: linear-gradient(120deg, #f5cb66 0%, #e0a82e 55%, #3dd6c0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 19px);
+      max-width: 680px;
+      margin: 0 auto 32px;
+    }
+    .hero-cta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .meta-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      color: var(--faint);
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+    .meta-strip span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .meta-strip .ok { color: var(--emerald); }
+
+    /* Showcase / Video Stage */
+    .stage-wrap {
+      padding: 18px 0 72px;
+    }
+    .stage-card {
+      background: linear-gradient(180deg, rgba(20, 30, 48, 0.92), rgba(11, 17, 29, 0.96));
+      border: 1px solid var(--border-strong);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+    }
+    .stage-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(8, 12, 20, 0.72);
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .win-dots {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+    .win-dots i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.16);
+      display: block;
+    }
+    .stage-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .stage-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+    .stage-tab.active {
+      background: var(--gold-soft);
+      border-color: rgba(224, 168, 46, 0.35);
+      color: #f5cb66;
+    }
+    .stage-body {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 35%, rgba(224, 168, 46, 0.08), transparent 60%), #0a101c;
+      padding: 28px;
+    }
+    .stage-video-slot {
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+    .stage-video-slot iframe,
+    .stage-video-slot video {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 10px;
+    }
+    .mock-ui {
+      width: 100%;
+      max-width: 920px;
+      background: #0d1422;
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+    }
+    .mock-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .mock-title {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .mock-pill {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: var(--emerald-soft);
+      color: var(--emerald);
+      border: 1px solid rgba(61, 214, 192, 0.25);
+    }
+    .mock-rows {
+      display: grid;
+      gap: 8px;
+    }
+    .mock-row {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 0.7fr 0.7fr 1fr;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.045);
+      font-size: 13.5px;
+    }
+    .mock-row.head {
+      background: transparent;
+      border-color: transparent;
+      color: var(--faint);
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      padding: 4px 14px;
+    }
+    .stat-hi { color: var(--emerald); font-family: var(--font-mono); font-weight: 600; }
+    .stat-gold { color: var(--gold); font-family: var(--font-mono); font-weight: 600; }
+    .video-ready-note {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 9px;
+      background: rgba(224, 168, 46, 0.08);
+      border: 1px dashed rgba(224, 168, 46, 0.35);
+      font-size: 12.5px;
+      color: #f3c969;
+      flex-wrap: wrap;
+    }
+
+    /* Sections */
+    section { padding: 68px 0; }
+    .sec-head {
+      text-align: center;
+      max-width: 660px;
+      margin: 0 auto 44px;
+    }
+    .sec-kicker {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 4vw, 38px);
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+    .sec-head p { color: var(--muted); font-size: 15.5px; }
+
+    /* Bento Grid */
+    .bento {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(224, 168, 46, 0.32);
+      background: var(--bg-card-hover);
+    }
+    .card-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: var(--gold-soft);
+      border: 1px solid rgba(224, 168, 46, 0.25);
+      margin-bottom: 16px;
+    }
+    .card h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Languages Strip */
+    .lang-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .lang-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 15px;
+      border-radius: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 13.5px;
+      font-weight: 500;
+    }
+    .lang-pill code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--gold);
+      background: var(--gold-soft);
+      padding: 2px 6px;
+      border-radius: 5px;
+      text-transform: uppercase;
+    }
+
+    /* Steps */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 44px;
+    }
+    .step {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .step-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--emerald);
+      margin-bottom: 8px;
+    }
+    .step h3 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+    .step p { color: var(--muted); font-size: 14px; }
+
+    /* FAQ */
+    .faq-list {
+      max-width: 780px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+    details.faq {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    details.faq summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    details.faq summary::after {
+      content: "+";
+      font-family: var(--font-mono);
+      color: var(--gold);
+      font-size: 18px;
+    }
+    details.faq[open] summary::after { content: "−"; }
+    details.faq p {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    /* Final CTA */
+    .cta-box {
+      background: linear-gradient(135deg, rgba(224, 168, 46, 0.14), rgba(61, 214, 192, 0.08));
+      border: 1px solid rgba(224, 168, 46, 0.3);
+      border-radius: 20px;
+      padding: 48px 28px;
+      text-align: center;
+    }
+    .cta-box h2 { margin-bottom: 12px; }
+    .cta-box p { color: var(--muted); max-width: 560px; margin: 0 auto 26px; }
+
+    /* Footer & Socials */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0 54px;
+      margin-top: 40px;
+    }
+    .foot-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .socials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 9px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.16s;
+    }
+    .social-link:hover {
+      border-color: var(--gold);
+      color: #f5cb66;
+      transform: translateY(-1px);
+    }
+    .disclaimer {
+      margin-top: 22px;
+      color: var(--faint);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 900px) {
+      .bento, .steps { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .mock-row { grid-template-columns: 1.6fr 1fr 0.6fr 0.6fr; }
+      .mock-row > :last-child { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="pitch-bg"></div>
+
+  <header>
+    <div class="container nav">
+      <a href="#" class="brand">
+        <img src="./assets/logo.png" alt="SquadEditor logo" />
+        <span>SquadEditor</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#preview" data-i18n="nav.preview">Önizleme</a>
+        <a href="#features" data-i18n="nav.features">Özellikler</a>
+        <a href="#languages" data-i18n="nav.languages">12 Dil</a>
+        <a href="#faq" data-i18n="nav.faq">SSS</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button class="lang-btn active" data-lang="tr">TR</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <a id="navDownloadBtn" href="#download" class="btn btn-primary" data-i18n="nav.download">İndir (Windows)</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="eyebrow">
+          <span class="dot"></span>
+          <span id="versionBadge">FM27 (27.0.1) · v1.0.0 · FREE &amp; OPEN SOURCE</span>
+        </div>
+        <h1>
+          <span data-i18n="hero.title1">Football Manager 27 için</span><br />
+          <span class="accent" data-i18n="hero.title2">Ücretsiz Gerçek Zamanlı Editör &amp; Scout</span>
+        </h1>
+        <p class="hero-sub" data-i18n="hero.sub">
+          Oyuncuları, kulüpleri, personelleri ve finansı oyun açıkken anında düzenle. Gerçek regenleri ve 5 yıldızlı antrenörleri saniyeler içinde bul — tüm değişiklikler Ctrl+Z ile güvenli geri alınabilir.
+        </p>
+        <div class="hero-cta">
+          <a id="heroDownloadBtn" href="#download" class="btn btn-primary btn-lg">
+            <span>⬇</span>
+            <span data-i18n="hero.dl">Windows için Ücretsiz İndir (.exe)</span>
+          </a>
+          <a href="#preview" class="btn btn-secondary btn-lg">
+            <span>▶</span>
+            <span data-i18n="hero.watch">40 sn Tanıtımı İzle</span>
+          </a>
+        </div>
+        <div class="meta-strip">
+          <span><b class="ok">✓</b> <span data-i18n="meta.free">%100 Ücretsiz</span></span>
+          <span><b class="ok">✓</b> <span data-i18n="meta.langs">12 Resmi FM Dili</span></span>
+          <span><b class="ok">✓</b> <span data-i18n="meta.undo">Güvenli Ctrl+Z Geri Alma</span></span>
+          <span><b class="ok">✓</b> <span data-i18n="meta.win">Windows 10/11 (x64)</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Video / Interactive Preview Stage -->
+    <div id="preview" class="stage-wrap">
+      <div class="container">
+        <div class="stage-card">
+          <div class="stage-bar">
+            <div class="win-dots"><i></i><i></i><i></i></div>
+            <div class="stage-tabs" id="stageTabs">
+              <button class="stage-tab active" data-tab="scout" data-i18n="tab.scout">🧬 Regen &amp; Scout</button>
+              <button class="stage-tab" data-tab="staff" data-i18n="tab.staff">⭐ 5★ Personel (TD Hariç)</button>
+              <button class="stage-tab" data-tab="edit" data-i18n="tab.edit">⚡ Canlı Düzenleme</button>
+            </div>
+            <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--faint);">Ctrl+K · Ctrl+F · Ctrl+Z</span>
+          </div>
+          <div class="stage-body">
+            <!-- Promo video container (automatically activated when SITE_CONFIG.videoUrl is set) -->
+            <div id="videoSlot" class="stage-video-slot"></div>
+
+            <!-- Interactive preview (shown until promo video is dropped in) -->
+            <div id="mockSlot" class="mock-ui">
+              <div class="mock-top">
+                <div class="mock-title">
+                  <span id="mockHeading">🧬 Regen &amp; Wonderkid Avı · CA / PA Canlı Tarama</span>
+                </div>
+                <span class="mock-pill" id="mockBadge">FM27 Bağlı · 52.400+ Oyuncu</span>
+              </div>
+              <div class="mock-rows" id="mockRows"></div>
+              <div class="video-ready-note">
+                <span data-i18n="stage.videoNote">🎬 40 saniyelik tanıtım videosu hazır olduğunda tek satırda (SITE_CONFIG.videoUrl) buraya gömülür.</span>
+                <code style="font-family:var(--font-mono);font-size:11.5px;">./assets/promo.mp4</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <section id="features">
+      <div class="container">
+        <div class="sec-head">
+          <div class="sec-kicker" data-i18n="feat.kicker">ÖNE ÇIKAN ÖZELLİKLER</div>
+          <h2 data-i18n="feat.title">Kariyerindeki her detay tek ekranda, sıfır gecikmeyle.</h2>
+          <p data-i18n="feat.sub">Ücretli editörlerin ve scout araçlarının en çok kullanılan tüm özelliklerini modern, hızlı ve tamamen ücretsiz bir masaüstü uygulamasında topladık.</p>
+        </div>
+
+        <div class="bento">
+          <article class="card">
+            <div class="card-icon">🧬</div>
+            <h3 data-i18n="f1.t">Gerçek Regen &amp; Gelişmiş Scout</h3>
+            <p data-i18n="f1.d">Uyruk, mevki, rol reytingi, gizli özellikler (Profesyonellik, İstikrar, Önemli Maçlar) ve gerçek FM27 Newgen/Regen filtresiyle gelecekteki yıldızları saniyeler içinde yakala.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon">⭐</div>
+            <h3 data-i18n="f2.t">5★ Personel Filtresi &amp; Rol Seçerek İşe Alma</h3>
+            <p data-i18n="f2.d">Antrenör, gözlemci ve fizyoterapistleri 1–20 özellikleriyle filtrele, tek tıkla "TD Hariç" de ve kulübe alırken görevini (Asistan, Kaleci, Kondisyon, Gözlemci vb.) kendin seç.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon">⚡</div>
+            <h3 data-i18n="f3.t">Tek Tık Hazır Aksiyonlar &amp; Wonderkid</h3>
+            <p data-i18n="f3.d">Tüm kadroyu maça hazırla (sakatlık/ceza temizle, kondisyon/moral fulle), tekrar zar atılabilen Wonderkid oluşturucu, Model Kişilik ve tüm tesisleri 20 yapma.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon">⇄</div>
+            <h3 data-i18n="f4.t">Anında Transfer &amp; Sözleşme Yönetimi</h3>
+            <p data-i18n="f4.d">Önbellekli bellek taraması sayesinde kulüp değişimleri ve bonservisli transferler anında planlanır. Sözleşme maddeleri, ikinci uyruk, favori kulüp ve kulüp ilişkileri düzenlenebilir.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon">🛡</div>
+            <h3 data-i18n="f5.t">Güvenli Yazma, Yedekleme &amp; Ctrl+Z</h3>
+            <p data-i18n="f5.d">Her yazma işlemi doğrulanır ve geçmişe kaydedilir. Tek tıkla `.fm` kayıt yedeği al, Salt Okunur modda güvenle scout yap veya istediğin değişikliği Ctrl+Z ile geri al.</p>
+          </article>
+          <article class="card">
+            <div class="card-icon">🎨</div>
+            <h3 data-i18n="f6.t">4 Canlı Tema, Radar &amp; Komut Paleti</h3>
+            <p data-i18n="f6.d">FM Gece Laciverti, OLED Siyah, WTCS Kömür &amp; Altın ve Açık tema. 8 eksenli oyuncu radarı, 2 oyuncu karşılaştırma, PNG oyuncu kartı indirme ve Ctrl+K Komut Paleti.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 Languages -->
+    <section id="languages">
+      <div class="container">
+        <div class="sec-head">
+          <div class="sec-kicker" data-i18n="lang.kicker">KÜRESEL DESTEK</div>
+          <h2 data-i18n="lang.title">12 Dilde Tam Football Manager Terminolojisi</h2>
+          <p data-i18n="lang.sub">Sadece arayüz değil; tüm oyuncu özellikleri, personel görevleri, sözleşme maddeleri ve oyun terimleri 12 dilde eksiksiz yerelleştirildi.</p>
+        </div>
+        <div class="lang-grid">
+          <div class="lang-pill"><code>en</code> English</div>
+          <div class="lang-pill"><code>tr</code> Türkçe</div>
+          <div class="lang-pill"><code>es</code> Español</div>
+          <div class="lang-pill"><code>pt</code> Português</div>
+          <div class="lang-pill"><code>fr</code> Français</div>
+          <div class="lang-pill"><code>de</code> Deutsch</div>
+          <div class="lang-pill"><code>it</code> Italiano</div>
+          <div class="lang-pill"><code>nl</code> Nederlands</div>
+          <div class="lang-pill"><code>pl</code> Polski</div>
+          <div class="lang-pill"><code>ru</code> Русский</div>
+          <div class="lang-pill"><code>ja</code> 日本語</div>
+          <div class="lang-pill"><code>ko</code> 한국어</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Start + FAQ -->
+    <section id="faq">
+      <div class="container">
+        <div class="sec-head">
+          <div class="sec-kicker" data-i18n="how.kicker">3 ADIMDA BAŞLA</div>
+          <h2 data-i18n="how.title">Kurulum Yok. Tek Dosya, Anında Bağlantı.</h2>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">01 / DOWNLOAD</div>
+            <h3 data-i18n="s1.t">İndir ve Çalıştır</h3>
+            <p data-i18n="s1.d">Windows için tek dosya SquadEditor.exe'yi indir. Kurulum gerektirmez, klasörden direkt açılır.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">02 / ATTACH</div>
+            <h3 data-i18n="s2.t">FM27 Kaydını Aç</h3>
+            <p data-i18n="s2.d">Football Manager 27'de kariyer kaydını yükle. SquadEditor oyunu otomatik algılar ve veritabanını saniyeler içinde okur.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">03 / EDIT &amp; SCOUT</div>
+            <h3 data-i18n="s3.t">Scout Yap veya Düzenle</h3>
+            <p data-i18n="s3.d">Yaptığın her değişiklik oyuna anında yansır. Önce tek tıkla "💾 Yedek" almanı öneririz.</p>
+          </div>
+        </div>
+
+        <div class="faq-list">
+          <details class="faq">
+            <summary data-i18n="q1.q">Tamamen ücretsiz mi? Sonradan ücretli olur mu?</summary>
+            <p data-i18n="q1.a">Evet, SquadEditor tamamen ücretsiz ve açık kaynaklıdır. Gizli abonelik, lisans anahtarı veya kısıtlı özellik yoktur.</p>
+          </details>
+          <details class="faq">
+            <summary data-i18n="q2.q">Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?</summary>
+            <p data-i18n="q2.a">Açık kaynaklı bağımsız Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta "Windows kişisel bilgisayarınızı korudu" uyarısı gösterebilir. "Ek bilgi → Yine de çalıştır" seçeneğiyle güvenle açabilirsin.</p>
+          </details>
+          <details class="faq">
+            <summary data-i18n="q3.q">Kariyer kaydımı bozar mı?</summary>
+            <p data-i18n="q3.a">Tüm bellek yazmaları doğrulamalıdır ve Ctrl+Z ile geri alınabilir. Yine de herhangi bir gerçek zamanlı editörde olduğu gibi büyük değişikliklerden önce üst bardaki "💾 Yedek" butonuyla kaydının yedeğini alman en güvenli yoldur.</p>
+          </details>
+          <details class="faq">
+            <summary data-i18n="q4.q">Hangi sürümle uyumlu?</summary>
+            <p data-i18n="q4.a">Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile tam uyumludur. .NET 10 Desktop Runtime gerektirir (yoksa Windows otomatik kurulum linkini sunar).</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download CTA -->
+    <section id="download">
+      <div class="container">
+        <div class="cta-box">
+          <h2 data-i18n="cta.title">Kariyerinin Kontrolünü Eline Al.</h2>
+          <p data-i18n="cta.sub">SquadEditor'ı şimdi Windows'a ücretsiz indir, 12 dilde FM27 veritabanını canlı keşfet.</p>
+          <a id="bottomDownloadBtn" href="#download" class="btn btn-primary btn-lg">
+            <span>⬇</span>
+            <span data-i18n="cta.btn">SquadEditor v1.0.0 İndir (Windows x64)</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="foot-row">
+        <a href="#" class="brand">
+          <img src="./assets/logo.png" alt="SquadEditor logo" />
+          <span>SquadEditor</span>
+        </a>
+        <div class="socials" id="socialLinks"></div>
+      </div>
+      <p class="disclaimer" data-i18n="foot.disclaimer">
+        SquadEditor bağımsız, topluluk yapımı ücretsiz bir araçtır. Sports Interactive veya SEGA ile herhangi bir resmi bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // =========================================================================
+    // KENDİ BİLGİLERİNİ SADECE BURADAN GÜNCELLE (Tek nokta ayar bloğu)
+    // =========================================================================
+    const SITE_CONFIG = {
+      version: "v1.0.0",
+      fmVersion: "FM27 (27.0.1)",
+      // GitHub Releases linkini hazır olunca buraya yapıştır:
+      // Örn: "https://github.com/KULLANICI_ADIN/SquadEditor/releases/latest/download/SquadEditor-win-x64.zip"
+      downloadUrl: "#download",
+      // 40 sn tanıtım videonu hazır olunca buraya koy:
+      // Yerel MP4 için: "./assets/promo.mp4"
+      // YouTube için: "https://www.youtube.com/embed/VIDEO_ID"
+      videoUrl: "",
+      // Sosyal medya hesapların (boş bıraktıkların gizlenir):
+      socials: [
+        { label: "X / Twitter", url: "https://x.com/kullaniciadin", icon: "𝕏" },
+        { label: "YouTube", url: "https://youtube.com/@kullaniciadin", icon: "▶" },
+        { label: "Instagram", url: "https://instagram.com/kullaniciadin", icon: "◎" },
+        { label: "GitHub", url: "https://github.com/kullaniciadin/SquadEditor", icon: "⌘" },
+        { label: "Discord", url: "https://discord.gg/davetkodun", icon: "◈" }
+      ]
+    };
+
+    const I18N = {
+      tr: {
+        "nav.preview": "Önizleme", "nav.features": "Özellikler", "nav.languages": "12 Dil", "nav.faq": "SSS", "nav.download": "İndir (Windows)",
+        "hero.title1": "Football Manager 27 için", "hero.title2": "Ücretsiz Gerçek Zamanlı Editör & Scout",
+        "hero.sub": "Oyuncuları, kulüpleri, personelleri ve finansı oyun açıkken anında düzenle. Gerçek regenleri ve 5 yıldızlı antrenörleri saniyeler içinde bul — tüm değişiklikler Ctrl+Z ile güvenli geri alınabilir.",
+        "hero.dl": "Windows için Ücretsiz İndir (.exe)", "hero.watch": "40 sn Tanıtımı İzle",
+        "meta.free": "%100 Ücretsiz", "meta.langs": "12 Resmi FM Dili", "meta.undo": "Güvenli Ctrl+Z Geri Alma", "meta.win": "Windows 10/11 (x64)",
+        "tab.scout": "🧬 Regen & Scout", "tab.staff": "⭐ 5★ Personel (TD Hariç)", "tab.edit": "⚡ Canlı Düzenleme",
+        "stage.videoNote": "🎬 40 saniyelik tanıtım videosu hazır olduğunda tek satırda (SITE_CONFIG.videoUrl) buraya gömülür.",
+        "feat.kicker": "ÖNE ÇIKAN ÖZELLİKLER", "feat.title": "Kariyerindeki her detay tek ekranda, sıfır gecikmeyle.",
+        "feat.sub": "Ücretli editörlerin ve scout araçlarının en çok kullanılan tüm özelliklerini modern, hızlı ve tamamen ücretsiz bir masaüstü uygulamasında topladık.",
+        "f1.t": "Gerçek Regen & Gelişmiş Scout", "f1.d": "Uyruk, mevki, rol reytingi, gizli özellikler (Profesyonellik, İstikrar, Önemli Maçlar) ve gerçek FM27 Newgen/Regen filtresiyle gelecekteki yıldızları saniyeler içinde yakala.",
+        "f2.t": "5★ Personel Filtresi & Rol Seçerek İşe Alma", "f2.d": "Antrenör, gözlemci ve fizyoterapistleri 1–20 özellikleriyle filtrele, tek tıkla \"TD Hariç\" de ve kulübe alırken görevini (Asistan, Kaleci, Kondisyon, Gözlemci vb.) kendin seç.",
+        "f3.t": "Tek Tık Hazır Aksiyonlar & Wonderkid", "f3.d": "Tüm kadroyu maça hazırla (sakatlık/ceza temizle, kondisyon/moral fulle), tekrar zar atılabilen Wonderkid oluşturucu, Model Kişilik ve tüm tesisleri 20 yapma.",
+        "f4.t": "Anında Transfer & Sözleşme Yönetimi", "f4.d": "Önbellekli bellek taraması sayesinde kulüp değişimleri ve bonservisli transferler anında planlanır. Sözleşme maddeleri, ikinci uyruk, favori kulüp ve kulüp ilişkileri düzenlenebilir.",
+        "f5.t": "Güvenli Yazma, Yedekleme & Ctrl+Z", "f5.d": "Her yazma işlemi doğrulanır ve geçmişe kaydedilir. Tek tıkla .fm kayıt yedeği al, Salt Okunur modda güvenle scout yap veya istediğin değişikliği Ctrl+Z ile geri al.",
+        "f6.t": "4 Canlı Tema, Radar & Komut Paleti", "f6.d": "FM Gece Laciverti, OLED Siyah, WTCS Kömür & Altın ve Açık tema. 8 eksenli oyuncu radarı, 2 oyuncu karşılaştırma, PNG oyuncu kartı indirme ve Ctrl+K Komut Paleti.",
+        "lang.kicker": "KÜRESEL DESTEK", "lang.title": "12 Dilde Tam Football Manager Terminolojisi",
+        "lang.sub": "Sadece arayüz değil; tüm oyuncu özellikleri, personel görevleri, sözleşme maddeleri ve oyun terimleri 12 dilde eksiksiz yerelleştirildi.",
+        "how.kicker": "3 ADIMDA BAŞLA", "how.title": "Kurulum Yok. Tek Dosya, Anında Bağlantı.",
+        "s1.t": "İndir ve Çalıştır", "s1.d": "Windows için tek dosya SquadEditor.exe'yi indir. Kurulum gerektirmez, klasörden direkt açılır.",
+        "s2.t": "FM27 Kaydını Aç", "s2.d": "Football Manager 27'de kariyer kaydını yükle. SquadEditor oyunu otomatik algılar ve veritabanını saniyeler içinde okur.",
+        "s3.t": "Scout Yap veya Düzenle", "s3.d": "Yaptığın her değişiklik oyuna anında yansır. Önce tek tıkla \"💾 Yedek\" almanı öneririz.",
+        "q1.q": "Tamamen ücretsiz mi? Sonradan ücretli olur mu?", "q1.a": "Evet, SquadEditor tamamen ücretsiz ve açık kaynaklıdır. Gizli abonelik, lisans anahtarı veya kısıtlı özellik yoktur.",
+        "q2.q": "Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?", "q2.a": "Açık kaynaklı bağımsız Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta \"Windows kişisel bilgisayarınızı korudu\" uyarısı gösterebilir. \"Ek bilgi → Yine de çalıştır\" seçeneğiyle güvenle açabilirsin.",
+        "q3.q": "Kariyer kaydımı bozar mı?", "q3.a": "Tüm bellek yazmaları doğrulamalıdır ve Ctrl+Z ile geri alınabilir. Yine de herhangi bir gerçek zamanlı editörde olduğu gibi büyük değişikliklerden önce üst bardaki \"💾 Yedek\" butonuyla kaydının yedeğini alman en güvenli yoldur.",
+        "q4.q": "Hangi sürümle uyumlu?", "q4.a": "Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile tam uyumludur. .NET 10 Desktop Runtime gerektirir (yoksa Windows otomatik kurulum linkini sunar).",
+        "cta.title": "Kariyerinin Kontrolünü Eline Al.", "cta.sub": "SquadEditor'ı şimdi Windows'a ücretsiz indir, 12 dilde FM27 veritabanını canlı keşfet.",
+        "cta.btn": "SquadEditor v1.0.0 İndir (Windows x64)",
+        "foot.disclaimer": "SquadEditor bağımsız, topluluk yapımı ücretsiz bir araçtır. Sports Interactive veya SEGA ile herhangi bir resmi bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
+      },
+      en: {
+        "nav.preview": "Preview", "nav.features": "Features", "nav.languages": "12 Languages", "nav.faq": "FAQ", "nav.download": "Download (Windows)",
+        "hero.title1": "The Free Real-Time Editor & Scout", "hero.title2": "Built for Football Manager 27",
+        "hero.sub": "Edit players, clubs, staff and finances live while FM27 runs. Discover true regens and 5-star coaches in seconds — every single write is guarded and undoable with Ctrl+Z.",
+        "hero.dl": "Download Free for Windows (.exe)", "hero.watch": "Watch 40s Promo",
+        "meta.free": "100% Free", "meta.langs": "12 Authentic FM Languages", "meta.undo": "Safe Ctrl+Z Undo", "meta.win": "Windows 10/11 (x64)",
+        "tab.scout": "🧬 Regen & Scout", "tab.staff": "⭐ 5★ Staff (No Managers)", "tab.edit": "⚡ Live Editing",
+        "stage.videoNote": "🎬 Drop your 40-second promo video into SITE_CONFIG.videoUrl (local MP4 or YouTube embed) and it replaces this stage automatically.",
+        "feat.kicker": "CORE CAPABILITIES", "feat.title": "Every career tool in one crisp, instant desktop app.",
+        "feat.sub": "All the power of paid real-time editors and scouting tools combined into a fast, modern, completely free Windows app.",
+        "f1.t": "True Regen & Advanced Scout", "f1.d": "Filter by nationality, role rating, hidden attributes (Professionalism, Consistency, Important Matches) and verified FM27 Newgen/Regen UIDs to find future superstars instantly.",
+        "f2.t": "5★ Staff Filter & Role-Based Hiring", "f2.d": "Search coaches, scouts and physios by 1–20 attributes, exclude head coaches with one click, and choose the exact staff role & department when hiring.",
+        "f3.t": "1-Click Presets & Wonderkid Reroller", "f3.d": "Prepare your whole squad for matchday (heal injuries, lift bans, max fitness & morale), reroll realistic Wonderkids, apply Model Personality, or max all club facilities.",
+        "f4.t": "Instant Transfers & Contract Editor", "f4.d": "Cached memory planning makes player transfers (with optional transfer fee) and free-agent signings near-instant. Edit clauses, second nationalities, and club relationships.",
+        "f5.t": "Guarded Memory Writes & Ctrl+Z", "f5.d": "Every write verifies live memory before committing and logs to Change History. Back up your .fm save in 1 click, browse safely in Read-Only mode, or undo anytime.",
+        "f6.t": "4 Live Themes, Radar & Command Palette", "f6.d": "Switch live between FM Midnight, OLED Black, WTCS Charcoal & Gold, and Light themes. Includes 8-axis radar, 2-player comparison, PNG card export, and Ctrl+K palette.",
+        "lang.kicker": "GLOBAL READY", "lang.title": "12 Languages with Authentic FM Terminology",
+        "lang.sub": "Not just menus — every attribute, staff job, contract clause and game term is natively localized across 12 major Football Manager languages.",
+        "how.kicker": "START IN 3 STEPS", "how.title": "No Installer. Single File, Instant Attach.",
+        "s1.t": "Download & Run", "s1.d": "Grab the single-file SquadEditor.exe for Windows. No installer or background services required.",
+        "s2.t": "Load Your FM27 Save", "s2.d": "Open your career in Football Manager 27. SquadEditor detects the game automatically and indexes the database in seconds.",
+        "s3.t": "Scout or Edit Live", "s3.d": "Changes apply immediately in-game. Use the 1-click \"💾 Backup\" button anytime for extra peace of mind.",
+        "q1.q": "Is it completely free?", "q1.a": "Yes — SquadEditor is 100% free and open source. No paywalls, license keys, or locked features.",
+        "q2.q": "Why does Windows SmartScreen show a warning?", "q2.a": "Independent open-source Windows apps without a paid code-signing certificate trigger SmartScreen on first launch. Click \"More info → Run anyway\" to open safely.",
+        "q3.q": "Will it corrupt my save?", "q3.a": "All memory writes are validated before writing and undoable via Ctrl+Z. As with any real-time editor, backing up your save with the built-in Backup button before major edits is recommended.",
+        "q4.q": "Which version is supported?", "q4.a": "Tested live on Windows 10/11 (x64) with Steam Football Manager 27 (27.0.1). Requires .NET 10 Desktop Runtime.",
+        "cta.title": "Take Full Control of Your Career.", "cta.sub": "Download SquadEditor free for Windows and explore your FM27 database live in 12 languages.",
+        "cta.btn": "Download SquadEditor v1.0.0 (Windows x64)",
+        "foot.disclaimer": "SquadEditor is an independent, community-built free tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
+      }
+    };
+
+    const MOCK_DATA = {
+      scout: {
+        tr: { head: "🧬 Regen & Wonderkid Avı · CA / PA Canlı Tarama", badge: "FM27 Bağlı · 52.400+ Oyuncu", cols: ["Oyuncu", "Kulüp", "CA", "PA", "En İyi Rol"] },
+        en: { head: "🧬 Regen & Wonderkid Finder · Live CA / PA Scan", badge: "FM27 Live · 52,400+ Players", cols: ["Player", "Club", "CA", "PA", "Best Role"] },
+        rows: [
+          ["Emre Kaya (17 · TUR · Regen)", "Fenerbahçe U19", "118", "184", "Oyun Kurucu 74.2%"],
+          ["Mateo Silva (18 · ARG · Regen)", "River Plate", "126", "189", "İç Forvet 76.8%"],
+          ["Lukas Weber (17 · GER · Regen)", "Borussia Dortmund", "121", "181", "Pasör Stoper 73.5%"]
+        ]
+      },
+      staff: {
+        tr: { head: "⭐ 5★ Boşta Antrenörler · Menajerler Gizli (TD Hariç)", badge: "21.800+ Personel · Rol Seçimli İşe Alma", cols: ["Personel", "Uyruk", "CA", "PA", "Öne Çıkan"] },
+        en: { head: "⭐ 5★ Unemployed Coaches · Managers Excluded", badge: "21,800+ Staff · Role-Picker Hiring", cols: ["Staff", "Nation", "CA", "PA", "Highlight"] },
+        rows: [
+          ["Rodolfo Borrell", "Spain", "175", "180", "TAC 19 · DET 18 · MOT 17"],
+          ["Danny Fairbairn", "England", "163", "168", "ATT 18 · TEC 18 · WWY 17"],
+          ["Xabier Mancisidor", "Spain", "160", "165", "GK 20 · DET 17 · MOT 16"]
+        ]
+      },
+      edit: {
+        tr: { head: "⚡ Canlı Düzenleme · Güvenli Ctrl+Z Geçmişi", badge: "Anında Bellek Yazımı · Otomatik Yedek", cols: ["İşlem", "Hedef", "Önce", "Sonra", "Durum"] },
+        en: { head: "⚡ Live Editing · Safe Ctrl+Z Change History", badge: "Instant Memory Write · Auto Backup", cols: ["Action", "Target", "Before", "After", "Status"] },
+        rows: [
+          ["⚡ Kadroyu Maça Hazırla", "Fenerbahçe (28)", "74% Kond.", "100% + Moral 20", "✓ Ctrl+Z Hazır"],
+          ["🎲 Wonderkid Yap", "Genç Forvet (18)", "CA 92 / PA 140", "CA 144 / PA 186", "✓ Ctrl+Z Hazır"],
+          ["⇄ Rol Seçimli İşe Al", "Antrenör → Kulüp", "Boşta", "Kaleci Antrenörü", "✓ 12 ms"]
+        ]
+      }
+    };
+
+    let currentLang = localStorage.getItem("se_site_lang") || "tr";
+    let currentTab = "scout";
+
+    function renderMock() {
+      const d = MOCK_DATA[currentTab];
+      const l = d[currentLang];
+      document.getElementById("mockHeading").textContent = l.head;
+      document.getElementById("mockBadge").textContent = l.badge;
+      const host = document.getElementById("mockRows");
+      host.innerHTML =
+        `<div class="mock-row head">${l.cols.map(c => `<span>${c}</span>`).join("")}</div>` +
+        d.rows.map(r => `
+          <div class="mock-row">
+            <strong>${r[0]}</strong>
+            <span style="color:var(--muted)">${r[1]}</span>
+            <span class="stat-gold">${r[2]}</span>
+            <span class="stat-hi">${r[3]}</span>
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">${r[4]}</span>
+          </div>`).join("");
+    }
+
+    function applyLang(lang) {
+      currentLang = lang;
+      localStorage.setItem("se_site_lang", lang);
+      document.documentElement.lang = lang;
+      document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
+      const dict = I18N[lang];
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) el.textContent = dict[key];
+      });
+      renderMock();
+    }
+
+    // Wire config
+    document.getElementById("versionBadge").textContent = `${SITE_CONFIG.fmVersion} · ${SITE_CONFIG.version} · FREE & OPEN SOURCE`;
+    ["navDownloadBtn", "heroDownloadBtn", "bottomDownloadBtn"].forEach(id => {
+      const el = document.getElementById(id);
+      el.href = SITE_CONFIG.downloadUrl;
+      if (SITE_CONFIG.downloadUrl.startsWith("http")) { el.target = "_blank"; el.rel = "noopener"; }
+    });
+
+    // Video slot
+    if (SITE_CONFIG.videoUrl) {
+      document.getElementById("mockSlot").style.display = "none";
+      const vs = document.getElementById("videoSlot");
+      vs.style.display = "block";
+      if (SITE_CONFIG.videoUrl.includes("youtube.com") || SITE_CONFIG.videoUrl.includes("youtu.be")) {
+        vs.innerHTML = `<iframe src="${SITE_CONFIG.videoUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+      } else {
+        vs.innerHTML = `<video src="${SITE_CONFIG.videoUrl}" controls playsinline></video>`;
+      }
+    }
+
+    // Social links
+    const sHost = document.getElementById("socialLinks");
+    sHost.innerHTML = SITE_CONFIG.socials
+      .filter(s => s.url)
+      .map(s => `<a class="social-link" href="${s.url}" target="_blank" rel="noopener"><span>${s.icon}</span><span>${s.label}</span></a>`)
+      .join("");
+
+    // Events
+    document.querySelectorAll(".lang-btn").forEach(b => b.addEventListener("click", () => applyLang(b.dataset.lang)));
+    document.querySelectorAll(".stage-tab").forEach(t => t.addEventListener("click", () => {
+      currentTab = t.dataset.tab;
+      document.querySelectorAll(".stage-tab").forEach(x => x.classList.toggle("active", x === t));
+      renderMock();
+    }));
+
+    applyLang(currentLang);
+  </script>
+</body>
+</html>

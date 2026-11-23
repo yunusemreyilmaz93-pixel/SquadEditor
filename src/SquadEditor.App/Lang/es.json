@@ -933,5 +933,8 @@
   "⭐ Best Free Agents (Free · CA ≥ 125)": "⭐ Mejores agentes libres (Libre · CA ≥ 125)",
   "🧬 Best Newgens (Regen · PA ≥ 150)": "🧬 Mejores Newgens (Regen · PA ≥ 150)",
   "No rival clubs recorded.": "No hay clubes rivales registrados.",
-  "No disliked personnel recorded.": "No hay personal no grato registrado."
+  "No disliked personnel recorded.": "No hay personal no grato registrado.",
+  "Search players, clubs, nations or leagues…": "Buscar jugadores, clubes, países o ligas…",
+  "Quick command palette (Ctrl+K)": "Paleta de comandos rápida (Ctrl+K)",
+  "Theme and accent apply immediately; changing language restarts the editor.": "El tema y el color se aplican al instante; cambiar el idioma reinicia el editor."
 }

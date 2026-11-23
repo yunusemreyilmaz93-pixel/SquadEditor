@@ -933,5 +933,8 @@
   "⭐ Best Free Agents (Free · CA ≥ 125)": "⭐ Лучшие свободные агенты (Своб. · CA ≥ 125)",
   "🧬 Best Newgens (Regen · PA ≥ 150)": "🧬 Лучшие ньюгены (Регены · PA ≥ 150)",
   "No rival clubs recorded.": "Принципиальные соперники не указаны.",
-  "No disliked personnel recorded.": "Нелюбимый персонал не указан."
+  "No disliked personnel recorded.": "Нелюбимый персонал не указан.",
+  "Search players, clubs, nations or leagues…": "Поиск игроков, клубов, стран или лиг…",
+  "Quick command palette (Ctrl+K)": "Быстрая палитра команд (Ctrl+K)",
+  "Theme and accent apply immediately; changing language restarts the editor.": "Тема и акцент применяются сразу; смена языка перезапускает редактор."
 }

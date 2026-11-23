@@ -933,5 +933,8 @@
   "⭐ Best Free Agents (Free · CA ≥ 125)": "⭐ Beste transfervrije spelers (Transfervrij · CA ≥ 125)",
   "🧬 Best Newgens (Regen · PA ≥ 150)": "🧬 Beste Newgens (Regen · PA ≥ 150)",
   "No rival clubs recorded.": "Geen rivaliserende clubs vastgelegd.",
-  "No disliked personnel recorded.": "Geen ongewenste personen vastgelegd."
+  "No disliked personnel recorded.": "Geen ongewenste personen vastgelegd.",
+  "Search players, clubs, nations or leagues…": "Zoek spelers, clubs, landen of competities…",
+  "Quick command palette (Ctrl+K)": "Snelle opdrachtenpalet (Ctrl+K)",
+  "Theme and accent apply immediately; changing language restarts the editor.": "Thema en accentkleur gelden direct; taal wijzigen herstart de editor."
 }

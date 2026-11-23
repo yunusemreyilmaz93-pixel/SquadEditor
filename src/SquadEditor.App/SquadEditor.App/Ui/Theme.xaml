@@ -213,7 +213,7 @@
         <ControlTemplate TargetType="TextBox">
           <Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                   BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
-            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+            <ScrollViewer x:Name="PART_ContentHost" Margin="0" VerticalAlignment="Center"/>
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -234,7 +234,7 @@
   <Style x:Key="SearchBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
     <Setter Property="Background" Value="{DynamicResource Panel}"/>
     <Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/>
-    <Setter Property="Padding" Value="30,2,10,2"/>
+    <Setter Property="Padding" Value="30,2,56,2"/>
     <Setter Property="VerticalContentAlignment" Value="Center"/>
   </Style>
 
@@ -243,7 +243,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Thumb">
-          <Border CornerRadius="4" Background="#33415E"/>
+          <Border CornerRadius="4" Background="{DynamicResource Stroke}"/>
         </ControlTemplate>
       </Setter.Value>
     </Setter>

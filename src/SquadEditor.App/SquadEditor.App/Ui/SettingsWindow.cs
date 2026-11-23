@@ -190,7 +190,7 @@ public sealed class SettingsWindow : Window
 	}
 
 	private UIElement Appearance() => Section(Build.T("Görünüm", "Appearance"),
-		Build.T("Tema, vurgu rengi ve dil değişince editör yeniden açılır ve oyuna tekrar bağlanır.", "Changing theme, accent or language restarts the editor and reconnects to the game."),
+		Build.T("Tema ve vurgu rengi anında uygulanır; dil değişince editör yeniden açılır.", "Theme and accent apply immediately; changing language restarts the editor."),
 		(Build.T("Tema", "Theme"), _theme, null),
 		(Build.T("Vurgu rengi", "Accent colour"), _accent, null),
 		(Build.T("Dil", "Language"), _language, null),

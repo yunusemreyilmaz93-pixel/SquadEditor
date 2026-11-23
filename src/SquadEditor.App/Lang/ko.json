@@ -933,5 +933,8 @@
   "⭐ Best Free Agents (Free · CA ≥ 125)": "⭐ 최고 자유 계약 선수 (FA · CA ≥ 125)",
   "🧬 Best Newgens (Regen · PA ≥ 150)": "🧬 최고 생성 선수 (리젠 · PA ≥ 150)",
   "No rival clubs recorded.": "기록된 라이벌 구단이 없습니다.",
-  "No disliked personnel recorded.": "기록된 비선호 인물이 없습니다."
+  "No disliked personnel recorded.": "기록된 비선호 인물이 없습니다.",
+  "Search players, clubs, nations or leagues…": "선수, 구단, 국가 또는 리그 검색…",
+  "Quick command palette (Ctrl+K)": "빠른 명령 팔레트 (Ctrl+K)",
+  "Theme and accent apply immediately; changing language restarts the editor.": "테마와 강조 색상은 즉시 적용되며, 언어 변경 시 에디터가 재시작됩니다."
 }

@@ -46,7 +46,8 @@ public partial class EditorWindow : Window, INavigator
 		Title = "SquadEditor";
 		// Number and date formats in grids follow the app language (576.610 in Turkish).
 		Language = System.Windows.Markup.XmlLanguage.GetLanguage(SquadEditor.Core.CoreText.Culture.IetfLanguageTag);
-		TopSearchHint.Text = Build.T("Oyuncu, kulüp, ülke veya lig ara…  (Ctrl+F)", "Search players, clubs, nations or leagues…  (Ctrl+F)");
+		TopSearchHint.Text = Build.T("Oyuncu, kulüp, ülke veya lig ara…", "Search players, clubs, nations or leagues…");
+		CommandButton.ToolTip = Build.T("Hızlı komut paleti (Ctrl+K)", "Quick command palette (Ctrl+K)");
 		ToastUndoBtn.Content = Build.T("↶ Geri Al", "↶ Undo");
 		_toastTimer.Tick += (_, _) => { _toastTimer.Stop(); ToastBanner.Visibility = Visibility.Collapsed; };
 		UndoText.Text = Build.T("Geri al", "Undo");
@@ -566,10 +567,22 @@ public partial class EditorWindow : Window, INavigator
 
 	private void TopSearch_TextChanged(object sender, TextChangedEventArgs e)
 	{
-		TopSearchHint.Visibility = TopSearch.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+		bool empty = TopSearch.Text.Length == 0;
+		TopSearchHint.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+		TopSearchShortcut.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+		TopSearchClear.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
 		_searchTimer.Stop();
 		_searchTimer.Start();
 	}
+
+	private void TopSearchClear_Click(object sender, RoutedEventArgs e)
+	{
+		TopSearch.Text = "";
+		SearchPopup.IsOpen = false;
+		TopSearch.Focus();
+	}
+
+	private void CommandButton_Click(object sender, RoutedEventArgs e) => OpenCommandPalette();
 
 	private void RunSearch()
 	{
