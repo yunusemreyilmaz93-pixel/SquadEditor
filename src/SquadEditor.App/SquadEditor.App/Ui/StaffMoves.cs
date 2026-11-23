@@ -123,7 +123,7 @@ public static class StaffMoves
 			{
 				held.Add(dep);
 				Removal(list, Array.IndexOf(list.Items, obj), writes, field);
-				steps.Add(Build.T($"{oldName} {dep.Tr} listesinden çıkar.", $"Leaves {oldName}'s {dep.En}."));
+				steps.Add(Build.F("{0} {2} listesinden çıkar.", "Leaves {0}'s {1}.", oldName, dep.En, dep.Tr));
 			}
 		}
 		if (held.Count == 0)
@@ -139,7 +139,7 @@ public static class StaffMoves
 		{
 			writes.Add(new PlannedWrite(block + Contract, GameWrite.U64(contract), GameWrite.U64(0), Build.T("Sözleşme", "Contract"), oldName, ""));
 			steps.Add(Build.T("Sözleşmesi kaldırılır: kulüpsüz kalır.", "His contract is removed: he has no club."));
-			summary = Build.T($"{name}, {oldName} kulübündeki görevinden ayrılır.", $"{name} leaves {oldName}.");
+			summary = Build.F("{0}, {1} kulübündeki görevinden ayrılır.", "{0} leaves {1}.", name, oldName);
 		}
 		else
 		{
@@ -168,7 +168,7 @@ public static class StaffMoves
 				writes.Add(new PlannedWrite(list.End, m.ReadBytes(list.End, 8), GameWrite.U64(obj), field));
 				writes.Add(new PlannedWrite(list.Header + 8, GameWrite.U64(list.End).Concat(GameWrite.U64(list.Capacity)).ToArray(),
 					GameWrite.U64(list.End + 8).Concat(GameWrite.U64(Math.Max(list.Capacity, list.End + 8))).ToArray(), field));
-				steps.Add(Build.T($"{newName} {dep.Tr} listesine eklenir.", $"Joins {newName}'s {dep.En}."));
+				steps.Add(Build.F("{0} {2} listesine eklenir.", "Joins {0}'s {1}.", newName, dep.En, dep.Tr));
 			}
 			writes.Add(new PlannedWrite(contract + ContractTeam, GameWrite.U64(team), GameWrite.U64(newSenior), field, oldName, newName));
 			writes.Add(new PlannedWrite(contract + ContractSenior, GameWrite.U64(senior), GameWrite.U64(newSenior), field, oldName, newName));
@@ -193,13 +193,13 @@ public static class StaffMoves
 			if (newJob.HasValue)
 			{
 				string roleText = RoleLabel(newJob.Value);
-				steps.Add(Build.T($"Yeni görevi: {roleText} (maaş ve bitiş aynı kalır).", $"New role: {roleText} (same wage and end)."));
-				summary = Build.T($"{name}: {oldName} → {newName} ({roleText}).", $"{name}: {oldName} → {newName} ({roleText}).");
+				steps.Add(Build.F("Yeni görevi: {0} (maaş ve bitiş aynı kalır).", "New role: {0} (same wage and end).", roleText));
+				summary = Build.F("{0}: {1} → {2} ({3}).", "{0}: {1} → {2} ({3}).", name, oldName, newName, roleText);
 			}
 			else
 			{
 				steps.Add(Build.T("Sözleşmesi yeni kulübe geçer (görev, maaş ve bitiş aynı kalır).", "His contract moves to the new club (same job, wage and end)."));
-				summary = Build.T($"{name}: {oldName} → {newName}.", $"{name}: {oldName} → {newName}.");
+				summary = Build.F("{0}: {1} → {2}.", "{0}: {1} → {2}.", name, oldName, newName);
 			}
 		}
 		return new MovePlan(summary, steps, writes.Where(w => !w.Expected.AsSpan().SequenceEqual(w.Bytes)).ToList(), club, newSenior);
@@ -301,11 +301,10 @@ public static class StaffMoves
 		string roleText = RoleLabel(chosenJob);
 		var steps = new List<string>
 		{
-			Build.T($"Oyunun sözleşme havuzundan yeni sözleşme alınır ({pool.Free} boş yer).", $"A new contract is taken from the game's pool ({pool.Free} free)."),
-			Build.T($"{newName} {chosen.Tr} listesine {roleText} olarak eklenir (maaş {Money.Format(wage, true)}, bitiş 30.06.{endYear}).",
-				$"Joins {newName}'s {chosen.En} as {roleText} ({Money.Format(wage, true)}, until 30.06.{endYear}).")
+			Build.F("Oyunun sözleşme havuzundan yeni sözleşme alınır ({0} boş yer).", "A new contract is taken from the game's pool ({0} free).", pool.Free),
+			Build.F("{0} {5} listesine {2} olarak eklenir (maaş {3}, bitiş 30.06.{4}).", "Joins {0}'s {1} as {2} ({3}, until 30.06.{4}).", newName, chosen.En, roleText, Money.Format(wage, true), endYear, chosen.Tr)
 		};
-		return new MovePlan(Build.T($"{name}, {newName} kulübüne {roleText} olarak katılır.", $"{name} joins {newName} as {roleText}."), steps, writes, club, newSenior);
+		return new MovePlan(Build.F("{0}, {1} kulübüne {2} olarak katılır.", "{0} joins {1} as {2}.", name, newName, roleText), steps, writes, club, newSenior);
 	}
 
 	private static string ClubName(GameData data, ulong club)

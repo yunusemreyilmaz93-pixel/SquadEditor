@@ -137,7 +137,7 @@ public sealed class PlayerPage : UserControl, IPage
 		string nation = _f["Nation"].Value;
 		string dob = _f["Date of Birth"].Value;
 		int age = _data.AgeOn(GameData.ParseDate(dob));
-		string ageText = age > 0 ? Build.T($"{age} yaşında ({Dates.Show(dob)})", $"{age} years old ({Dates.Show(dob)})") : "";
+		string ageText = age > 0 ? Build.F("{0} yaşında ({1})", "{0} years old ({1})", age, Dates.Show(dob)) : "";
 		var line1 = Build.Text(string.Join("  ·  ", new[] { positions, nation, ageText }.Where(s => s.Length > 0)), 13, new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xFF, 0xFF)));
 		line1.Margin = new Thickness(0, 4, 0, 0);
 
@@ -197,7 +197,7 @@ public sealed class PlayerPage : UserControl, IPage
 	private IEnumerable<EditField> Group(string group)
 	{
 		var fields = _f.Values.Where(f => f.Def.GroupKey == group);
-		return group == "Positions" ? fields : fields.OrderBy(f => f.Label, StringComparer.Create(CultureInfo.GetCultureInfo(Loc.Instance.Language == "tr" ? "tr-TR" : "en-GB"), true));
+		return group == "Positions" ? fields : fields.OrderBy(f => f.Label, StringComparer.Create(SquadEditor.Core.CoreText.Culture, true));
 	}
 
 	/// <summary>Current injuries and bans with Heal / Lift buttons.</summary>
@@ -222,19 +222,19 @@ public sealed class PlayerPage : UserControl, IPage
 			}
 			foreach (Ban b in bans)
 			{
-				stack.Children.Add(Build.Text(Build.T($"Ceza: {b.Matches} maç", $"Ban: {b.Matches} matches"), 13, Build.Res("Danger")));
+				stack.Children.Add(Build.Text(Build.F("Ceza: {0} maç", "Ban: {0} matches", b.Matches), 13, Build.Res("Danger")));
 			}
 			var buttons = new WrapPanel { Margin = new Thickness(0, 6, 0, 0) };
 			if (injuries.Count > 0)
 			{
 				var heal = new Button { Content = Build.T("İyileştir", "Heal"), Margin = new Thickness(0, 0, 6, 0), IsEnabled = !AppSettings.Current.ReadOnlyMode };
-				heal.Click += (_, _) => { Medical.Heal(_data, Address, Name); _nav.SetStatus(Build.T($"{Name} iyileşti. Ctrl+Z geri alır.", $"{Name} healed. Ctrl+Z undoes it.")); Fill(); };
+				heal.Click += (_, _) => { Medical.Heal(_data, Address, Name); _nav.SetStatus(Build.F("{0} iyileşti. Ctrl+Z geri alır.", "{0} healed. Ctrl+Z undoes it.", Name)); Fill(); };
 				buttons.Children.Add(heal);
 			}
 			if (bans.Count > 0)
 			{
 				var lift = new Button { Content = Build.T("Cezayı kaldır", "Lift bans"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
-				lift.Click += (_, _) => { Medical.LiftBans(_data, Address, Name); _nav.SetStatus(Build.T($"{Name} için ceza kaldırıldı.", $"Bans lifted for {Name}.")); Fill(); };
+				lift.Click += (_, _) => { Medical.LiftBans(_data, Address, Name); _nav.SetStatus(Build.F("{0} için ceza kaldırıldı.", "Bans lifted for {0}.", Name)); Fill(); };
 				buttons.Children.Add(lift);
 			}
 			if (buttons.Children.Count > 0)
@@ -273,12 +273,12 @@ public sealed class PlayerPage : UserControl, IPage
 				if (_data.Session.Freezer.IsFrozen(Address))
 				{
 					_data.Session.Freezer.Unfreeze(Address);
-					_nav.SetStatus(Build.T($"{Name} artık dondurulmuş değil.", $"{Name} unfrozen."));
+					_nav.SetStatus(Build.F("{0} artık dondurulmuş değil.", "{0} unfrozen.", Name));
 				}
 				else
 				{
 					int count = _data.Session.FreezeEntity(Address, Name, _data.PlayerDef, FreezeGroups);
-					_nav.SetStatus(Build.T($"{Name} donduruldu ({count} alan kilitlendi).", $"{Name} frozen ({count} fields locked)."));
+					_nav.SetStatus(Build.F("{0} donduruldu ({1} alan kilitlendi).", "{0} frozen ({1} fields locked).", Name, count));
 				}
 				Fill();
 			};
@@ -300,12 +300,12 @@ public sealed class PlayerPage : UserControl, IPage
 				if (list.Contains(Uid))
 				{
 					list.Remove(Uid);
-					_nav.SetStatus(Build.T($"{Name} kısa listeden çıkarıldı.", $"{Name} removed from shortlist."));
+					_nav.SetStatus(Build.F("{0} kısa listeden çıkarıldı.", "{0} removed from shortlist.", Name));
 				}
 				else
 				{
 					list.Add(Uid);
-					_nav.SetStatus(Build.T($"★ {Name} kısa listeye eklendi.", $"★ {Name} added to shortlist."));
+					_nav.SetStatus(Build.F("★ {0} kısa listeye eklendi.", "★ {0} added to shortlist.", Name));
 				}
 				AppSettings.Current.SetShortlist(_data.SaveKey, list.ToList());
 				AppSettings.Current.Save();
@@ -321,7 +321,7 @@ public sealed class PlayerPage : UserControl, IPage
 			};
 			healMax.Click += (_, _) =>
 			{
-				using (_data.Session.History.BeginBatch(Build.T($"{Name}: İyileştir & Fulle", $"{Name}: Heal & Max")))
+				using (_data.Session.History.BeginBatch(Build.F("{0}: İyileştir & Fulle", "{0}: Heal & Max", Name)))
 				{
 					Medical.Heal(_data, Address, Name);
 					Medical.LiftBans(_data, Address, Name);
@@ -338,14 +338,14 @@ public sealed class PlayerPage : UserControl, IPage
 					}
 				}
 				RefreshValues();
-				_nav.SetStatus(Build.T($"✓ {Name} iyileştirildi; kondisyon, moral ve mutluluk fullendi. Ctrl+Z geri alır.", $"✓ {Name} healed; fitness, morale & happiness maxed. Ctrl+Z undoes it."));
+				_nav.SetStatus(Build.F("✓ {0} iyileştirildi; kondisyon, moral ve mutluluk fullendi. Ctrl+Z geri alır.", "✓ {0} healed; fitness, morale & happiness maxed. Ctrl+Z undoes it.", Name));
 			};
 			Button ExtendBtn(int years)
 			{
 				var btn = new Button
 				{
-					Content = Build.T($"📝 +{years} Yıl", $"📝 +{years}y"),
-					ToolTip = Build.T($"Sözleşme bitişini {years} yıl uzat", $"Extend contract expiry by {years} year(s)"),
+					Content = Build.F("📝 +{0} Yıl", "📝 +{0}y", years),
+					ToolTip = Build.F("Sözleşme bitişini {0} yıl uzat", "Extend contract expiry by {0} year(s)", years),
 					Padding = new Thickness(9, 4, 9, 4),
 					Margin = new Thickness(0, 0, 6, 0),
 					IsEnabled = canWrite && _f.TryGetValue("Contract Expires", out EditField? ce) && GameData.ParseDate(ce.Value) != null
@@ -358,8 +358,7 @@ public sealed class PlayerPage : UserControl, IPage
 						_data.Session.WriteField(Address, ce.Def, next.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture), Name);
 						RefreshValues();
 						RebuildHeader();
-						_nav.SetStatus(Build.T($"✓ {Name} sözleşmesi {Dates.Show(next.ToString("dd.MM.yyyy"))} tarihine uzatıldı. Ctrl+Z geri alır.",
-							$"✓ {Name}'s contract extended to {Dates.Show(next.ToString("dd.MM.yyyy"))}. Ctrl+Z undoes it."));
+						_nav.SetStatus(Build.F("✓ {0} sözleşmesi {1} tarihine uzatıldı. Ctrl+Z geri alır.", "✓ {0}'s contract extended to {1}. Ctrl+Z undoes it.", Name, Dates.Show(next.ToString("dd.MM.yyyy"))));
 					}
 				};
 				return btn;
@@ -374,7 +373,7 @@ public sealed class PlayerPage : UserControl, IPage
 					RefreshValues();
 					RebuildHeader();
 					_data.Renamed(Address, Name);
-					_nav.SetStatus(Build.T($"{old} → {Name}. Ctrl+Z geri alır. Oyunda görmek için profili yeniden aç.", $"{old} → {Name}. Ctrl+Z undoes it. Reopen the profile in the game to see it."));
+					_nav.SetStatus(Build.F("{0} → {1}. Ctrl+Z geri alır. Oyunda görmek için profili yeniden aç.", "{0} → {1}. Ctrl+Z undoes it. Reopen the profile in the game to see it.", old, Name));
 				}
 			};
 			var move = new Button { Content = Build.T("Kulübe taşı", "Move to club"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
@@ -445,7 +444,7 @@ public sealed class PlayerPage : UserControl, IPage
 			{
 				string from = _data.ClubsByAddress.TryGetValue(loan.FromClub, out ClubRow? f) ? f.Name : "?";
 				string to = _data.ClubsByAddress.TryGetValue(loan.ToClub, out ClubRow? t) ? t.Name : "?";
-				var info = Build.Text(Build.T($"  ·  Kiralık: {from} → {to}", $"  ·  Loan: {from} → {to}") + (loan.Until is { } u ? $" ({u:dd.MM.yyyy})" : ""), 12, Build.Res("Muted"));
+				var info = Build.Text(Build.F("  ·  Kiralık: {0} → {1}", "  ·  Loan: {0} → {1}", from, to) + (loan.Until is { } u ? $" ({u:dd.MM.yyyy})" : ""), 12, Build.Res("Muted"));
 				info.Margin = new Thickness(6, 0, 8, 0);
 				panel.Children.Add(info);
 				var recall = new Button { Content = Build.T("Kiradan geri çağır", "Recall"), Padding = new Thickness(9, 4, 9, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
@@ -488,7 +487,7 @@ public sealed class PlayerPage : UserControl, IPage
 		if (self == null) return;
 		var dlg = new Window
 		{
-			Title = Build.T($"{Name} ile karşılaştırılacak oyuncuyu seç", $"Pick player to compare with {Name}"),
+			Title = Build.F("{0} ile karşılaştırılacak oyuncuyu seç", "Pick player to compare with {0}", Name),
 			Width = 460,
 			Height = 460,
 			WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -637,7 +636,7 @@ public sealed class PlayerPage : UserControl, IPage
 					PlayerIdentity.SetPrimaryNation(_data, Address, nr.Address, oldName, nr.Name, Name);
 					_f["Nation"].Refresh();
 					RebuildHeader();
-					_nav.SetStatus(Build.T($"✓ {Name} uyruğu {nr.Name} olarak değiştirildi. Ctrl+Z geri alır.", $"✓ {Name}'s nation changed to {nr.Name}. Ctrl+Z undoes it."));
+					_nav.SetStatus(Build.F("✓ {0} uyruğu {1} olarak değiştirildi. Ctrl+Z geri alır.", "✓ {0}'s nation changed to {1}. Ctrl+Z undoes it.", Name, nr.Name));
 				}
 				catch (Exception ex)
 				{
@@ -670,7 +669,7 @@ public sealed class PlayerPage : UserControl, IPage
 				del.Click += (_, _) =>
 				{
 					PlayerIdentity.RemoveRelation(_data, Address, current.Index, current.TargetName, Name);
-					_nav.SetStatus(Build.T($"✓ {Name}: {current.TargetName} ikinci uyruğu silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed {current.TargetName}. Ctrl+Z undoes it."));
+					_nav.SetStatus(Build.F("✓ {0}: {1} ikinci uyruğu silindi. Ctrl+Z geri alır.", "✓ {0}: removed {1}. Ctrl+Z undoes it.", Name, current.TargetName));
 					Fill();
 				};
 				DockPanel.SetDock(del, Dock.Right);
@@ -699,7 +698,7 @@ public sealed class PlayerPage : UserControl, IPage
 					try
 					{
 						PlayerIdentity.AddSecondNation(_data, Address, nr.Address, nr.Name, Name);
-						_nav.SetStatus(Build.T($"✓ {Name} için {nr.Name} ikinci uyruk eklendi. Ctrl+Z geri alır.", $"✓ Added {nr.Name} as second nationality for {Name}. Ctrl+Z undoes it."));
+						_nav.SetStatus(Build.F("✓ {1} için {0} ikinci uyruk eklendi. Ctrl+Z geri alır.", "✓ Added {0} as second nationality for {1}. Ctrl+Z undoes it.", nr.Name, Name));
 						Fill();
 					}
 					catch (Exception ex) { _nav.SetStatus(ex.Message); }
@@ -735,7 +734,7 @@ public sealed class PlayerPage : UserControl, IPage
 				del.Click += (_, _) =>
 				{
 					PlayerIdentity.RemoveRelation(_data, Address, current.Index, current.TargetName, Name);
-					_nav.SetStatus(Build.T($"✓ {Name}: {current.TargetName} ilişkisi silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed relation with {current.TargetName}. Ctrl+Z undoes it."));
+					_nav.SetStatus(Build.F("✓ {0}: {1} ilişkisi silindi. Ctrl+Z geri alır.", "✓ {0}: removed relation with {1}. Ctrl+Z undoes it.", Name, current.TargetName));
 					Fill();
 				};
 				var strBox = new TextBox { Text = current.Strength.ToString(), Width = 50, Height = 26, FontSize = 12, Padding = new Thickness(4, 0, 4, 0), HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, IsReadOnly = !canWrite };
@@ -744,7 +743,7 @@ public sealed class PlayerPage : UserControl, IPage
 					if (e.Key == System.Windows.Input.Key.Enter && byte.TryParse(strBox.Text.Trim(), out byte v))
 					{
 						PlayerIdentity.SetRelationStrength(_data, current, v, Name);
-						_nav.SetStatus(Build.T($"✓ {Name} · {current.TargetName} gücü {Math.Clamp(v, (byte)1, (byte)100)} yapıldı.", $"✓ {Name} · {current.TargetName} strength set to {Math.Clamp(v, (byte)1, (byte)100)}."));
+						_nav.SetStatus(Build.F("✓ {0} · {1} gücü {2} yapıldı.", "✓ {0} · {1} strength set to {2}.", Name, current.TargetName, Math.Clamp(v, (byte)1, (byte)100)));
 						Fill();
 					}
 				};
@@ -776,7 +775,7 @@ public sealed class PlayerPage : UserControl, IPage
 					try
 					{
 						PlayerIdentity.AddFavClub(_data, Address, cr.Address, cr.Name, 100, Name);
-						_nav.SetStatus(Build.T($"✓ {Name} için {cr.Name} favori kulüp eklendi. Ctrl+Z geri alır.", $"✓ Added {cr.Name} as favoured club for {Name}. Ctrl+Z undoes it."));
+						_nav.SetStatus(Build.F("✓ {1} için {0} favori kulüp eklendi. Ctrl+Z geri alır.", "✓ Added {0} as favoured club for {1}. Ctrl+Z undoes it.", cr.Name, Name));
 						Fill();
 					}
 					catch (Exception ex) { _nav.SetStatus(ex.Message); }
@@ -812,7 +811,7 @@ public sealed class PlayerPage : UserControl, IPage
 				del.Click += (_, _) =>
 				{
 					PlayerIdentity.RemoveLanguage(_data, Address, current.Index, current.Name, Name);
-					_nav.SetStatus(Build.T($"✓ {Name}: {current.Name} dili silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed {current.Name}. Ctrl+Z undoes it."));
+					_nav.SetStatus(Build.F("✓ {0}: {1} dili silindi. Ctrl+Z geri alır.", "✓ {0}: removed {1}. Ctrl+Z undoes it.", Name, current.Name));
 					Fill();
 				};
 				var fluencyBox = new ComboBox
@@ -821,7 +820,7 @@ public sealed class PlayerPage : UserControl, IPage
 					Height = 25,
 					FontSize = 11.5,
 					IsEnabled = canWrite,
-					ItemsSource = Enumerable.Range(1, 10).Select(v => new KeyValuePair<int, string>(v, v == 10 ? Build.T("10 (Akıcı)", "10 (Fluent)") : v >= 7 ? Build.T($"{v} (İyi)", $"{v} (Good)") : Build.T($"{v} (Temel)", $"{v} (Basic)"))).ToList(),
+					ItemsSource = Enumerable.Range(1, 10).Select(v => new KeyValuePair<int, string>(v, v == 10 ? Build.T("10 (Akıcı)", "10 (Fluent)") : v >= 7 ? Build.F("{0} (İyi)", "{0} (Good)", v) : Build.F("{0} (Temel)", "{0} (Basic)", v))).ToList(),
 					DisplayMemberPath = "Value",
 					SelectedValuePath = "Key",
 					SelectedValue = current.Fluency
@@ -831,7 +830,7 @@ public sealed class PlayerPage : UserControl, IPage
 					if (fluencyBox.SelectedValue is int v && v != current.Fluency)
 					{
 						PlayerIdentity.SetFluency(_data, current, v, Name);
-						_nav.SetStatus(Build.T($"✓ {Name} · {current.Name} akıcılığı {v}/10 yapıldı. Ctrl+Z geri alır.", $"✓ {Name} · {current.Name} fluency set to {v}/10. Ctrl+Z undoes it."));
+						_nav.SetStatus(Build.F("✓ {0} · {1} akıcılığı {2}/10 yapıldı. Ctrl+Z geri alır.", "✓ {0} · {1} fluency set to {2}/10. Ctrl+Z undoes it.", Name, current.Name, v));
 						Fill();
 					}
 				};
@@ -872,7 +871,7 @@ public sealed class PlayerPage : UserControl, IPage
 				try
 				{
 					PlayerTraits.Toggle(_data, Address, b, label, Name);
-					_nav.SetStatus(Build.T($"✓ {Name} · {label} güncellendi. Ctrl+Z geri alır.", $"✓ {Name} · {label} updated. Ctrl+Z undoes it."));
+					_nav.SetStatus(Build.F("✓ {0} · {1} güncellendi. Ctrl+Z geri alır.", "✓ {0} · {1} updated. Ctrl+Z undoes it.", Name, label));
 				}
 				catch (Exception ex)
 				{
@@ -904,7 +903,7 @@ public sealed class PlayerPage : UserControl, IPage
 				del.Click += (_, _) =>
 				{
 					ContractClauses.Remove(_data, Address, current.Index, Name);
-					_nav.SetStatus(Build.T($"✓ {Name}: \"{current.Label}\" silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed \"{current.Label}\". Ctrl+Z undoes it."));
+					_nav.SetStatus(Build.F("✓ {0}: \"{1}\" silindi. Ctrl+Z geri alır.", "✓ {0}: removed \"{1}\". Ctrl+Z undoes it.", Name, current.Label));
 					Fill();
 				};
 				var box = new TextBox
@@ -925,7 +924,7 @@ public sealed class PlayerPage : UserControl, IPage
 						try
 						{
 							ContractClauses.UpdateValue(_data, current, box.Text, Name);
-							_nav.SetStatus(Build.T($"✓ {Name} · {current.Label} güncellendi. Ctrl+Z geri alır.", $"✓ {Name} · {current.Label} updated. Ctrl+Z undoes it."));
+							_nav.SetStatus(Build.F("✓ {0} · {1} güncellendi. Ctrl+Z geri alır.", "✓ {0} · {1} updated. Ctrl+Z undoes it.", Name, current.Label));
 							Fill();
 						}
 						catch (Exception ex)
@@ -964,7 +963,7 @@ public sealed class PlayerPage : UserControl, IPage
 					VerticalContentAlignment = VerticalAlignment.Center,
 					HorizontalContentAlignment = HorizontalAlignment.Right,
 					Margin = new Thickness(0, 0, 6, 0),
-					ToolTip = Build.T($"Tutar ({Money.Current.Code}) veya yüzde (örn. 15)", $"Amount ({Money.Current.Code}) or percent (e.g. 15)")
+					ToolTip = Build.F("Tutar ({0}) veya yüzde (örn. 15)", "Amount ({0}) or percent (e.g. 15)", Money.Current.Code)
 				};
 				var addBtn = new Button
 				{
@@ -983,7 +982,7 @@ public sealed class PlayerPage : UserControl, IPage
 					try
 					{
 						ContractClauses.Add(_data, Address, preset.TypeId, preset.IsMoney, valBox.Text, Name);
-						_nav.SetStatus(Build.T($"✓ {Name} · {Build.T(preset.Tr, preset.En)} eklendi. Ctrl+Z geri alır.", $"✓ {Name} · added {preset.En}. Ctrl+Z undoes it."));
+						_nav.SetStatus(Build.F("✓ {0} · {2} eklendi. Ctrl+Z geri alır.", "✓ {0} · added {1}. Ctrl+Z undoes it.", Name, preset.En, Build.T(preset.Tr, preset.En)));
 						Fill();
 					}
 					catch (Exception ex)

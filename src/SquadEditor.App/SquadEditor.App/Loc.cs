@@ -17,10 +17,20 @@ public sealed class Loc : INotifyPropertyChanged
 
 	private Dictionary<string, string> _fallback = new Dictionary<string, string>();
 
-	public static IReadOnlyList<(string Code, string Name)> Languages { get; } = new (string, string)[2]
+	public static IReadOnlyList<(string Code, string Name)> Languages { get; } = new (string, string)[]
 	{
 		("en", "English"),
-		("tr", "Türkçe")
+		("tr", "Türkçe"),
+		("es", "Español"),
+		("pt", "Português"),
+		("fr", "Français"),
+		("de", "Deutsch"),
+		("it", "Italiano"),
+		("nl", "Nederlands"),
+		("pl", "Polski"),
+		("ru", "Русский"),
+		("ja", "日本語"),
+		("ko", "한국어")
 	};
 
 	public string Language { get; private set; } = "en";
@@ -37,6 +47,11 @@ public sealed class Loc : INotifyPropertyChanged
 		}
 	}
 
+	public string UiText(string en)
+	{
+		return _strings.TryGetValue(en, out string? value) && value.Length > 0 ? value : en;
+	}
+
 	public event PropertyChangedEventHandler? PropertyChanged;
 
 	public static event EventHandler? LanguageChanged;
@@ -45,6 +60,7 @@ public sealed class Loc : INotifyPropertyChanged
 	{
 		_fallback = LoadFile("en");
 		_strings = _fallback;
+		CoreText.ExternalLookup = key => _strings.TryGetValue(key, out string? v) && v.Length > 0 ? v : null;
 	}
 
 	public static string T(string key)

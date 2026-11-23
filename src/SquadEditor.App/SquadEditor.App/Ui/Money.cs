@@ -58,12 +58,11 @@ public static class Money
 	public static string Format(double gbp, bool wage)
 	{
 		double v = ToDisplay(gbp, wage);
-		bool tr = Loc.Instance.Language == "tr";
-		CultureInfo culture = CultureInfo.GetCultureInfo(tr ? "tr-TR" : "en-GB");
+		CultureInfo culture = SquadEditor.Core.CoreText.Culture;
 		double a = Math.Abs(v);
-		string number = a >= 1e9 ? (v / 1e9).ToString("0.##", culture) + (tr ? " mr" : "bn")
-			: a >= 1e6 ? (v / 1e6).ToString("0.##", culture) + (tr ? " mn" : "m")
-			: a >= 1e4 ? (v / 1e3).ToString("0.#", culture) + (tr ? " bin" : "k")
+		string number = a >= 1e9 ? (v / 1e9).ToString("0.##", culture) + Build.T(" mr", "bn")
+			: a >= 1e6 ? (v / 1e6).ToString("0.##", culture) + Build.T(" mn", "m")
+			: a >= 1e4 ? (v / 1e3).ToString("0.#", culture) + Build.T(" bin", "k")
 			: v.ToString("#,0", culture);
 		CurrencyInfo c = Current;
 		string text = c.SymbolAfter ? number + " " + c.Symbol : c.Symbol + number;

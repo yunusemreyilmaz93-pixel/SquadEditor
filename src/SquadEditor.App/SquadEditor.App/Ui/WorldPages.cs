@@ -59,14 +59,13 @@ public sealed class NationPage : UserControl, IPage
 				_data.Session.WriteField(_row.Address, F("Game Importance").Def, "5", _row.Name);
 				_data.Session.WriteField(_row.Address, F("Economic Factor").Def, "20", _row.Name);
 			}
-			_nav.SetStatus(Build.T($"✓ {_row.Name}: Gençlik Reytingi 200, Gelişmiş, Hayati, Ekonomi 20 yapıldı. Ctrl+Z geri alır.",
-				$"✓ {_row.Name}: Youth Rating 200, Developed, Crucial, Economy 20. Ctrl+Z undoes it."));
+			_nav.SetStatus(Build.F("✓ {0}: Gençlik Reytingi 200, Gelişmiş, Hayati, Ekonomi 20 yapıldı. Ctrl+Z geri alır.", "✓ {0}: Youth Rating 200, Developed, Crucial, Economy 20. Ctrl+Z undoes it.", _row.Name));
 		});
 		QBtn(Build.T("Gençlik +20", "Youth +20"), () =>
 		{
 			int next = Math.Min(200, F("Youth Rating").Number + 20);
 			_data.Session.WriteField(_row.Address, F("Youth Rating").Def, next.ToString(), _row.Name);
-			_nav.SetStatus(Build.T($"✓ {_row.Name} Gençlik Reytingi → {next}", $"✓ {_row.Name} Youth Rating → {next}"));
+			_nav.SetStatus(Build.F("✓ {0} Gençlik Reytingi → {1}", "✓ {0} Youth Rating → {1}", _row.Name, next));
 		});
 		right.Children.Add(Build.Card(Build.T("Hızlı İşlemler", "Quick Actions"), quick));
 
@@ -179,8 +178,7 @@ public sealed class CompPage : UserControl, IPage
 				_data.Session.WriteField(_row.Address, F("Reputation").Def, "200", _row.Name);
 				_data.Session.WriteField(_row.Address, F("Reputation (10000)").Def, "10000", _row.Name);
 			}
-			_nav.SetStatus(Build.T($"✓ {_row.Name} itibarı maksimum (200 / 10000) yapıldı. Ctrl+Z geri alır.",
-				$"✓ {_row.Name} reputation maxed (200 / 10000). Ctrl+Z undoes it."));
+			_nav.SetStatus(Build.F("✓ {0} itibarı maksimum (200 / 10000) yapıldı. Ctrl+Z geri alır.", "✓ {0} reputation maxed (200 / 10000). Ctrl+Z undoes it.", _row.Name));
 		});
 		QBtn(Build.T("İtibar +20", "Reputation +20"), () =>
 		{
@@ -191,7 +189,7 @@ public sealed class CompPage : UserControl, IPage
 				_data.Session.WriteField(_row.Address, F("Reputation").Def, next.ToString(), _row.Name);
 				_data.Session.WriteField(_row.Address, F("Reputation (10000)").Def, next10k.ToString(), _row.Name);
 			}
-			_nav.SetStatus(Build.T($"✓ {_row.Name} itibarı → {next} / {next10k}", $"✓ {_row.Name} reputation → {next} / {next10k}"));
+			_nav.SetStatus(Build.F("✓ {0} itibarı → {1} / {2}", "✓ {0} reputation → {1} / {2}", _row.Name, next, next10k));
 		});
 		right.Children.Add(Build.Card(Build.T("Hızlı İşlemler", "Quick Actions"), quick));
 

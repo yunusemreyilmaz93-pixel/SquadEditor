@@ -100,7 +100,7 @@ public static class PlayerIdentity
 		BitConverter.GetBytes(nationAddr).CopyTo(entry, 0);
 		// Verified exact bytes from Ferdi Kadıoğlu (The Netherlands & Kanada): 0xFF00506409080000
 		BitConverter.GetBytes(0xFF00506409080000UL).CopyTo(entry, 8);
-		AppendRelation(data, player, entry, Build.T($"İkinci uyruk ekle ({nationName})", $"Add second nation ({nationName})"), nationName, entityLabel);
+		AppendRelation(data, player, entry, Build.F("İkinci uyruk ekle ({0})", "Add second nation ({0})", nationName), nationName, entityLabel);
 	}
 
 	public static void AddFavClub(GameData data, ulong player, ulong clubAddr, string clubName, byte strength, string entityLabel)
@@ -110,7 +110,7 @@ public static class PlayerIdentity
 		entry[8] = 0x02; entry[9] = 0x00; entry[10] = 0x01; entry[11] = 0x03;
 		entry[12] = Math.Clamp(strength, (byte)1, (byte)100);
 		entry[13] = 0x00; entry[14] = 0x00; entry[15] = 0xFF;
-		AppendRelation(data, player, entry, Build.T($"Favori kulüp ekle ({clubName})", $"Add favoured club ({clubName})"), clubName, entityLabel);
+		AppendRelation(data, player, entry, Build.F("Favori kulüp ekle ({0})", "Add favoured club ({0})", clubName), clubName, entityLabel);
 	}
 
 	public static void SetRelationStrength(GameData data, PlayerRelation rel, byte strength, string entityLabel)
@@ -138,7 +138,7 @@ public static class PlayerIdentity
 		int count = (int)((end - begin) / RelEntrySize);
 		if (index < 0 || index >= count) return;
 		byte[] raw = m.ReadBytes(begin, count * RelEntrySize);
-		using (data.Session.History.BeginBatch(Build.T($"{entityLabel}: İlişki/uyruk sil ({targetName})", $"{entityLabel}: Remove relation ({targetName})")))
+		using (data.Session.History.BeginBatch(Build.F("{0}: İlişki/uyruk sil ({1})", "{0}: Remove relation ({1})", entityLabel, targetName)))
 		{
 			for (int i = index; i < count - 1; i++)
 			{
@@ -274,7 +274,7 @@ public static class PlayerIdentity
 		ulong end = m.ReadPointer(player + LanguagesVector + 8);
 		int count = (int)((end - begin) / 8);
 		if (index < 0 || index >= count) return;
-		using (data.Session.History.BeginBatch(Build.T($"{entityLabel}: Dil sil ({langName})", $"{entityLabel}: Remove language ({langName})")))
+		using (data.Session.History.BeginBatch(Build.F("{0}: Dil sil ({1})", "{0}: Remove language ({1})", entityLabel, langName)))
 		{
 			for (int i = index; i < count - 1; i++)
 			{

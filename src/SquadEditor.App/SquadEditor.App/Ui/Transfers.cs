@@ -113,8 +113,7 @@ public static partial class Transfers
 				}
 				listed |= t == team;
 				Removal(list, at, writes, field);
-				steps.Add(Build.T($"{oldName} {TeamLabel(data, t)} listesinden çıkar ({list.Items.Length} → {list.Items.Length - 1}).",
-					$"Leaves {oldName} {TeamLabel(data, t)} ({list.Items.Length} → {list.Items.Length - 1})."));
+				steps.Add(Build.F("{0} {1} listesinden çıkar ({2} → {3}).", "Leaves {0} {1} ({2} → {3}).", oldName, TeamLabel(data, t), list.Items.Length, list.Items.Length - 1));
 			}
 			foreach (long post in new[] { TeamCaptain, TeamVice })
 			{
@@ -133,7 +132,7 @@ public static partial class Transfers
 		int emptied = SelectionWrites(m, player, oldTeams, writes);
 		if (emptied > 0)
 		{
-			steps.Add(Build.T($"Maç kadrosu seçimlerinden çıkar ({emptied} kopya).", $"Taken out of the match selections ({emptied} copies)."));
+			steps.Add(Build.F("Maç kadrosu seçimlerinden çıkar ({0} kopya).", "Taken out of the match selections ({0} copies).", emptied));
 		}
 
 		ulong senior = 0;
@@ -143,7 +142,7 @@ public static partial class Transfers
 			writes.Add(new PlannedWrite(player + PlayerTeam, GameWrite.U64(team), GameWrite.U64(0), field, oldName, ""));
 			writes.Add(new PlannedWrite(player + PlayerContract, GameWrite.U64(contract), GameWrite.U64(0), Build.T("Sözleşme", "Contract")));
 			steps.Add(Build.T("Takımı ve sözleşmesi kaldırılır: serbest oyuncu olur.", "His team and contract are removed: he becomes a free agent."));
-			summary = Build.T($"{name}, {oldName} kulübünden serbest bırakılır.", $"{name} is released by {oldName}.");
+			summary = Build.F("{0}, {1} kulübünden serbest bırakılır.", "{0} is released by {1}.", name, oldName);
 		}
 		else
 		{
@@ -164,7 +163,7 @@ public static partial class Transfers
 				throw Refuse("Oyuncu zaten o takımın listesinde.", "The player is in that team's list already.");
 			}
 			Append(data, m, target, player, newName, writes, steps, field);
-			steps.Add(Build.T($"{newName} A takımına katılır.", $"Joins {newName}'s senior team."));
+			steps.Add(Build.F("{0} A takımına katılır.", "Joins {0}'s senior team.", newName));
 
 			writes.Add(new PlannedWrite(player + PlayerTeam, GameWrite.U64(team), GameWrite.U64(senior), field, oldName, newName));
 			writes.Add(new PlannedWrite(contract + ContractTeam, GameWrite.U64(employer), GameWrite.U64(senior), field, oldName, newName));
@@ -187,12 +186,11 @@ public static partial class Transfers
 			if (feeGbp > 0)
 			{
 				AddTransferFeeWrites(m, oldClub, club, oldName, newName, feeGbp, writes, steps);
-				summary = Build.T($"{name}: {oldName} → {newName} ({Money.Format(feeGbp, false)} bonservis).",
-					$"{name}: {oldName} → {newName} ({Money.Format(feeGbp, false)} fee).");
+				summary = Build.F("{0}: {1} → {2} ({3} bonservis).", "{0}: {1} → {2} ({3} fee).", name, oldName, newName, Money.Format(feeGbp, false));
 			}
 			else
 			{
-				summary = Build.T($"{name}: {oldName} → {newName} (bonservissiz).", $"{name}: {oldName} → {newName} (free transfer).");
+				summary = Build.F("{0}: {1} → {2} (bonservissiz).", "{0}: {1} → {2} (free transfer).", name, oldName, newName);
 			}
 		}
 		return new MovePlan(summary, steps, writes.Where(w => !w.Expected.AsSpan().SequenceEqual(w.Bytes)).ToList(), club, senior);
@@ -235,8 +233,7 @@ public static partial class Transfers
 				}
 			}
 		}
-		steps.Add(Build.T($"Bonservis: {buyerName} kasasından {Money.Format(feeGbp, false)} düşülür, {sellerName} kasasına eklenir.",
-			$"Transfer fee: {Money.Format(feeGbp, false)} deducted from {buyerName} and paid to {sellerName}."));
+		steps.Add(Build.F("Bonservis: {1} kasasından {0} düşülür, {2} kasasına eklenir.", "Transfer fee: {0} deducted from {1} and paid to {2}.", Money.Format(feeGbp, false), buyerName, sellerName));
 	}
 
 	private static Exception Refuse(string tr, string en) => new InvalidOperationException(Build.T(tr, en));

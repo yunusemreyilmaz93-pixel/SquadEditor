@@ -15,7 +15,25 @@ public static class Build
 
 	public static Style StyleOf(string key) => (Style)Application.Current.Resources[key];
 
-	public static string T(string tr, string en) => Loc.Instance.Language == "tr" ? tr : en;
+	public static string T(string tr, string en) => Loc.Instance.Language switch
+	{
+		"tr" => tr,
+		"en" => en,
+		_ => Loc.Instance.UiText(en)
+	};
+
+	public static string F(string trFormat, string enFormat, params object?[] args)
+	{
+		string fmt = T(trFormat, enFormat);
+		try
+		{
+			return string.Format(SquadEditor.Core.CoreText.Culture, fmt, args);
+		}
+		catch (FormatException)
+		{
+			return string.Format(System.Globalization.CultureInfo.InvariantCulture, enFormat, args);
+		}
+	}
 
 	public static TextBlock Text(string text, double size = 13, Brush? brush = null, FontWeight? weight = null)
 	{
@@ -88,7 +106,7 @@ public static class Build
 		if (field.Def.Options.Count > 0 && !field.IsReadOnly)
 		{
 			var combo = new ComboBox { Width = 180, Height = 26, IsEditable = false };
-			var items = field.Def.Options.Select(o => new KeyValuePair<string, string>(o.Key, Loc.Instance.Language == "tr" ? Translate(field, o.Value) : o.Value)).ToList();
+			var items = field.Def.Options.Select(o => new KeyValuePair<string, string>(o.Key, Loc.Instance.Language != "en" ? Translate(field, o.Value) : o.Value)).ToList();
 			if (!items.Any(i => i.Key == field.Value) && field.Value.Length > 0)
 			{
 				items.Add(new KeyValuePair<string, string>(field.Value, "#" + field.Value));

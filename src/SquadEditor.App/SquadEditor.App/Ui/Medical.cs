@@ -83,7 +83,7 @@ public static class Medical
 			return false;
 		}
 		Write(data, record + 8, BitConverter.GetBytes(begin), label, Build.T("Sakatlık", "Injury"),
-			Build.T($"{(end - begin) / 8} sakatlık", $"{(end - begin) / 8} injuries"), Build.T("iyileşti", "healed"));
+			Build.F("{0} sakatlık", "{0} injuries", (end - begin) / 8), Build.T("iyileşti", "healed"));
 		return true;
 	}
 
@@ -105,7 +105,7 @@ public static class Medical
 				Write(data, begin + (ulong)(i * AbsenceSize), keep[i], label, Build.T("Ceza", "Ban"), "", "");
 			}
 			Write(data, record + 0x20, BitConverter.GetBytes(begin + (ulong)(keep.Count * AbsenceSize)), label, Build.T("Ceza", "Ban"),
-				Build.T($"{entries.Count - keep.Count} ceza", $"{entries.Count - keep.Count} bans"), Build.T("kaldırıldı", "lifted"));
+				Build.F("{0} ceza", "{0} bans", entries.Count - keep.Count), Build.T("kaldırıldı", "lifted"));
 		}
 		return true;
 	}
@@ -117,10 +117,10 @@ public static class Medical
 		if (injuries.Count > 0)
 		{
 			int days = injuries.Max(i => i.BackBy is { } back ? (int)Math.Ceiling((back - today).TotalDays) : i.LongestDays);
-			return days > 0 ? Build.T($"Sakat · {days} gün", $"Injured · {days} d") : Build.T("Sakat", "Injured");
+			return days > 0 ? Build.F("Sakat · {0} gün", "Injured · {0} d", days) : Build.T("Sakat", "Injured");
 		}
 		var bans = Bans(memory, player);
-		return bans.Count > 0 ? Build.T($"Cezalı · {bans.Sum(b => b.Matches)} maç", $"Banned · {bans.Sum(b => b.Matches)} m") : "";
+		return bans.Count > 0 ? Build.F("Cezalı · {0} maç", "Banned · {0} m", bans.Sum(b => b.Matches)) : "";
 	}
 
 	private static List<ulong> Absences(IMemory memory, ulong player, out ulong record)

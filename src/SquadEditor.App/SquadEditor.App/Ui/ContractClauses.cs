@@ -26,7 +26,7 @@ public sealed record ContractClause(int Index, ulong Address, int AmountGbp, sho
 		0x22 => Build.T("Gol Yememe Bonusu", "Clean Sheet Bonus"),
 		0x23 => Build.T("Kullanılmayan Yedek Bonusu", "Unused Sub Fee"),
 		0x26 => Build.T("Özel Performans / Yılın Takımı Bonusu", "Performance / Milestone Bonus"),
-		_ => Build.T($"Sözleşme Maddesi #{TypeId}", $"Contract Clause #{TypeId}")
+		_ => Build.F("Sözleşme Maddesi #{0}", "Contract Clause #{0}", TypeId)
 	};
 
 	public string ValueDisplay => IsMoney
@@ -119,7 +119,7 @@ public static class ContractClauses
 		entry[6] = typeId;
 		entry[7] = 0;
 		string label = new ContractClause(0, end, isMoney ? 0 : -1, 0, typeId).Label;
-		using (data.Session.History.BeginBatch(Build.T($"{entityLabel}: Sözleşme maddesi ekle", $"{entityLabel}: Add clause")))
+		using (data.Session.History.BeginBatch(Build.F("{0}: Sözleşme maddesi ekle", "{0}: Add clause", entityLabel)))
 		{
 			data.Session.History.Apply(m, end, entry, new EditInfo(entityLabel, label, "—", display), guarded: true);
 			data.Session.History.Apply(m, contract + ClausesVector + 8, BitConverter.GetBytes(end + EntrySize),
@@ -196,7 +196,7 @@ public static class ContractClauses
 		int count = (int)((end - begin) / EntrySize);
 		if (index < 0 || index >= count) return;
 		byte[] raw = m.ReadBytes(begin, count * EntrySize);
-		using (data.Session.History.BeginBatch(Build.T($"{entityLabel}: Sözleşme maddesi sil", $"{entityLabel}: Remove clause")))
+		using (data.Session.History.BeginBatch(Build.F("{0}: Sözleşme maddesi sil", "{0}: Remove clause", entityLabel)))
 		{
 			for (int i = index; i < count - 1; i++)
 			{

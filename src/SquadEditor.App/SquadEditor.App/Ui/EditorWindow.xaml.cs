@@ -45,7 +45,7 @@ public partial class EditorWindow : Window, INavigator
 		InitializeComponent();
 		Title = "SquadEditor";
 		// Number and date formats in grids follow the app language (576.610 in Turkish).
-		Language = System.Windows.Markup.XmlLanguage.GetLanguage(Loc.Instance.Language == "tr" ? "tr-TR" : "en-GB");
+		Language = System.Windows.Markup.XmlLanguage.GetLanguage(SquadEditor.Core.CoreText.Culture.IetfLanguageTag);
 		TopSearchHint.Text = Build.T("Oyuncu, kulüp, ülke veya lig ara…  (Ctrl+F)", "Search players, clubs, nations or leagues…  (Ctrl+F)");
 		ToastUndoBtn.Content = Build.T("↶ Geri Al", "↶ Undo");
 		_toastTimer.Tick += (_, _) => { _toastTimer.Stop(); ToastBanner.Visibility = Visibility.Collapsed; };
@@ -69,8 +69,7 @@ public partial class EditorWindow : Window, INavigator
 		EditField.Written += (_, f) =>
 		{
 			UpdateCounts();
-			SetStatus(Build.T($"✓ {f.Label} → {f.Display}  (Ctrl+Z geri alır · Oyunda görmek için profili kapatıp aç veya Devam'a bas)",
-				$"✓ {f.Label} → {f.Display}  (Ctrl+Z undoes · Reopen profile or press Continue in FM to see it)"));
+			SetStatus(Build.F("✓ {0} → {1}  (Ctrl+Z geri alır · Oyunda görmek için profili kapatıp aç veya Devam'a bas)", "✓ {0} → {1}  (Ctrl+Z undoes · Reopen profile or press Continue in FM to see it)", f.Label, f.Display));
 		};
 		SourceInitialized += (_, _) => DarkTitleBar();
 		Loaded += (_, _) =>
@@ -163,8 +162,7 @@ public partial class EditorWindow : Window, INavigator
 			_pages.Clear();
 			OpenPage(new HomePage(data, this));
 			UpdateCounts();
-			SetStatus(Build.T($"Bağlandı. {data.Players.Count:N0} oyuncu, {data.Staff.Count:N0} personel ve {data.Clubs.Count:N0} kulüp {watch.Elapsed.TotalSeconds:0.0} saniyede okundu.",
-				$"Connected. {data.Players.Count:N0} players, {data.Staff.Count:N0} staff and {data.Clubs.Count:N0} clubs read in {watch.Elapsed.TotalSeconds:0.0} s."));
+			SetStatus(Build.F("Bağlandı. {0:N0} oyuncu, {1:N0} personel ve {2:N0} kulüp {3:0.0} saniyede okundu.", "Connected. {0:N0} players, {1:N0} staff and {2:N0} clubs read in {3:0.0} s.", data.Players.Count, data.Staff.Count, data.Clubs.Count, watch.Elapsed.TotalSeconds));
 			if (AppSettings.Current.LiveRefresh)
 			{
 				_liveTimer.Start();
@@ -307,8 +305,7 @@ public partial class EditorWindow : Window, INavigator
 		try
 		{
 			string dest = SaveBackup.Create(save);
-			SetStatus(Build.T($"✓ Yedek alındı: {Path.GetFileName(dest)} (SquadEditor_Backups)",
-				$"✓ Backup created: {Path.GetFileName(dest)} (SquadEditor_Backups)"));
+			SetStatus(Build.F("✓ Yedek alındı: {0} (SquadEditor_Backups)", "✓ Backup created: {0} (SquadEditor_Backups)", Path.GetFileName(dest)));
 		}
 		catch (Exception ex)
 		{
@@ -589,7 +586,7 @@ public partial class EditorWindow : Window, INavigator
 			hits.Add(new SearchHit
 			{
 				Title = n.Name,
-				Subtitle = Build.T($"Gençlik {n.YouthRating}  ·  {n.Development}", $"Youth {n.YouthRating}  ·  {n.Development}"),
+				Subtitle = Build.F("Gençlik {0}  ·  {1}", "Youth {0}  ·  {1}", n.YouthRating, n.Development),
 				Corner = new CornerRadius(6),
 				Badge = Build.T("Ülke", "Nation"),
 				BadgeBrush = Build.Res("Positive"),
@@ -602,7 +599,7 @@ public partial class EditorWindow : Window, INavigator
 			hits.Add(new SearchHit
 			{
 				Title = comp.Name,
-				Subtitle = Build.T($"İtibar {comp.Reputation} / 200", $"Reputation {comp.Reputation} / 200"),
+				Subtitle = Build.F("İtibar {0} / 200", "Reputation {0} / 200", comp.Reputation),
 				Corner = new CornerRadius(6),
 				Badge = Build.T("Lig", "League"),
 				BadgeBrush = Build.Res("Accent"),
@@ -721,8 +718,7 @@ public partial class EditorWindow : Window, INavigator
 		}
 		catch (SquadEditor.Core.Editing.GuardedUndoException ex)
 		{
-			SetStatus(Build.T($"\"{ex.Batch.Label}\" geri alınamadı: oyun bu arada değiştirdi (Devam'a basıldı). Geçmişten çıkarıldı; geri dönmek için yedeği yükle.",
-				$"\"{ex.Batch.Label}\" could not be undone: the game has changed it since. It was dropped from the history; load your backup to go back."));
+			SetStatus(Build.F("\"{0}\" geri alınamadı: oyun bu arada değiştirdi (Devam'a basıldı). Geçmişten çıkarıldı; geri dönmek için yedeği yükle.", "\"{0}\" could not be undone: the game has changed it since. It was dropped from the history; load your backup to go back.", ex.Batch.Label));
 			UpdateCounts();
 			return;
 		}
@@ -747,7 +743,7 @@ public partial class EditorWindow : Window, INavigator
 		Counts.Text = Build.T($"Oyuncu {_data.Players.Count:N0}  ·  Kulüp {_data.Clubs.Count:N0}  ·  Değişiklik {changes}" + (frozen > 0 ? $"  ·  Dondurulan {frozen}" : "") + $"  ·  Logo {ImageLookup.Graphics.ClubLogos:N0}  ·  Yüz {ImageLookup.Graphics.Faces:N0}",
 			$"Players {_data.Players.Count:N0}  ·  Clubs {_data.Clubs.Count:N0}  ·  Changes {changes}" + (frozen > 0 ? $"  ·  Frozen {frozen}" : "") + $"  ·  Logos {ImageLookup.Graphics.ClubLogos:N0}  ·  Faces {ImageLookup.Graphics.Faces:N0}");
 		UndoButton.IsEnabled = changes > 0;
-		UndoText.Text = changes > 0 ? Build.T($"Geri al ({changes})", $"Undo ({changes})") : Build.T("Geri al", "Undo");
+		UndoText.Text = changes > 0 ? Build.F("Geri al ({0})", "Undo ({0})", changes) : Build.T("Geri al", "Undo");
 	}
 
 	public void SetStatus(string text)
@@ -780,7 +776,7 @@ public partial class EditorWindow : Window, INavigator
 				Theme.ApplyLive(theme, AppSettings.Current.Accent);
 				DarkTitleBar();
 				RebuildOpenPages();
-				SetStatus(Build.T($"✓ Tema değiştirildi: {theme}", $"✓ Theme switched: {theme}"));
+				SetStatus(Build.F("✓ Tema değiştirildi: {0}", "✓ Theme switched: {0}", theme));
 			})
 		{ Owner = this };
 		dlg.ShowDialog();

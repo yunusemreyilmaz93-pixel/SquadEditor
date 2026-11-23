@@ -17,7 +17,7 @@ public sealed record ClubRelation(int Index, ulong EntryAddress, ulong TargetAdd
 		(0x01, 0x03) => Build.T("⭐ Efsane / Favori Kişi", "⭐ Legend / Favoured Person"),
 		(0x02, 0x03) => Build.T("⛔ Sevilmeyen Kişi", "⛔ Disliked Person"),
 		(0x44, 0x03) => Build.T("👔 Eski / Mevcut Teknik Direktör", "👔 Former / Current Manager"),
-		_ => Build.T($"İlişki (#{Kind:X2})", $"Relation (#{Kind:X2})")
+		_ => Build.F("İlişki (#{0:X2})", "Relation (#{0:X2})", Kind)
 	};
 }
 
@@ -88,7 +88,7 @@ public static class ClubRelationships
 		int count = (int)((end - begin) / EntrySize);
 		if (index < 0 || index >= count) return;
 		byte[] raw = m.ReadBytes(begin, count * EntrySize);
-		using (data.Session.History.BeginBatch(Build.T($"{clubName}: İlişki sil ({label})", $"{clubName}: Remove relation ({label})")))
+		using (data.Session.History.BeginBatch(Build.F("{0}: İlişki sil ({1})", "{0}: Remove relation ({1})", clubName, label)))
 		{
 			for (int i = index; i < count - 1; i++)
 			{
@@ -128,7 +128,7 @@ public static class ClubRelationships
 					del.Click += (_, _) =>
 					{
 						Remove(data, club.Address, current.Index, current.TargetName, club.Name);
-						nav.SetStatus(Build.T($"✓ {club.Name}: {current.TargetName} ilişkisi silindi. Ctrl+Z geri alır.", $"✓ {club.Name}: removed relation with {current.TargetName}. Ctrl+Z undoes it."));
+						nav.SetStatus(Build.F("✓ {0}: {1} ilişkisi silindi. Ctrl+Z geri alır.", "✓ {0}: removed relation with {1}. Ctrl+Z undoes it.", club.Name, current.TargetName));
 						Fill();
 					};
 					var strBox = new TextBox
@@ -148,7 +148,7 @@ public static class ClubRelationships
 						if (e.Key == System.Windows.Input.Key.Enter && byte.TryParse(strBox.Text.Trim(), out byte val))
 						{
 							SetStrength(data, current, val, club.Name);
-							nav.SetStatus(Build.T($"✓ {club.Name} · {current.TargetName} gücü {Math.Clamp(val, (byte)1, (byte)100)} yapıldı.", $"✓ {club.Name} · {current.TargetName} strength set to {Math.Clamp(val, (byte)1, (byte)100)}."));
+							nav.SetStatus(Build.F("✓ {0} · {1} gücü {2} yapıldı.", "✓ {0} · {1} strength set to {2}.", club.Name, current.TargetName, Math.Clamp(val, (byte)1, (byte)100)));
 							Fill();
 						}
 					};

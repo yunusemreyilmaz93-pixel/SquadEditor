@@ -50,8 +50,7 @@ public static partial class Transfers
 			{
 				writes.Add(new PlannedWrite(victim + PlayerContract, GameWrite.U64(vc), GameWrite.U64(0), Build.T("Yer açma (sözleşme)", "Freed slot")));
 			}
-			steps.Add(Build.T($"{owner} kadro belleği doluydu: en düşük CA'lı oyuncu ({victimName}, CA {lowestCa}) serbest bırakılıp yerine yerleştirildi.",
-				$"{owner}'s squad memory was full: lowest-CA player ({victimName}, CA {lowestCa}) released to make room."));
+			steps.Add(Build.F("{0} kadro belleği doluydu: en düşük CA'lı oyuncu ({1}, CA {2}) serbest bırakılıp yerine yerleştirildi.", "{0}'s squad memory was full: lowest-CA player ({1}, CA {2}) released to make room.", owner, victimName, lowestCa));
 			return;
 		}
 		writes.Add(new PlannedWrite(list.End, m.ReadBytes(list.End, 8), GameWrite.U64(item), field));
@@ -108,10 +107,10 @@ public static partial class Transfers
 		};
 		var steps = new List<string>
 		{
-			Build.T($"Kiralık {data.GameDate:dd.MM.yyyy} günü biter; oyun onu bir gün sonra kulübüne döndürür.", $"The loan ends on {data.GameDate:dd.MM.yyyy}; the game sends him back the next day."),
+			Build.F("Kiralık {0:dd.MM.yyyy} günü biter; oyun onu bir gün sonra kulübüne döndürür.", "The loan ends on {0:dd.MM.yyyy}; the game sends him back the next day.", data.GameDate),
 			Build.T("Satın alma opsiyonu kaldırılır (yoksa kiralayan kulüp onu satın alabilir).", "The option to buy is removed (otherwise the loan club could buy him).")
 		};
-		return new MovePlan(Build.T($"{name}, {ClubName(data, loan.FromClub)} kulübüne geri çağrılır.", $"{name} is recalled to {ClubName(data, loan.FromClub)}."),
+		return new MovePlan(Build.F("{0}, {1} kulübüne geri çağrılır.", "{0} is recalled to {1}.", name, ClubName(data, loan.FromClub)),
 			steps, writes.Where(w => !w.Expected.AsSpan().SequenceEqual(w.Bytes)).ToList(), loan.FromClub, 0);
 	}
 
@@ -164,7 +163,7 @@ public static partial class Transfers
 			if (at >= 0)
 			{
 				Removal(list, at, writes, field);
-				steps.Add(Build.T($"{oldName} {TeamLabel(data, t)} listesinden çıkar.", $"Leaves {oldName} {TeamLabel(data, t)}."));
+				steps.Add(Build.F("{0} {1} listesinden çıkar.", "Leaves {0} {1}.", oldName, TeamLabel(data, t)));
 			}
 			foreach (long post in new[] { TeamCaptain, TeamVice })
 			{
@@ -198,7 +197,7 @@ public static partial class Transfers
 		steps.Add(Build.T("Sözleşmesi yeni kulübe geçer (maaş ve bitiş aynı), kiralıktaki forma numarası ve kadro durumu kalır.",
 			"His contract moves to the new club (same wage and end), keeping his loan's squad number and status."));
 		steps.Add(Build.T("Kiralık sözleşmesi kapanır.", "The loan contract is let go."));
-		return new MovePlan(Build.T($"{name}: {oldName} → {newName} (kiralık kalıcı olur).", $"{name}: {oldName} → {newName} (loan made permanent)."),
+		return new MovePlan(Build.F("{0}: {1} → {2} (kiralık kalıcı olur).", "{0}: {1} → {2} (loan made permanent).", name, oldName, newName),
 			steps, writes.Where(w => !w.Expected.AsSpan().SequenceEqual(w.Bytes)).ToList(), loan.ToClub, team);
 	}
 
@@ -307,15 +306,14 @@ public static partial class Transfers
 		int wage = BitConverter.ToInt32(bytes, 0x20);
 		var steps = new List<string>
 		{
-			Build.T($"Oyunun sözleşme havuzundan yeni bir sözleşme alınır ({pool.Free} boş yer).", $"A new contract is taken from the game's contract pool ({pool.Free} free)."),
-			Build.T($"Sözleşme: {Money.Format(wage, true)}, bitiş 30.06.{endYear}, forma numarası yok (sonra düzenlenebilir).",
-				$"Contract: {Money.Format(wage, true)}, until 30.06.{endYear}, no squad number (editable afterwards).")
+			Build.F("Oyunun sözleşme havuzundan yeni bir sözleşme alınır ({0} boş yer).", "A new contract is taken from the game's contract pool ({0} free).", pool.Free),
+			Build.F("Sözleşme: {0}, bitiş 30.06.{1}, forma numarası yok (sonra düzenlenebilir).", "Contract: {0}, until 30.06.{1}, no squad number (editable afterwards).", Money.Format(wage, true), endYear)
 		};
 		Append(data, m, target, player, clubName, writes, steps, field);
 		writes.Add(new PlannedWrite(player + PlayerContract, GameWrite.U64(0), GameWrite.U64(slot), Build.T("Sözleşme", "Contract")));
 		writes.Add(new PlannedWrite(player + PlayerTeam, GameWrite.U64(0), GameWrite.U64(senior), field, "", clubName));
-		steps.Add(Build.T($"{clubName} A takım listesine eklenir.", $"Joins {clubName}'s senior team."));
-		return new MovePlan(Build.T($"{name}, {clubName} ile sözleşme imzalar.", $"{name} signs for {clubName}."), steps, writes, club, senior);
+		steps.Add(Build.F("{0} A takım listesine eklenir.", "Joins {0}'s senior team.", clubName));
+		return new MovePlan(Build.F("{0}, {1} ile sözleşme imzalar.", "{0} signs for {1}.", name, clubName), steps, writes, club, senior);
 	}
 
 	/// <summary>A date (u16 day of year with the flags of the bytes it replaces, u16 year).</summary>

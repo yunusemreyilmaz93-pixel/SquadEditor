@@ -79,7 +79,7 @@ public sealed class SettingsWindow : Window
 		Fill(_height, new[] { ("cm", "cm"), ("ftin", Build.T("feet / inç", "feet / inches")) }, _s.HeightUnit);
 		Fill(_date, Dates.Formats.Select(f => (f, DateTime.Today.ToString(f, CultureInfo.InvariantCulture) + "   (" + f.ToLowerInvariant() + ")")).ToArray(), _s.DateFormat);
 		Fill(_attributes, new[] { ("20", Build.T("1-20 (oyundaki gibi)", "1-20 (like the game)")), ("100", Build.T("1-100 (oyunun iç değeri)", "1-100 (the game's internal value)")) }, _s.Attributes100 ? "100" : "20");
-		Fill(_refresh, new[] { 1000, 1500, 3000, 5000 }.Select(v => (v.ToString(), Build.T($"{v / 1000.0:0.#} saniyede bir", $"every {v / 1000.0:0.#} s"))).ToArray(), _s.LiveRefreshMs.ToString());
+		Fill(_refresh, new[] { 1000, 1500, 3000, 5000 }.Select(v => (v.ToString(), Build.F("{0:0.#} saniyede bir", "every {0:0.#} s", v / 1000.0))).ToArray(), _s.LiveRefreshMs.ToString());
 		_compact.IsChecked = _s.Compact;
 		_readOnly.IsChecked = _s.ReadOnlyMode;
 		_confirm.IsChecked = _s.ConfirmBulkEdits;

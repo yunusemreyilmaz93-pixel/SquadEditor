@@ -169,7 +169,7 @@ public sealed class StaffFilterWindow : Window
 		var pNat = Labeled(Build.T("Uyruk", "Nationality"), cNation);
 		var pCat = Labeled(Build.T("Görev Kategorisi", "Role Category"), cCat);
 		var pAge = Labeled(Build.T("Maks. Yaş", "Max Age"), bAge);
-		var pWage = Labeled(Build.T($"Maks. Maaş ({Money.Current.Code}{Money.WageSuffix})", $"Max Wage ({Money.Current.Code}{Money.WageSuffix})"), bWage);
+		var pWage = Labeled(Build.F("Maks. Maaş ({0}{1})", "Max Wage ({0}{1})", Money.Current.Code, Money.WageSuffix), bWage);
 		pWage.Margin = new Thickness(0);
 		Grid.SetColumn(pCat, 1);
 		Grid.SetColumn(pAge, 2);

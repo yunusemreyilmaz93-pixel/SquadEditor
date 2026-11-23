@@ -136,7 +136,7 @@ public static class PlayerVisuals
 		var stack = new StackPanel { Margin = new Thickness(12, 2, 12, 10) };
 		int growth = Math.Max(0, pa - ca);
 		var top = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
-		var right = Build.Text(growth > 0 ? Build.T($"+{growth} potansiyel", $"+{growth} growth") : Build.T("Zirvede", "At peak"),
+		var right = Build.Text(growth > 0 ? Build.F("+{0} potansiyel", "+{0} growth", growth) : Build.T("Zirvede", "At peak"),
 			11, growth > 0 ? Build.Res("Positive") : Build.Res("Faint"), FontWeights.SemiBold);
 		DockPanel.SetDock(right, Dock.Right);
 		top.Children.Add(right);
@@ -175,7 +175,7 @@ public sealed class PlayerCompareWindow : Window
 {
 	public PlayerCompareWindow(GameData data, PlayerRow a, PlayerRow b, INavigator nav)
 	{
-		Title = Build.T($"Karşılaştır: {a.Name} vs {b.Name}", $"Compare: {a.Name} vs {b.Name}");
+		Title = Build.F("Karşılaştır: {0} vs {1}", "Compare: {0} vs {1}", a.Name, b.Name);
 		Width = 960;
 		Height = 720;
 		MinWidth = 820;

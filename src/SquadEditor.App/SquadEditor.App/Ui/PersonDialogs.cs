@@ -219,7 +219,7 @@ public sealed class MoveWindow : ActionWindow
 		if (showFee)
 		{
 			var feeRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 2) };
-			feeRow.Children.Add(new TextBlock { Text = Build.T($"Bonservis ({Money.Current.Code}, 0 = bedelsiz): ", $"Transfer fee ({Money.Current.Code}, 0 = free): "), Foreground = Build.Res("Muted"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
+			feeRow.Children.Add(new TextBlock { Text = Build.F("Bonservis ({0}, 0 = bedelsiz): ", "Transfer fee ({0}, 0 = free): ", Money.Current.Code), Foreground = Build.Res("Muted"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
 			feeRow.Children.Add(_fee);
 			Body.Children.Add(feeRow);
 			_feeDebounce.Tick += (_, _) => { _feeDebounce.Stop(); Check(); };

@@ -70,12 +70,12 @@ public sealed class CommandPaletteWindow : Window
 				foreach (NationRow n in data.Nations.Where(x => x.Search.Contains(q)).OrderByDescending(x => x.YouthRating).Take(3))
 				{
 					NationRow nation = n;
-					items.Add(new("🌍", n.Name, Build.T($"Ülke · Gençlik {n.YouthRating}", $"Nation · Youth {n.YouthRating}"), n.Search, () => nav.OpenNation(nation.Address)));
+					items.Add(new("🌍", n.Name, Build.F("Ülke · Gençlik {0}", "Nation · Youth {0}", n.YouthRating), n.Search, () => nav.OpenNation(nation.Address)));
 				}
 				foreach (CompRow c in data.Competitions.Where(x => x.Search.Contains(q)).OrderByDescending(x => x.Reputation).Take(3))
 				{
 					CompRow comp = c;
-					items.Add(new("🏆", c.Name, Build.T($"Lig · İtibar {c.Reputation}", $"League · Rep {c.Reputation}"), c.Search, () => nav.OpenComp(comp.Address)));
+					items.Add(new("🏆", c.Name, Build.F("Lig · İtibar {0}", "League · Rep {0}", c.Reputation), c.Search, () => nav.OpenComp(comp.Address)));
 				}
 				foreach (ClubRow c in data.Clubs.Where(x => x.SquadSize > 0 && x.Search.Contains(q)).OrderByDescending(x => x.AverageCA).Take(5))
 				{
@@ -304,8 +304,7 @@ public static class ClubBestXi
 
 			// Right side: Depth & Gap Analysis
 			var depthStack = new StackPanel { Margin = new Thickness(12, 4, 12, 10) };
-			depthStack.Children.Add(Build.Text(Build.T($"İlk 11 Ortalama CA: {avgCa:0.0}  ·  Kırmızı satırlar zayıf veya yedeksiz mevkiler",
-				$"Best XI Avg CA: {avgCa:0.0}  ·  Red rows mark weak or uncovered slots"), 11.5, Build.Res("Muted")));
+			depthStack.Children.Add(Build.Text(Build.F("İlk 11 Ortalama CA: {0:0.0}  ·  Kırmızı satırlar zayıf veya yedeksiz mevkiler", "Best XI Avg CA: {0:0.0}  ·  Red rows mark weak or uncovered slots", avgCa), 11.5, Build.Res("Muted")));
 			foreach (var (slot, p, bk) in starters)
 			{
 				bool weak = p == null || p.CA < avgCa - 14 || bk == null;
@@ -333,7 +332,7 @@ public static class ClubBestXi
 			var split = new Grid { VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left };
 			split.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 			split.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(460) });
-			var pitchCard = Build.Card(Build.T($"En İyi 11 ({formName})", $"Best XI ({formName})"), new Border { Padding = new Thickness(12, 4, 12, 12), Child = canvas });
+			var pitchCard = Build.Card(Build.F("En İyi 11 ({0})", "Best XI ({0})", formName), new Border { Padding = new Thickness(12, 4, 12, 12), Child = canvas });
 			var depthCard = Build.Card(Build.T("Kadro Derinliği & Eksik Analizi", "Squad Depth & Gap Analysis"), depthStack);
 			Grid.SetColumn(pitchCard, 0);
 			Grid.SetColumn(depthCard, 1);
@@ -440,8 +439,7 @@ public static class PlayerCardExport
 			enc.Frames.Add(BitmapFrame.Create(rtb));
 			using var fs = File.Create(dlg.FileName);
 			enc.Save(fs);
-			nav.SetStatus(Build.T($"✓ PNG kart kaydedildi ve panoya kopyalandı: {Path.GetFileName(dlg.FileName)}",
-				$"✓ PNG card saved & copied to clipboard: {Path.GetFileName(dlg.FileName)}"));
+			nav.SetStatus(Build.F("✓ PNG kart kaydedildi ve panoya kopyalandı: {0}", "✓ PNG card saved & copied to clipboard: {0}", Path.GetFileName(dlg.FileName)));
 		}
 		else
 		{

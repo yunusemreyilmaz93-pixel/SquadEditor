@@ -213,8 +213,7 @@ public static class Names
 		if (!SameBlock(oldBytes, newBytes))
 		{
 			(int min, int max) = Lengths(oldBytes);
-			return Build.T($"Oyunda yok; yerinde yazmak için {min}-{max} bayt olmalı (şimdi {newBytes}).",
-				$"Not in the game; to write it in place it must take {min}-{max} bytes (now {newBytes}).");
+			return Build.F("Oyunda yok; yerinde yazmak için {0}-{1} bayt olmalı (şimdi {2}).", "Not in the game; to write it in place it must take {0}-{1} bytes (now {2}).", min, max, newBytes);
 		}
 		if (m.Read<uint>(str - 4) != 1)
 		{
@@ -223,8 +222,7 @@ public static class Names
 		int others = OtherHolders(data, index, block, entry);
 		if (others > 0)
 		{
-			return Build.T($"Oyunda yok; eski ismi {others} kişi daha kullanıyor, onlar da değişirdi.",
-				$"Not in the game; {others} other people use the old name and would change too.");
+			return Build.F("Oyunda yok; eski ismi {0} kişi daha kullanıyor, onlar da değişirdi.", "Not in the game; {0} other people use the old name and would change too.", others);
 		}
 		return null;
 	}

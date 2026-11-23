@@ -16,7 +16,7 @@ public sealed class MassEditWindow : Window
 {
 	public MassEditWindow(GameData data, EntityDef entity, IReadOnlyList<BulkTarget> targets, INavigator nav, Action? after = null)
 	{
-		Title = Build.T($"Toplu Düzenle ({targets.Count} kayıt)", $"Mass Edit ({targets.Count} records)");
+		Title = Build.F("Toplu Düzenle ({0} kayıt)", "Mass Edit ({0} records)", targets.Count);
 		Width = 460;
 		SizeToContent = SizeToContent.Height;
 		ResizeMode = ResizeMode.NoResize;
@@ -34,8 +34,7 @@ public sealed class MassEditWindow : Window
 			.ToList();
 
 		var stack = new StackPanel { Margin = new Thickness(18) };
-		stack.Children.Add(Build.Text(Build.T($"{targets.Count} seçili kaydın tek bir alanını topluca değiştir (Ctrl+Z ile geri alınır).",
-			$"Edit one field across all {targets.Count} selected records (Ctrl+Z undoes it)."), 12.5, Build.Res("Muted")));
+		stack.Children.Add(Build.Text(Build.F("{0} seçili kaydın tek bir alanını topluca değiştir (Ctrl+Z ile geri alınır).", "Edit one field across all {0} selected records (Ctrl+Z undoes it).", targets.Count), 12.5, Build.Res("Muted")));
 
 		stack.Children.Add(new TextBlock { Text = Build.T("Alan", "Field"), Foreground = Build.Res("Muted"), FontSize = 12, Margin = new Thickness(0, 12, 0, 4) });
 		var fieldBox = new ComboBox { Height = 30, ItemsSource = fields, DisplayMemberPath = "Value", SelectedIndex = 0 };
@@ -94,11 +93,11 @@ public sealed class MassEditWindow : Window
 				else if (IsMoney(f))
 				{
 					string period = IsWage(f) ? Money.WageSuffix : "";
-					rangeHint.Text = Build.T($"Para birimi: {Money.Current.Code}{period} (otomatik dönüştürülür)", $"Currency: {Money.Current.Code}{period} (converted automatically)");
+					rangeHint.Text = Build.F("Para birimi: {0}{1} (otomatik dönüştürülür)", "Currency: {0}{1} (converted automatically)", Money.Current.Code, period);
 				}
 				else
 				{
-					rangeHint.Text = f.Min.HasValue && f.Max.HasValue ? Build.T($"Aralık: {f.Min} – {f.Max}", $"Range: {f.Min} – {f.Max}") : "";
+					rangeHint.Text = f.Min.HasValue && f.Max.HasValue ? Build.F("Aralık: {0} – {1}", "Range: {0} – {1}", f.Min, f.Max) : "";
 				}
 			}
 			valueBox.IsEnabled = (opBox.SelectedValue as string) != "max";
@@ -125,8 +124,7 @@ public sealed class MassEditWindow : Window
 			string fieldLabel = data.Layout.Text(lang, f.Name);
 
 			if (targets.Count > 1 && AppSettings.Current.ConfirmBulkEdits && MessageBox.Show(this,
-				Build.T($"\"{fieldLabel}\" alanı {targets.Count} kayıt için topluca değiştirilsin mi? Ctrl+Z geri alır.",
-					$"Mass edit \"{fieldLabel}\" across {targets.Count} records? Ctrl+Z undoes it."),
+				Build.F("\"{0}\" alanı {1} kayıt için topluca değiştirilsin mi? Ctrl+Z geri alır.", "Mass edit \"{0}\" across {1} records? Ctrl+Z undoes it.", fieldLabel, targets.Count),
 				Title, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
 			{
 				return;
@@ -215,8 +213,8 @@ public sealed class MassEditWindow : Window
 			string label = $"{fieldLabel} ({expr})";
 			BulkResult result = BulkEdit.ApplyActions(data.Session, entity, new[] { action }, targets, label);
 			nav.SetStatus(result.Failed == 0
-				? Build.T($"✓ {label}: {targets.Count} kayıt, {result.Written} değer yazıldı. Ctrl+Z geri alır.", $"✓ {label}: {targets.Count} records, {result.Written} values written. Ctrl+Z undoes it.")
-				: Build.T($"{result.Written} yazıldı, {result.Failed} hata: {result.FirstError}", $"{result.Written} written, {result.Failed} failed: {result.FirstError}"));
+				? Build.F("✓ {0}: {1} kayıt, {2} değer yazıldı. Ctrl+Z geri alır.", "✓ {0}: {1} records, {2} values written. Ctrl+Z undoes it.", label, targets.Count, result.Written)
+				: Build.F("{0} yazıldı, {1} hata: {2}", "{0} written, {1} failed: {2}", result.Written, result.Failed, result.FirstError));
 			after?.Invoke();
 			DialogResult = true;
 		};

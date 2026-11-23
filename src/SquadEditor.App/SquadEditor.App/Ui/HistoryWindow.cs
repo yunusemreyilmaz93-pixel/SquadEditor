@@ -75,7 +75,7 @@ public sealed class HistoryWindow : Window
 			}
 			catch (GuardedUndoException ex)
 			{
-				MessageBox.Show(this, Build.T($"\"{ex.Batch.Label}\" geri alınamadı: oyun bu arada veriyi değiştirdi.", $"\"{ex.Batch.Label}\" could not be undone: the game changed this data since."), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+				MessageBox.Show(this, Build.F("\"{0}\" geri alınamadı: oyun bu arada veriyi değiştirdi.", "\"{0}\" could not be undone: the game changed this data since.", ex.Batch.Label), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
 				Fill();
 			}
 			catch (InvalidOperationException)
@@ -100,7 +100,7 @@ public sealed class HistoryWindow : Window
 			}
 			catch (GuardedUndoException ex)
 			{
-				MessageBox.Show(this, Build.T($"\"{ex.Batch.Label}\" geri alınamadı (oyun değiştirdi); kalanlar durdu.", $"\"{ex.Batch.Label}\" could not be undone (changed by game); stopped."), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+				MessageBox.Show(this, Build.F("\"{0}\" geri alınamadı (oyun değiştirdi); kalanlar durdu.", "\"{0}\" could not be undone (changed by game); stopped.", ex.Batch.Label), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
 			}
 			_afterUndo();
 			Fill();
@@ -120,14 +120,14 @@ public sealed class HistoryWindow : Window
 			EditRecord first = b.Entries[0];
 			bool guarded = b.Entries.Any(e => e.Guarded);
 			string entity = b.Label ?? first.Info.Entity;
-			string field = b.Entries.Count == 1 ? _data.Layout.Text(lang, first.Info.Field) : Build.T($"{b.Entries.Count} yazma", $"{b.Entries.Count} writes");
+			string field = b.Entries.Count == 1 ? _data.Layout.Text(lang, first.Info.Field) : Build.F("{0} yazma", "{0} writes", b.Entries.Count);
 			string change = b.Entries.Count == 1
 				? $"{first.Info.OldValue} → {first.Info.NewValue}"
 				: string.Join(", ", b.Entries.Take(3).Select(e => $"{_data.Layout.Text(lang, e.Info.Field)}: {e.Info.OldValue}→{e.Info.NewValue}")) + (b.Entries.Count > 3 ? "…" : "");
 			rows.Add(new Row(b.Id, b.Time.ToString("HH:mm:ss"), entity, field, change, guarded ? Build.T("Korumalı", "Guarded") : Build.T("Standart", "Standard")));
 		}
 		_grid.ItemsSource = rows;
-		_summary.Text = Build.T($"{batches.Count} işlem ({_data.Session.History.Entries.Count} alan değişikliği).", $"{batches.Count} batches ({_data.Session.History.Entries.Count} field writes).");
+		_summary.Text = Build.F("{0} işlem ({1} alan değişikliği).", "{0} batches ({1} field writes).", batches.Count, _data.Session.History.Entries.Count);
 	}
 
 	private void ApplyTitleBar()

@@ -30,21 +30,33 @@ public static class CoreText
 
 	public static string Language { get; set; } = "en";
 
-	public static CultureInfo Culture
+	public static System.Func<string, string?>? ExternalLookup { get; set; }
+
+	public static CultureInfo Culture => Language switch
 	{
-		get
-		{
-			if (!(Language == "tr"))
-			{
-				return CultureInfo.GetCultureInfo("en-GB");
-			}
-			return CultureInfo.GetCultureInfo("tr-TR");
-		}
-	}
+		"tr" => CultureInfo.GetCultureInfo("tr-TR"),
+		"es" => CultureInfo.GetCultureInfo("es-ES"),
+		"pt" => CultureInfo.GetCultureInfo("pt-BR"),
+		"fr" => CultureInfo.GetCultureInfo("fr-FR"),
+		"de" => CultureInfo.GetCultureInfo("de-DE"),
+		"it" => CultureInfo.GetCultureInfo("it-IT"),
+		"nl" => CultureInfo.GetCultureInfo("nl-NL"),
+		"pl" => CultureInfo.GetCultureInfo("pl-PL"),
+		"ru" => CultureInfo.GetCultureInfo("ru-RU"),
+		"ja" => CultureInfo.GetCultureInfo("ja-JP"),
+		"ko" => CultureInfo.GetCultureInfo("ko-KR"),
+		_ => CultureInfo.GetCultureInfo("en-GB")
+	};
 
 	public static string Get(string key, params object[] args)
 	{
-		var (text, text2) = Messages[key];
-		return string.Format(CultureInfo.InvariantCulture, (Language == "tr") ? text2 : text, args);
+		var (en, tr) = Messages[key];
+		string fmt = Language switch
+		{
+			"tr" => tr,
+			"en" => en,
+			_ => ExternalLookup?.Invoke("Core." + key) ?? en
+		};
+		return string.Format(CultureInfo.InvariantCulture, fmt, args);
 	}
 }

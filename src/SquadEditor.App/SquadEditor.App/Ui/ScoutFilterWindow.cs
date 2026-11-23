@@ -131,7 +131,7 @@ public sealed class ScoutFilterWindow : Window
 
 		TextBox bGrowth = AddRow(Build.T("Gelişim payı (PA − CA) ≥", "Potential gap (PA − CA) ≥"), filter.MinGrowth?.ToString() ?? "");
 		TextBox bRating = AddRow(Build.T("En iyi rol reytingi (%) ≥", "Best role rating (%) ≥"), filter.MinRating?.ToString(CultureInfo.InvariantCulture) ?? "");
-		TextBox bWage = AddRow(Build.T($"Maks. maaş ({Money.Current.Code}{Money.WageSuffix}) ≤", $"Max wage ({Money.Current.Code}{Money.WageSuffix}) ≤"), filter.MaxWageDisplay?.ToString(CultureInfo.InvariantCulture) ?? "");
+		TextBox bWage = AddRow(Build.F("Maks. maaş ({0}{1}) ≤", "Max wage ({0}{1}) ≤", Money.Current.Code, Money.WageSuffix), filter.MaxWageDisplay?.ToString(CultureInfo.InvariantCulture) ?? "");
 		TextBox bPro = AddRow(Build.T("Profesyonellik ≥", "Professionalism ≥"), filter.MinPro?.ToString() ?? "");
 		TextBox bCons = AddRow(Build.T("İstikrar ≥", "Consistency ≥"), filter.MinCons?.ToString() ?? "");
 		TextBox bImp = AddRow(Build.T("Önemli Maçlar ≥", "Important Matches ≥"), filter.MinImp?.ToString() ?? "");
