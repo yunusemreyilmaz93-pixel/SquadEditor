@@ -2626,40 +2626,33 @@
   ],
   "presets": [
     {
-      "name": "Heal and inspire",
+      "name": "Model personality",
       "entity": "Player",
-      "description": "Full condition and top morale.",
+      "description": "Maxes all positive personality & mental traits and minimizes controversy, dirtiness & injury proneness.",
       "actions": [
-        {
-          "field": "Condition",
-          "value": "max"
-        },
-        {
-          "field": "Morale",
-          "value": "max"
-        }
+        { "field": "Adaptability", "value": "20" },
+        { "field": "Ambition", "value": "20" },
+        { "field": "Loyalty", "value": "20" },
+        { "field": "Pressure", "value": "20" },
+        { "field": "Professionalism", "value": "20" },
+        { "field": "Sportsmanship", "value": "20" },
+        { "field": "Temperament", "value": "20" },
+        { "field": "Determination", "value": "20" },
+        { "field": "Consistency", "value": "18" },
+        { "field": "Important Matches", "value": "18" },
+        { "field": "Controversy", "value": "1" },
+        { "field": "Injury Proneness", "value": "1" },
+        { "field": "Dirtiness", "value": "1" }
       ]
     },
     {
       "name": "Wonderkid",
       "entity": "Player",
-      "description": "Potential 200 and +3 to technical, mental and physical attributes.",
+      "description": "Rolls a fresh, position-aware realistic Wonderkid (random CA 120-160, PA 158-198) on every click.",
       "actions": [
         {
           "field": "PA",
           "value": "max"
-        },
-        {
-          "group": "Technical",
-          "value": "+3"
-        },
-        {
-          "group": "Mental",
-          "value": "+3"
-        },
-        {
-          "group": "Physical",
-          "value": "+3"
         }
       ]
     },
@@ -2976,10 +2969,10 @@
       "Ball carrying": "Top taşıma",
       "Physical play": "Fizik",
       "Mentality": "Mentalite",
-      "Heal and inspire": "Tam kondisyon ve moral",
-      "Full condition and top morale.": "Kondisyonu ve morali en üste çıkarır.",
-      "Wonderkid": "Wonderkid yap",
-      "Potential 200 and +3 to technical, mental and physical attributes.": "Potansiyel 200, teknik, zihinsel ve fiziksel özelliklere +3.",
+      "Model personality": "Kişilik tam",
+      "Maxes all positive personality & mental traits and minimizes controversy, dirtiness & injury proneness.": "Tüm pozitif kişilik/gizli özellikleri fuller, tartışmacılık/sertlik/sakatlık eğilimini 1 yapar.",
+      "Wonderkid": "🎲 Wonderkid yap",
+      "Rolls a fresh, position-aware realistic Wonderkid (random CA 120-160, PA 158-198) on every click.": "Her tıklamada mevkiye uygun rastgele gerçekçi Wonderkid (CA 120-160, PA 158-198) üretir.",
       "World star": "Dünya yıldızı",
       "Top reputation everywhere.": "Her yerde en yüksek itibar.",
       "Rich owner": "Zengin patron",

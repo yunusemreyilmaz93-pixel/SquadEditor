@@ -561,7 +561,7 @@ public sealed class PlayerPage : UserControl, IPage
 		}
 
 		AddColumn(grid, 0, Build.Card(Build.T("Teknik", "Technical"), host, toggle),
-			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, RefreshValues, _nav));
+			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, () => { RefreshValues(); RebuildHeader(); if (_onOverview && _contentHost != null) _contentHost.Content = Overview(); }, _nav));
 		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"), hl)),
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))));
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"), hl)),

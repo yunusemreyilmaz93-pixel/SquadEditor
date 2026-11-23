@@ -366,15 +366,78 @@ public static class Build
 				{
 					return;
 				}
+				if (preset.Name == "Wonderkid" && entity == "Player")
+				{
+					RollWonderkid(data, list, nav);
+					after();
+					return;
+				}
 				var result = SquadEditor.Core.Editing.BulkEdit.ApplyPreset(data.Session, data.Layout.GetEntity(entity), preset, list, data.Layout.Text(lang, preset.Name));
 				nav.SetStatus(result.Failed == 0
-					? T($"{data.Layout.Text(lang, preset.Name)}: {list.Count} kayda uygulandı ({result.Written} değer).", $"{preset.Name}: applied to {list.Count} records ({result.Written} values).")
+					? T($"✓ {data.Layout.Text(lang, preset.Name)}: {list.Count} kayda uygulandı ({result.Written} değer). Ctrl+Z geri alır.", $"✓ {preset.Name}: applied to {list.Count} records ({result.Written} values). Ctrl+Z undoes it.")
 					: T($"{result.Written} değer yazıldı, {result.Failed} hata: {result.FirstError}", $"{result.Written} values written, {result.Failed} failed: {result.FirstError}"));
 				after();
 			};
 			panel.Children.Add(button);
 		}
 		return Card(T("Ön ayarlar", "Presets"), panel);
+	}
+
+	/// <summary>Generates a fresh, realistic, position-aware random Wonderkid build (CA 120-160, PA 158-198) on every click.</summary>
+	private static void RollWonderkid(GameData data, IReadOnlyList<SquadEditor.Core.Editing.BulkTarget> targets, INavigator nav)
+	{
+		var rng = Random.Shared;
+		var def = data.PlayerDef;
+		var byName = def.Fields.Where(f => f.IsWritable && f.Concat.Count == 0).ToDictionary(f => f.Name);
+		int lastCa = 0, lastPa = 0;
+		using (data.Session.History.BeginBatch(T("🎲 Wonderkid oluştur", "🎲 Roll Wonderkid")))
+		{
+			foreach (var t in targets)
+			{
+				int ca = rng.Next(120, 161);
+				int pa = rng.Next(Math.Max(ca + 15, 158), 199);
+				lastCa = ca;
+				lastPa = pa;
+				byte[] raw69 = new byte[69];
+				string role = data.Memory.TryRead(t.Address + 0x150, raw69) ? ScoutRating.Evaluate(raw69).Role : "";
+				bool isGk = raw69[0] >= 15;
+				double baseAttr = 8.5 + (ca - 110) / 13.0; // ~9.3 at CA 120, ~12.3 at CA 160
+
+				void WriteVal(string fieldName, int v)
+				{
+					if (byName.TryGetValue(fieldName, out var fd))
+					{
+						try { data.Session.WriteField(t.Address, fd, v.ToString(System.Globalization.CultureInfo.InvariantCulture), t.Label); } catch { }
+					}
+				}
+
+				WriteVal("CA", ca);
+				WriteVal("PA", pa);
+				string primaryGroup = isGk ? "Goalkeeping" : "Technical";
+				foreach (var fd in def.Fields.Where(f => f.IsWritable && f.GroupKey is "Mental" or "Physical" || f.GroupKey == primaryGroup))
+				{
+					int hl = ScoutRating.HighlightLevel(role, fd.Name);
+					int val = hl switch
+					{
+						2 => Math.Clamp((int)Math.Round(baseAttr + rng.Next(3, 6)), 12, 19),
+						1 => Math.Clamp((int)Math.Round(baseAttr + rng.Next(1, 4)), 10, 18),
+						_ => Math.Clamp((int)Math.Round(baseAttr + rng.Next(-3, 3)), 6, 16)
+					};
+					WriteVal(fd.Name, val);
+				}
+				WriteVal("Determination", rng.Next(14, 19));
+				WriteVal("Professionalism", rng.Next(13, 19));
+				WriteVal("Ambition", rng.Next(14, 19));
+				WriteVal("Consistency", rng.Next(12, 17));
+				WriteVal("Important Matches", rng.Next(12, 17));
+				WriteVal("Injury Proneness", rng.Next(3, 9));
+			}
+		}
+		nav.SetStatus(targets.Count == 1
+			? T($"✓ {targets[0].Label} → Wonderkid (CA {lastCa} / PA {lastPa}) · Beğenmezsen tekrar bas · Ctrl+Z geri alır.",
+				$"✓ {targets[0].Label} → Wonderkid (CA {lastCa} / PA {lastPa}) · Click again to reroll · Ctrl+Z undoes.")
+			: T($"✓ {targets.Count} oyuncu için rastgele Wonderkid profili oluşturuldu. Ctrl+Z geri alır.",
+				$"✓ Rolled random Wonderkid builds for {targets.Count} players. Ctrl+Z undoes."));
 	}
 
 	public static ScrollViewer Scroll(UIElement content)
