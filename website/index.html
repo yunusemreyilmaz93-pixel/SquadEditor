@@ -1,40 +1,64 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SquadEditor — Football Manager 27 Real-Time Editor &amp; Scout</title>
-  <meta name="description" content="Free, open-source real-time memory editor and scout for Football Manager 27 on Windows. 12 authentic FM languages, verified regen &amp; 5-star staff search, safe Ctrl+Z undo." />
+  <title>Squadeditor — Football Manager 27 için Ücretsiz Editör ve Scout</title>
+  <meta name="description" content="Football Manager 27 için ücretsiz, hızlı ve açık kaynaklı gerçek zamanlı editör ve scout aracı. 12 dil, 4 canlı tema, gerçek regen ve 5 yıldızlı personel arama." />
   <link rel="icon" href="./assets/app.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --bg: #0a0b0d;
-      --surface: #111318;
-      --surface-2: #161920;
-      --line: #222630;
-      --line-strong: #303645;
-      --ink: #f3f5f8;
-      --ink-2: #9ba3b4;
-      --ink-3: #687082;
-      --turf: #22c55e;
-      --turf-dim: rgba(34, 197, 94, 0.12);
-      --display: 'Barlow Condensed', system-ui, sans-serif;
-      --sans: 'Inter', system-ui, -apple-system, sans-serif;
-      --mono: 'JetBrains Mono', Consolas, monospace;
+    /* Light Theme (Warm Editorial Paper) */
+    :root, [data-theme="light"] {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --surface-soft: #efeee9;
+      --line: #e4e2da;
+      --line-strong: #d1cec3;
+      --ink: #14161a;
+      --ink-2: #4b515e;
+      --ink-3: #787f8e;
+      --accent: #15803d;
+      --accent-soft: rgba(21, 128, 61, 0.09);
+      --btn-bg: #14161a;
+      --btn-fg: #ffffff;
+      --btn-hover: #2a2e37;
+      --shadow: 0 20px 50px rgba(17, 20, 26, 0.08), 0 2px 8px rgba(17, 20, 26, 0.04);
+      --serif: 'Instrument Serif', Georgia, serif;
+      --sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
+    /* Dark Theme (Rich Stadium Charcoal) */
+    [data-theme="dark"] {
+      --bg: #0e1014;
+      --surface: #151820;
+      --surface-soft: #1b202b;
+      --line: #232834;
+      --line-strong: #32394a;
+      --ink: #f3f5f8;
+      --ink-2: #a3abbc;
+      --ink-3: #6c7487;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.12);
+      --btn-bg: #f3f5f8;
+      --btn-fg: #0e1014;
+      --btn-hover: #dce1ea;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; background: var(--bg); color: var(--ink); }
+    html { scroll-behavior: smooth; }
     body {
+      background: var(--bg);
+      color: var(--ink);
       font-family: var(--sans);
       font-size: 15px;
-      line-height: 1.6;
+      line-height: 1.65;
+      transition: background 0.25s var(--ease), color 0.25s var(--ease);
       -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
     }
 
     a { color: inherit; }
@@ -51,21 +75,22 @@
 
     .wrap {
       width: 100%;
-      max-width: 1160px;
+      max-width: 1120px;
       margin: 0 auto;
       padding: 0 28px;
     }
 
-    /* Top bar — solid matte surface, crisp 1px rule */
+    /* Header */
     header {
       position: sticky;
       top: 0;
       z-index: 40;
       background: var(--bg);
       border-bottom: 1px solid var(--line);
+      transition: background 0.25s var(--ease), border-color 0.25s var(--ease);
     }
     .bar {
-      height: 60px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -76,22 +101,15 @@
       align-items: center;
       gap: 10px;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 15px;
-      letter-spacing: -0.01em;
+      font-weight: 700;
+      font-size: 16.5px;
+      letter-spacing: -0.02em;
     }
     .brand img {
-      width: 26px;
-      height: 26px;
-      border-radius: 5px;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
       display: block;
-    }
-    .brand .ver {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--ink-3);
-      padding-left: 8px;
-      border-left: 1px solid var(--line);
     }
     nav {
       display: flex;
@@ -100,7 +118,8 @@
     }
     nav a {
       text-decoration: none;
-      font-size: 13.5px;
+      font-size: 14px;
+      font-weight: 500;
       color: var(--ink-2);
       transition: color 0.15s;
     }
@@ -108,343 +127,377 @@
     .bar-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+    }
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover {
+      border-color: var(--line-strong);
+      color: var(--ink);
     }
     .lang-toggle {
       display: inline-flex;
       border: 1px solid var(--line);
-      border-radius: 6px;
-      overflow: hidden;
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 2px;
     }
     .lang-toggle button {
       background: transparent;
       border: 0;
       color: var(--ink-3);
-      font-family: var(--mono);
-      font-size: 11.5px;
-      padding: 5px 9px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+      transition: all 0.15s;
     }
     .lang-toggle button.active {
-      background: var(--surface-2);
+      background: var(--surface-soft);
       color: var(--ink);
     }
 
-    /* Buttons — solid high contrast, no glow, no gradient */
+    /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       font-family: var(--sans);
       font-size: 14px;
       font-weight: 600;
       padding: 10px 18px;
-      border-radius: 7px;
+      border-radius: 9px;
       border: 1px solid transparent;
       text-decoration: none;
       cursor: pointer;
       transition: background 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.12s var(--ease);
     }
     .btn:active { transform: translateY(1px); }
-    .btn-solid {
-      background: var(--ink);
-      color: #0a0b0d;
+    .btn-primary {
+      background: var(--btn-bg);
+      color: var(--btn-fg);
     }
-    .btn-solid:hover { background: #dce2ec; }
+    .btn-primary:hover { background: var(--btn-hover); }
     .btn-outline {
-      background: transparent;
+      background: var(--surface);
       color: var(--ink);
       border-color: var(--line-strong);
     }
-    .btn-outline:hover {
-      background: var(--surface);
-      border-color: var(--ink-3);
-    }
-    .btn-sm { padding: 7px 13px; font-size: 13px; }
-    .btn-lg { padding: 12px 22px; font-size: 14.5px; }
+    .btn-outline:hover { background: var(--surface-soft); }
+    .btn-sm { padding: 7px 14px; font-size: 13px; }
+    .btn-lg { padding: 13px 24px; font-size: 15px; border-radius: 10px; }
 
-    /* Hero — asymmetric editorial split */
+    /* Hero */
     .hero {
-      padding: 64px 0 56px;
-      border-bottom: 1px solid var(--line);
+      padding: 72px 0 60px;
     }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1.05fr 1.15fr;
-      gap: 48px;
+    .hero-top {
+      max-width: 760px;
+      margin-bottom: 42px;
+    }
+    .hero-kicker {
+      display: inline-flex;
       align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 16px;
     }
-    .hero-meta {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--turf);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .hero-meta span.sep { color: var(--line-strong); }
-    .hero-meta span.dim { color: var(--ink-3); }
     h1 {
-      font-family: var(--display);
-      font-weight: 700;
-      font-size: clamp(44px, 5.4vw, 68px);
-      line-height: 0.96;
-      letter-spacing: -0.015em;
-      text-transform: uppercase;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(44px, 6.2vw, 72px);
+      line-height: 1.03;
+      letter-spacing: -0.02em;
       color: var(--ink);
       margin-bottom: 20px;
     }
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
     .hero-lead {
-      color: var(--ink-2);
-      font-size: 16px;
+      font-size: 17px;
       line-height: 1.65;
-      max-width: 480px;
+      color: var(--ink-2);
+      max-width: 600px;
       margin-bottom: 28px;
     }
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 22px;
+      gap: 14px;
     }
-    .hero-specs {
-      font-family: var(--mono);
-      font-size: 12px;
+    .hero-note {
+      margin-top: 14px;
+      font-size: 13px;
       color: var(--ink-3);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      padding-top: 18px;
-      border-top: 1px solid var(--line);
-      max-width: 480px;
     }
 
-    /* Right hero media frame — crisp Windows frame, zero macOS dots */
-    .frame {
+    /* Auto-advancing Screen Showcase */
+    .showcase {
       background: var(--surface);
-      border: 1px solid var(--line-strong);
-      border-radius: 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
       overflow: hidden;
+      box-shadow: var(--shadow);
     }
-    .frame-head {
+    .showcase-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 9px 14px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--line);
-      background: #0d0f14;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
     }
-    .frame-tabs {
+    .slide-tabs {
       display: flex;
-      gap: 4px;
+      gap: 6px;
       flex-wrap: wrap;
     }
-    .frame-tab {
+    .slide-tab {
       background: transparent;
       border: 1px solid transparent;
       color: var(--ink-3);
-      font-family: var(--mono);
-      font-size: 11.5px;
-      padding: 4px 10px;
-      border-radius: 5px;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 7px;
       cursor: pointer;
       transition: all 0.15s;
     }
-    .frame-tab:hover { color: var(--ink-2); }
-    .frame-tab.active {
-      background: var(--surface-2);
-      border-color: var(--line-strong);
+    .slide-tab:hover { color: var(--ink); }
+    .slide-tab.active {
+      background: var(--surface-soft);
+      border-color: var(--line);
       color: var(--ink);
+      font-weight: 600;
     }
-    .frame-tag {
-      font-family: var(--mono);
-      font-size: 11px;
+    .slide-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .slide-caption {
+      font-size: 12.5px;
       color: var(--ink-3);
+      margin-right: 6px;
     }
-    .frame-stage {
+    .stage {
       position: relative;
-      aspect-ratio: 16 / 10;
-      background: #0b0d12;
+      background: var(--surface-soft);
+      aspect-ratio: 16 / 9.4;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 24px;
       overflow: hidden;
     }
-    .frame-stage img {
+    .stage img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+      transition: opacity 0.3s var(--ease), transform 0.35s var(--ease);
+    }
+    .stage img.fading {
+      opacity: 0;
+      transform: scale(0.985);
+    }
+    .progress-track {
+      height: 3px;
+      background: var(--line);
       width: 100%;
+    }
+    .progress-fill {
       height: 100%;
-      object-fit: contain;
-      padding: 14px;
-      display: block;
-    }
-    .frame-stage video,
-    .frame-stage iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
-    .video-placeholder {
-      padding: 36px 28px;
-      text-align: center;
-      max-width: 420px;
-    }
-    .video-placeholder .play-ring {
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
-      border: 1px solid var(--line-strong);
-      background: var(--surface-2);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--ink);
-      margin-bottom: 16px;
-    }
-    .video-placeholder h3 {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    .video-placeholder p {
-      font-size: 13px;
-      color: var(--ink-3);
-      margin-bottom: 14px;
-    }
-    .video-placeholder code {
-      font-family: var(--mono);
-      font-size: 11.5px;
-      color: var(--turf);
-      background: var(--turf-dim);
-      padding: 4px 9px;
-      border-radius: 5px;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.1s linear;
     }
 
-    /* Section scaffold — editorial ruling lines */
+    /* Sections */
     section {
-      padding: 64px 0;
-      border-bottom: 1px solid var(--line);
+      padding: 72px 0;
+      border-top: 1px solid var(--line);
     }
-    .sec-row {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 48px;
-      align-items: start;
+    .sec-header {
+      max-width: 640px;
+      margin-bottom: 42px;
     }
-    .sec-side h2 {
-      font-family: var(--display);
-      font-size: 34px;
-      line-height: 1.02;
-      text-transform: uppercase;
-      letter-spacing: -0.01em;
+    .sec-header h2 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(32px, 4.2vw, 44px);
+      line-height: 1.08;
+      letter-spacing: -0.015em;
       margin-bottom: 10px;
     }
-    .sec-side p {
+    .sec-header p {
       color: var(--ink-2);
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 15.5px;
     }
 
-    /* Architectural Feature Ledger (2-col hairline grid, zero rounded-square emoji badges) */
-    .ledger {
+    /* Comprehensive 4-Group Feature Architecture */
+    .feat-groups {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      border-top: 1px solid var(--line);
-      border-left: 1px solid var(--line);
+      gap: 24px;
     }
-    .ledger-item {
-      padding: 24px 26px;
-      border-right: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      background: var(--bg);
-      transition: background 0.16s;
+    .feat-group {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 26px 28px;
     }
-    .ledger-item:hover { background: var(--surface); }
-    .ledger-head {
+    .feat-group-head {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 8px;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .feat-group-head svg.ic { color: var(--accent); width: 20px; height: 20px; }
+    .feat-group-head h3 {
+      font-size: 16.5px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+    .feat-list {
+      list-style: none;
+      display: grid;
+      gap: 14px;
+    }
+    .feat-list li {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .feat-list li svg.ic {
+      width: 15px;
+      height: 15px;
+      margin-top: 4px;
+      color: var(--accent);
+    }
+    .feat-list strong {
+      display: block;
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-bottom: 2px;
       color: var(--ink);
     }
-    .ledger-head svg.ic { color: var(--turf); }
-    .ledger-head h3 {
-      font-size: 15.5px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    .ledger-item p {
-      color: var(--ink-2);
+    .feat-list span {
+      display: block;
       font-size: 13.5px;
-      line-height: 1.62;
+      color: var(--ink-2);
+      line-height: 1.55;
     }
 
-    /* 12 Languages Matrix — proving real FM terminology */
-    .lang-matrix {
+    /* 12 Languages with Crisp Inline SVG Flags */
+    .lang-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      border-top: 1px solid var(--line);
-      border-left: 1px solid var(--line);
+      gap: 12px;
     }
-    .lang-cell {
-      padding: 14px 16px;
-      border-right: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      background: var(--bg);
-    }
-    .lang-cell-top {
+    .lang-card {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      transition: border-color 0.15s;
     }
-    .lang-cell strong { font-size: 14px; font-weight: 600; }
-    .lang-cell code {
-      font-family: var(--mono);
-      font-size: 10.5px;
-      color: var(--ink-3);
-      text-transform: uppercase;
+    .lang-card:hover { border-color: var(--line-strong); }
+    .flag {
+      width: 28px;
+      height: 20px;
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+      display: block;
     }
-    .lang-cell span {
+    .lang-info strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .lang-info span {
       display: block;
       font-size: 12px;
       color: var(--ink-3);
-      font-family: var(--mono);
     }
 
-    /* Setup + FAQ Split */
-    .install-list {
-      list-style: none;
+    /* About + FAQ Split */
+    .split-2 {
       display: grid;
-      gap: 18px;
-      margin-bottom: 24px;
-    }
-    .install-list li {
-      display: grid;
-      grid-template-columns: 28px 1fr;
-      gap: 12px;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 52px;
       align-items: start;
     }
-    .install-num {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--turf);
-      padding-top: 2px;
+    .about-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 28px;
     }
-    .install-list h4 { font-size: 14.5px; font-weight: 600; margin-bottom: 2px; }
-    .install-list p { font-size: 13.5px; color: var(--ink-2); }
+    .about-card h3 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 30px;
+      margin-bottom: 12px;
+    }
+    .about-card p {
+      color: var(--ink-2);
+      font-size: 14.5px;
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+    .about-sign {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13.5px;
+      color: var(--ink-2);
+    }
+    .about-sign strong { color: var(--ink); }
 
     .faq-stack {
       border-top: 1px solid var(--line);
     }
     details.faq {
       border-bottom: 1px solid var(--line);
-      padding: 16px 0;
+      padding: 17px 0;
     }
     details.faq summary {
       cursor: pointer;
@@ -453,8 +506,8 @@
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      font-weight: 500;
-      font-size: 14.5px;
+      font-weight: 600;
+      font-size: 15px;
     }
     details.faq summary::-webkit-details-marker { display: none; }
     details.faq summary svg.ic {
@@ -467,35 +520,42 @@
     details.faq p {
       margin-top: 10px;
       color: var(--ink-2);
-      font-size: 13.5px;
+      font-size: 14px;
       line-height: 1.65;
-      max-width: 64ch;
     }
 
-    /* Download band */
+    /* Final Download Band */
     .dl-band {
-      padding: 52px 0;
-      border-bottom: 1px solid var(--line);
+      padding: 64px 0;
+      border-top: 1px solid var(--line);
     }
-    .dl-inner {
+    .dl-box {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 40px 42px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 28px;
       flex-wrap: wrap;
     }
-    .dl-inner h2 {
-      font-family: var(--display);
-      font-size: 38px;
-      line-height: 1;
-      text-transform: uppercase;
+    .dl-box h2 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(30px, 4vw, 40px);
+      line-height: 1.1;
       margin-bottom: 6px;
     }
-    .dl-inner p { color: var(--ink-2); font-size: 14.5px; }
+    .dl-box p {
+      color: var(--ink-2);
+      font-size: 14.5px;
+    }
 
     /* Footer */
     footer {
-      padding: 36px 0 48px;
+      border-top: 1px solid var(--line);
+      padding: 36px 0 52px;
     }
     .foot-top {
       display: flex;
@@ -503,7 +563,7 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 18px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .socials {
       display: flex;
@@ -513,33 +573,34 @@
     .social-btn {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 7px 12px;
+      gap: 8px;
+      padding: 8px 13px;
       border: 1px solid var(--line);
-      border-radius: 6px;
+      background: var(--surface);
+      border-radius: 8px;
       text-decoration: none;
       font-size: 13px;
+      font-weight: 500;
       color: var(--ink-2);
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      transition: all 0.15s;
     }
     .social-btn:hover {
       border-color: var(--line-strong);
       color: var(--ink);
-      background: var(--surface);
     }
     .social-btn svg.ic { width: 15px; height: 15px; }
     .legal {
       color: var(--ink-3);
-      font-size: 12px;
+      font-size: 12.5px;
       line-height: 1.6;
       max-width: 78ch;
     }
 
-    @media (max-width: 960px) {
-      .hero-grid, .sec-row { grid-template-columns: 1fr; gap: 32px; }
-      .ledger { grid-template-columns: 1fr; }
-      .lang-matrix { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 920px) {
+      .feat-groups, .split-2 { grid-template-columns: 1fr; }
+      .lang-grid { grid-template-columns: repeat(2, 1fr); }
       nav { display: none; }
+      .dl-box { padding: 28px 24px; }
     }
   </style>
 </head>
@@ -547,21 +608,24 @@
   <header>
     <div class="wrap bar">
       <a href="#" class="brand">
-        <img src="./assets/logo.png" alt="SquadEditor" />
-        <span>SquadEditor</span>
-        <span class="ver" id="hdrVersion">v1.0.0</span>
+        <img src="./assets/logo.png" alt="Squadeditor" />
+        <span>Squadeditor</span>
       </a>
       <nav>
         <a href="#features" data-i18n="nav.features">Özellikler</a>
-        <a href="#languages" data-i18n="nav.languages">12 Dil</a>
-        <a href="#faq" data-i18n="nav.faq">Kurulum &amp; SSS</a>
+        <a href="#languages" data-i18n="nav.languages">Diller</a>
+        <a href="#about" data-i18n="nav.about">Hakkında</a>
+        <a href="#about" data-i18n="nav.faq">SSS</a>
       </nav>
       <div class="bar-right">
+        <button type="button" class="icon-btn" id="themeToggle" aria-label="Tema değiştir" title="Açık / Koyu Tema">
+          <svg class="ic" id="themeIcon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
         <div class="lang-toggle" role="group" aria-label="Language">
           <button class="active" data-lang="tr">TR</button>
           <button data-lang="en">EN</button>
         </div>
-        <a id="navDl" href="#download" class="btn btn-solid btn-sm">
+        <a id="navDl" href="#download" class="btn btn-primary btn-sm">
           <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span data-i18n="nav.dl">İndir</span>
         </a>
@@ -570,160 +634,188 @@
   </header>
 
   <main>
-    <!-- Asymmetric Hero -->
-    <section class="hero">
-      <div class="wrap hero-grid">
-        <div>
-          <div class="hero-meta">
-            <span id="fmTag">FM27 (27.0.1)</span>
-            <span class="sep">/</span>
-            <span class="dim" data-i18n="hero.meta">ÜCRETSİZ · AÇIK KAYNAK · WINDOWS</span>
-          </div>
-          <h1 data-i18n="hero.title">FM27 için gerçek zamanlı editör ve scout.</h1>
+    <!-- Hero + Auto-Advancing Real Screen Showcase -->
+    <div class="hero">
+      <div class="wrap">
+        <div class="hero-top">
+          <div class="hero-kicker" data-i18n="hero.kicker">Football Manager 27 · Ücretsiz Masaüstü Aracı</div>
+          <h1 data-i18n-html="hero.title">Kariyerin için <em>hızlı ve ücretsiz</em> gerçek zamanlı editör.</h1>
           <p class="hero-lead" data-i18n="hero.lead">
-            Oyuncuları, kulüpleri, personelleri ve finansı oyun açıkken doğrudan düzenle. Gerçek regenleri ve 5 yıldızlı antrenörleri saniyeler içinde bul. Her yazma doğrulanır ve Ctrl+Z ile geri alınır.
+            Oyun açıkken oyuncuları, personelleri, kulüpleri ve finansı anında düzenle. Gerçek regenleri ve 5 yıldızlı antrenörleri zahmetsizce bul, yaptığın her değişikliği tek tuşla geri al.
           </p>
           <div class="hero-actions">
-            <a id="heroDl" href="#download" class="btn btn-solid btn-lg">
+            <a id="heroDl" href="#download" class="btn btn-primary btn-lg">
               <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span data-i18n="hero.dl">Windows için İndir (.exe)</span>
+              <span data-i18n="hero.dl">Windows için Ücretsiz İndir</span>
             </a>
-            <button type="button" class="btn btn-outline btn-lg" id="watchVideoBtn">
-              <svg class="ic" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-              <span data-i18n="hero.video">40 sn Tanıtım</span>
-            </button>
+            <a href="#features" class="btn btn-outline btn-lg" data-i18n="hero.explore">Tüm Özelliklere Bak</a>
           </div>
-          <div class="hero-specs">
-            <span>Windows 10/11 x64</span>
-            <span data-i18n="spec.langs">12 FM Dili</span>
-            <span data-i18n="spec.undo">Ctrl+Z Geri Alma</span>
-            <span data-i18n="spec.backup">Tek Tık .fm Yedek</span>
-          </div>
+          <p class="hero-note" data-i18n="hero.note">Kurulum gerektirmez, tek dosya olarak çalışır. Steam Football Manager 27 ile uyumludur.</p>
         </div>
 
-        <!-- Real App Screenshots + Promo Video Frame -->
-        <div class="frame" id="mediaFrame">
-          <div class="frame-head">
-            <div class="frame-tabs" id="mediaTabs">
-              <button class="frame-tab active" data-view="video" data-i18n="view.video">Tanıtım (40s)</button>
-              <button class="frame-tab" data-view="staff" data-i18n="view.staff">Personel Filtresi</button>
-              <button class="frame-tab" data-view="scout" data-i18n="view.scout">Oyuncu Scout</button>
-              <button class="frame-tab" data-view="de">DE</button>
-              <button class="frame-tab" data-view="ja">JA</button>
+        <div class="showcase" id="showcase">
+          <div class="showcase-bar">
+            <div class="slide-tabs" id="slideTabs"></div>
+            <div class="slide-controls">
+              <span class="slide-caption" id="slideCaption"></span>
+              <button type="button" class="icon-btn" id="prevSlide" aria-label="Önceki">
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button type="button" class="icon-btn" id="nextSlide" aria-label="Sonraki">
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
             </div>
-            <span class="frame-tag" id="frameCaption">promo.mp4</span>
           </div>
-          <div class="frame-stage" id="frameStage"></div>
+          <div class="stage">
+            <img id="slideImg" src="./assets/shot_light.png" alt="Squadeditor ekran görüntüsü" />
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Features Ledger -->
+    <!-- Full Feature Coverage (4 Organized Groups, 16 Real Features) -->
     <section id="features">
-      <div class="wrap sec-row">
-        <div class="sec-side">
-          <h2 data-i18n="feat.h">Özellikler</h2>
-          <p data-i18n="feat.p">Süslü vaatler değil; FM27 kaydınla canlı çalışan, doğrudan test edilmiş araçlar.</p>
+      <div class="wrap">
+        <div class="sec-header">
+          <h2 data-i18n="feat.h">Bir editörden ve scout aracından beklediğin her şey.</h2>
+          <p data-i18n="feat.p">Oyuncu aramadan personel transferine, kulüp tesislerinden canlı tema geçişine kadar tüm araçlar tek çatı altında.</p>
         </div>
-        <div class="ledger">
-          <div class="ledger-item">
-            <div class="ledger-head">
+
+        <div class="feat-groups">
+          <!-- Group 1: Oyuncu & Scout -->
+          <div class="feat-group">
+            <div class="feat-group-head">
               <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              <h3 data-i18n="f1.t">Gerçek Regen &amp; Gelişmiş Scout</h3>
+              <h3 data-i18n="g1.h">Oyuncu Arama &amp; Scout</h3>
             </div>
-            <p data-i18n="f1.d">Doğrulanmış FM27 Newgen UID aralığıyla sadece oyunun ürettiği regenleri listele. Uyruk, mevki, rol reytingi ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar) filtrele.</p>
+            <ul class="feat-list">
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g1.f1t">Gerçek Regen (Newgen) Filtresi</strong><span data-i18n="g1.f1d">Gerçek genç oyuncularla karışmadan sadece oyunun ürettiği yeni yetenekleri listeler.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g1.f2t">Gelişmiş Oyuncu Filtresi &amp; Hazır Şablonlar</strong><span data-i18n="g1.f2d">Uyruk, bölge, mevki, rol reytingi, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g1.f3t">8 Eksenli Radar, Karşılaştırma &amp; Oyuncu Kartı</strong><span data-i18n="g1.f3d">İki oyuncuyu yan yana kıyasla, sağ panelden hızlı önizleme aç veya tek tıkla paylaşılabilir PNG oyuncu kartı oluştur.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g1.f4t">Wonderkid Oluşturucu, Model Kişilik &amp; Tercih Edilen Hareketler</strong><span data-i18n="g1.f4d">Tekrar zar atılabilen dengeli Wonderkid üretici, tek tıkla kişilik iyileştirme ve tüm oyuncu alışkanlıklarını (Traits) düzenleme.</span></div>
+              </li>
+            </ul>
           </div>
-          <div class="ledger-item">
-            <div class="ledger-head">
+
+          <!-- Group 2: Personel & Transfer -->
+          <div class="feat-group">
+            <div class="feat-group-head">
               <svg class="ic" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              <h3 data-i18n="f2.t">Personel Filtresi &amp; Rol Seçimli İşe Alma</h3>
+              <h3 data-i18n="g2.h">Personel &amp; Transfer Yönetimi</h3>
             </div>
-            <p data-i18n="f2.d">Antrenör, gözlemci ve fizyoterapistleri 1–20 özellikleriyle ara. Tek tıkla teknik direktörleri (boştakiler dahil) gizle ve kulübe alırken görevini (Asistan, Kaleci, Kondisyon vb.) seç.</p>
+            <ul class="feat-list">
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g2.f1t">5★ Antrenör, Gözlemci &amp; Fizyoterapist Filtresi</strong><span data-i18n="g2.f1d">1–20 personel özelliklerine göre doğrudan arama; tek tıkla "TD Hariç" seçeneğiyle boştaki teknik direktörleri gizleme.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g2.f2t">Rol Seçerek Personel İşe Alma &amp; Taşıma</strong><span data-i18n="g2.f2d">Boştaki veya sözleşmeli personeli istediğin göreve (Asistan Menajer, Kaleci Antrenörü, Gözlemci, Fizyoterapist vb.) atayarak kulübe ekle.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g2.f3t">Hızlı Oyuncu Transferi &amp; Kiralık İşlemleri</strong><span data-i18n="g2.f3d">Bedelsiz veya bonservisli anında kulüp değişimi, serbest oyuncu imzalatma, kiralık oyuncuyu geri çağırma veya kalıcı transfer yapma.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g2.f4t">Sözleşme Maddeleri, İkinci Uyruk &amp; Diller</strong><span data-i18n="g2.f4d">Serbest kalma bedeli ve bonus maddeleri ekle/sil; oyuncunun ana uyruğunu, ikinci uyruklarını, konuştuğu dilleri ve favori kulüplerini düzenle.</span></div>
+              </li>
+            </ul>
           </div>
-          <div class="ledger-item">
-            <div class="ledger-head">
-              <svg class="ic" viewBox="0 0 24 24"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
-              <h3 data-i18n="f3.t">Anında Transfer &amp; Sözleşme Düzenleme</h3>
+
+          <!-- Group 3: Kulüp & Kadro -->
+          <div class="feat-group">
+            <div class="feat-group-head">
+              <svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+              <h3 data-i18n="g3.h">Kulüp, Kadro &amp; Finans</h3>
             </div>
-            <p data-i18n="f3.d">Önbellekli bellek taraması sayesinde transfer planlaması milisaniyeler sürer. Bonservisli transfer, sözleşme maddeleri, ikinci uyruk, konuşulan diller ve kulüp ilişkilerini canlı düzenle.</p>
+            <ul class="feat-list">
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g3.f1t">Tek Tıkla Tüm Kadroyu Maça Hazırla</strong><span data-i18n="g3.f1d">Sakatlıkları iyileştir, cezaları kaldır; kondisyon, maç formu, moral ve sözleşme memnuniyetini tüm takımda anında yükselt.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g3.f2t">En İyi 11 &amp; Kadro Derinliği</strong><span data-i18n="g3.f2d">Seçtiğin dizilişe göre kulübün en güçlü ilk 11'ini ve yedek derinliğini saha görünümünde otomatik çıkarır.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g3.f3t">Finans, Tesisler &amp; Kulüp İlişkileri</strong><span data-i18n="g3.f3d">Bakiye, transfer ve maaş bütçesini düzenle; tüm tesisleri tek tıkla 20 yap; rakip kulüpleri, efsaneleri ve sevilmeyen kişileri yönet.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g3.f4t">Toplu Düzenleme, Sözleşme Uzatma &amp; Dondurma</strong><span data-i18n="g3.f4d">Birden fazla oyuncunun özelliklerini toplu değiştir, tüm kadronun sözleşmesini toplu uzat veya seçtiğin değerleri sabit tutmak için dondur.</span></div>
+              </li>
+            </ul>
           </div>
-          <div class="ledger-item">
-            <div class="ledger-head">
-              <svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-              <h3 data-i18n="f4.t">Doğrulamalı Yazma, Yedek &amp; Ctrl+Z</h3>
+
+          <!-- Group 4: Arayüz & Güvenlik -->
+          <div class="feat-group">
+            <div class="feat-group-head">
+              <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <h3 data-i18n="g4.h">Kullanım Rahatlığı &amp; Güvenlik</h3>
             </div>
-            <p data-i18n="f4.d">Yazmadan önce bellek adresi doğrulanır, her değişiklik geçmişe işlenir. Tek tıkla .fm kayıt yedeği al, Salt Okunur modda güvenle gez veya istediğin işlemi Ctrl+Z ile geri al.</p>
-          </div>
-          <div class="ledger-item">
-            <div class="ledger-head">
-              <svg class="ic" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-              <h3 data-i18n="f5.t">Tek Tık Kadro, Wonderkid &amp; Tesis</h3>
-            </div>
-            <p data-i18n="f5.d">Tüm kadroyu maça hazırla, tekrar zar atılabilen gerçekçi Wonderkid oluştur, Model Kişilik uygula, En İyi 11 dizilişini gör veya kulüp tesislerini tek tıkla 20 yap.</p>
-          </div>
-          <div class="ledger-item">
-            <div class="ledger-head">
-              <svg class="ic" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 8h10"/><path d="M7 12h6"/><path d="M7 16h8"/></svg>
-              <h3 data-i18n="f6.t">Klavye Odaklı Hız &amp; 4 Canlı Tema</h3>
-            </div>
-            <p data-i18n="f6.d">Ctrl+K Komut Paleti, Ctrl+F global arama, fare tekeriyle sayı artırma, 2 oyuncu karşılaştırma, PNG oyuncu kartı dışa aktarma ve anında değişen 4 tema (Gece, OLED, WTCS Altın, Açık).</p>
+            <ul class="feat-list">
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g4.f1t">4 Canlı Tema &amp; Logo / Yüz Paketi Desteği</strong><span data-i18n="g4.f1d">FM Gece Laciverti, OLED Siyah, WTCS Kömür &amp; Altın ve Açık tema arasında anında geç. FM graphics klasöründeki logoları ve yüzleri otomatik gösterir.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g4.f2t">Komut Paleti, Global Arama &amp; Hızlı Kısayollar</strong><span data-i18n="g4.f2d">Oyuncu, kulüp, ülke ve liglerde anında arama yap; fare tekeriyle sayıları hızla değiştir; kısa liste (Shortlist) oluştur ve CSV dışa aktar.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g4.f3t">Doğrulamalı Yazma &amp; Tam Geri Alma Geçmişi</strong><span data-i18n="g4.f3d">Yazmadan önce bellek adresi doğrulanır, yapılan her düzenleme oturum geçmişinde tutulur ve tek tuşla geri alınabilir.</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong data-i18n="g4.f4t">Kayıt Yedekleme &amp; Salt Okunur Mod</strong><span data-i18n="g4.f4d">Üst bardan tek tıkla güncel kariyer kaydının yedeğini al; sadece scout yapmak istersen Salt Okunur modu aç.</span></div>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 12 Languages Matrix -->
+    <!-- 12 Languages with Crisp SVG Flags -->
     <section id="languages">
-      <div class="wrap sec-row">
-        <div class="sec-side">
-          <h2 data-i18n="lang.h">12 Dil</h2>
-          <p data-i18n="lang.p">Tüm arayüz, 282 FM27 oyun terimi ve sistem mesajları 12 dilde eksiksiz. Her kutunun altında "Finishing" özelliğinin gerçek FM karşılığı yer alır.</p>
+      <div class="wrap">
+        <div class="sec-header">
+          <h2 data-i18n="lang.h">12 dilde eksiksiz Football Manager terminolojisi.</h2>
+          <p data-i18n="lang.p">Menülerden gizli özelliklere, personel görevlerinden sözleşme maddelerine kadar her ekran kendi dilinde tutarlı çalışır.</p>
         </div>
-        <div class="lang-matrix">
-          <div class="lang-cell"><div class="lang-cell-top"><strong>English</strong><code>en</code></div><span>Finishing</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Türkçe</strong><code>tr</code></div><span>Bitiricilik</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Español</strong><code>es</code></div><span>Remate</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Português</strong><code>pt</code></div><span>Finalização</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Français</strong><code>fr</code></div><span>Finition</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Deutsch</strong><code>de</code></div><span>Abschluss</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Italiano</strong><code>it</code></div><span>Finalizzazione</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Nederlands</strong><code>nl</code></div><span>Afmaken</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Polski</strong><code>pl</code></div><span>Wykończenie akcji</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>Русский</strong><code>ru</code></div><span>Завершение атаки</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>日本語</strong><code>ja</code></div><span>決定力</span></div>
-          <div class="lang-cell"><div class="lang-cell-top"><strong>한국어</strong><code>ko</code></div><span>골 결정력</span></div>
-        </div>
+        <div class="lang-grid" id="langGrid"></div>
       </div>
     </section>
 
-    <!-- Quick Start + FAQ -->
-    <section id="faq">
-      <div class="wrap sec-row">
-        <div class="sec-side">
-          <h2 data-i18n="faq.h">Kurulum &amp; SSS</h2>
-          <ol class="install-list" style="margin-top:20px;">
-            <li>
-              <span class="install-num">1.</span>
-              <div>
-                <h4 data-i18n="s1.t">İndir ve aç</h4>
-                <p data-i18n="s1.d">Kurulum yok; tek dosya SquadEditor.exe doğrudan çalışır.</p>
-              </div>
-            </li>
-            <li>
-              <span class="install-num">2.</span>
-              <div>
-                <h4 data-i18n="s2.t">FM27 kaydını yükle</h4>
-                <p data-i18n="s2.d">Oyun açıkken otomatik bağlanır ve veritabanını okur.</p>
-              </div>
-            </li>
-            <li>
-              <span class="install-num">3.</span>
-              <div>
-                <h4 data-i18n="s3.t">Yedek al ve düzenle</h4>
-                <p data-i18n="s3.d">Üst bardan tek tıkla .fm yedeği alıp güvenle düzenle.</p>
-              </div>
-            </li>
-          </ol>
+    <!-- About + FAQ -->
+    <section id="about">
+      <div class="wrap split-2">
+        <div class="about-card">
+          <h3 data-i18n="about.h">Hakkında</h3>
+          <p data-i18n="about.p1">
+            Squadeditor, Football Manager topluluğu için tamamen ücretsiz ve açık kaynaklı bir alternatif sunmak amacıyla geliştirildi. Karmaşık arayüzler ve ücretli duvarlar olmadan; hızlı çalışan, kayda zarar vermeyen ve gerçekten oyuncunun işini gören bir araç olmasını hedefledim.
+          </p>
+          <p data-i18n="about.p2">
+            Geri bildirimlerini, bulduğun hataları veya yeni fikirlerini sosyal medya hesaplarımdan ya da GitHub üzerinden paylaşabilirsin.
+          </p>
+          <div class="about-sign">
+            <span><span data-i18n="about.by">Geliştiren</span> <strong>basitbioyun</strong></span>
+            <a id="aboutGh" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" class="btn btn-outline btn-sm" data-i18n="about.repo">GitHub Deposu</a>
+          </div>
         </div>
 
         <div class="faq-stack">
@@ -732,44 +824,46 @@
               <span data-i18n="q1.q">Tamamen ücretsiz mi?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q1.a">Evet. SquadEditor tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.</p>
+            <p data-i18n="q1.a">Evet. Squadeditor tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.</p>
           </details>
           <details class="faq">
             <summary>
               <span data-i18n="q2.q">Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q2.a">Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. "Ek bilgi → Yine de çalıştır" adımıyla açabilirsin.</p>
+            <p data-i18n="q2.a">Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. "Ek bilgi → Yine de çalıştır" adımıyla güvenle açabilirsin.</p>
           </details>
           <details class="faq">
             <summary>
-              <span data-i18n="q3.q">Kariyer kaydımı bozar mı?</span>
+              <span data-i18n="q3.q">Kariyer kaydıma zarar verir mi?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q3.a">Her yazma öncesinde bellek doğrulaması yapılır ve tüm değişiklikler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce üst bardaki Yedek butonuyla kaydının kopyasını alman önerilir.</p>
+            <p data-i18n="q3.a">Her yazma öncesinde bellek doğrulaması yapılır ve tüm değişiklikler geri alınabilir. Yine de büyük düzenlemelerden önce üst bardaki Yedek butonuyla kaydının kopyasını alman en güvenli yöntemdir.</p>
           </details>
           <details class="faq">
             <summary>
-              <span data-i18n="q4.q">Hangi sürüm ve sistemle uyumlu?</span>
+              <span data-i18n="q4.q">Nasıl kullanılır ve hangi sürümle uyumlu?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q4.a">Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. .NET 10 Desktop Runtime gerektirir.</p>
+            <p data-i18n="q4.a">Steam üzerinden çalışan Windows Football Manager 27 (27.0.1) ile uyumludur. Oyunda kariyerini yükledikten sonra Squadeditor'ı açman yeterli; otomatik bağlanır.</p>
           </details>
         </div>
       </div>
     </section>
 
-    <!-- Direct Download Band -->
+    <!-- Download CTA -->
     <div id="download" class="dl-band">
-      <div class="wrap dl-inner">
-        <div>
-          <h2 data-i18n="cta.h">SquadEditor İndir</h2>
-          <p data-i18n="cta.p">Windows 10/11 (x64) · Tek dosya · 12 dil · Ücretsiz</p>
+      <div class="wrap">
+        <div class="dl-box">
+          <div>
+            <h2 data-i18n="cta.h">Hemen denemek için indir.</h2>
+            <p data-i18n="cta.p">Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.</p>
+          </div>
+          <a id="bottomDl" href="#download" class="btn btn-primary btn-lg">
+            <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span data-i18n="cta.btn">Squadeditor İndir (Windows)</span>
+          </a>
         </div>
-        <a id="bottomDl" href="#download" class="btn btn-solid btn-lg">
-          <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span data-i18n="cta.btn">SquadEditor v1.0.0 İndir</span>
-        </a>
       </div>
     </div>
   </main>
@@ -778,35 +872,29 @@
     <div class="wrap">
       <div class="foot-top">
         <a href="#" class="brand">
-          <img src="./assets/logo.png" alt="SquadEditor" />
-          <span>SquadEditor</span>
+          <img src="./assets/logo.png" alt="Squadeditor" />
+          <span>Squadeditor</span>
         </a>
         <div class="socials" id="socialLinks"></div>
       </div>
       <p class="legal" data-i18n="foot.legal">
-        SquadEditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır.
+        Squadeditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır.
       </p>
     </div>
   </footer>
 
   <script>
     // =========================================================================
-    // TEK NOKTA AYAR BLOĞU — Yayınlamadan önce sadece burayı güncelle
+    // TEK NOKTA AYAR BLOĞU — İndirme ve GitHub linkini buradan güncelleyebilirsin
     // =========================================================================
     const SITE_CONFIG = {
-      version: "v1.0.0",
-      fmVersion: "FM27 (27.0.1)",
-      // GitHub Releases indirme linki:
-      downloadUrl: "#download",
-      // 40 sn tanıtım videosu (MP4 için "./assets/promo.mp4" veya YouTube embed URL):
-      videoUrl: "",
-      // Sosyal medya hesapların (url boşsa o buton gizlenir):
+      downloadUrl: "https://github.com/basitbioyun/SquadEditor/releases/latest",
+      repoUrl: "https://github.com/basitbioyun/SquadEditor",
       socials: [
-        { id: "x", label: "X", url: "https://x.com/kullaniciadin" },
-        { id: "youtube", label: "YouTube", url: "https://youtube.com/@kullaniciadin" },
-        { id: "instagram", label: "Instagram", url: "https://instagram.com/kullaniciadin" },
-        { id: "github", label: "GitHub", url: "https://github.com/kullaniciadin/SquadEditor" },
-        { id: "discord", label: "Discord", url: "https://discord.gg/davetkodun" }
+        { id: "x", label: "X (@basitbioyun)", url: "https://x.com/basitbioyun" },
+        { id: "youtube", label: "YouTube", url: "https://youtube.com/@basitbioyun" },
+        { id: "instagram", label: "Instagram", url: "https://instagram.com/basitbioyun" },
+        { id: "github", label: "GitHub", url: "https://github.com/basitbioyun/SquadEditor" }
       ]
     };
 
@@ -814,108 +902,161 @@
       x: `<svg class="ic" viewBox="0 0 24 24"><path d="M4 4l11.7 16h4.3L8.3 4H4z"/><path d="M4 20l6.8-6.8"/><path d="M20 4l-6.8 6.8"/></svg>`,
       youtube: `<svg class="ic" viewBox="0 0 24 24"><path d="M2.5 17a24.1 24.1 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.6 49.6 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.1 24.1 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.6 49.6 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9 10 15"/></svg>`,
       instagram: `<svg class="ic" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`,
-      github: `<svg class="ic" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>`,
-      discord: `<svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M7.5 7.5c3.5-1 5.5-1 9 0"/><path d="M7 16.5c3.5 1 6.5 1 10 0"/><path d="M15.5 17c0 1 1.5 3 2 3 1.5 0 2.833-1.667 3.5-3 .667-1.667.5-5.833-1.5-11.5-1.457-1.015-3-1.34-4.5-1.5l-1 2.5"/><path d="M8.5 17c0 1-1.356 3-1.832 3-1.429 0-2.698-1.667-3.333-3-.635-1.667-.476-5.833 1.428-11.5C6.151 4.485 7.545 4.16 9 4l1 2.5"/></svg>`
+      github: `<svg class="ic" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>`
     };
+
+    // Crisp inline SVG flags (renders identically on Windows, macOS, and mobile)
+    const LANGUAGES = [
+      { code: "tr", name: "Türkçe", sample: "Bitiricilik", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="20" fill="#E30A17"/><circle cx="11.5" cy="10" r="5" fill="#fff"/><circle cx="13" cy="10" r="4" fill="#E30A17"/><polygon points="16.8,10 19.2,9.2 17.7,11.2 17.7,8.8 19.2,10.8" fill="#fff"/></svg>` },
+      { code: "en", name: "English", sample: "Finishing", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="20" fill="#012169"/><path d="M0,0 L28,20 M28,0 L0,20" stroke="#fff" stroke-width="3.6"/><path d="M0,0 L28,20 M28,0 L0,20" stroke="#C8102E" stroke-width="2"/><path d="M14,0 V20 M0,10 H28" stroke="#fff" stroke-width="5.6"/><path d="M14,0 V20 M0,10 H28" stroke="#C8102E" stroke-width="3.2"/></svg>` },
+      { code: "es", name: "Español", sample: "Remate", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="20" fill="#AA151B"/><rect y="5" width="28" height="10" fill="#F1BF00"/></svg>` },
+      { code: "pt", name: "Português", sample: "Finalização", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="20" fill="#009B3A"/><polygon points="14,2.5 25,10 14,17.5 3,10" fill="#FFDF00"/><circle cx="14" cy="10" r="4" fill="#002776"/></svg>` },
+      { code: "fr", name: "Français", sample: "Finition", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="9.33" height="20" fill="#002395"/><rect x="9.33" width="9.34" height="20" fill="#fff"/><rect x="18.67" width="9.33" height="20" fill="#ED2939"/></svg>` },
+      { code: "de", name: "Deutsch", sample: "Abschluss", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="6.67" fill="#000"/><rect y="6.67" width="28" height="6.67" fill="#DD0000"/><rect y="13.34" width="28" height="6.66" fill="#FFCE00"/></svg>` },
+      { code: "it", name: "Italiano", sample: "Finalizzazione", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="9.33" height="20" fill="#009246"/><rect x="9.33" width="9.34" height="20" fill="#fff"/><rect x="18.67" width="9.33" height="20" fill="#CE2B37"/></svg>` },
+      { code: "nl", name: "Nederlands", sample: "Afmaken", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="6.67" fill="#AE1C28"/><rect y="6.67" width="28" height="6.67" fill="#fff"/><rect y="13.34" width="28" height="6.66" fill="#21468B"/></svg>` },
+      { code: "pl", name: "Polski", sample: "Wykończenie akcji", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="10" fill="#fff"/><rect y="10" width="28" height="10" fill="#DC143C"/></svg>` },
+      { code: "ru", name: "Русский", sample: "Завершение атаки", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="6.67" fill="#fff"/><rect y="6.67" width="28" height="6.67" fill="#0039A6"/><rect y="13.34" width="28" height="6.66" fill="#D52B1E"/></svg>` },
+      { code: "ja", name: "日本語", sample: "決定力", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="20" fill="#fff"/><circle cx="14" cy="10" r="5.5" fill="#BC002D"/></svg>` },
+      { code: "ko", name: "한국어", sample: "골 결정력", flag: `<svg class="flag" viewBox="0 0 28 20"><rect width="28" height="20" fill="#fff"/><circle cx="14" cy="10" r="4.6" fill="#CD2E3A"/><path d="M9.4,10 A4.6,4.6 0 0,0 18.6,10 A2.3,2.3 0 0,1 14,10 A2.3,2.3 0 0,0 9.4,10 Z" fill="#0047A0"/></svg>` }
+    ];
+
+    const SLIDES = [
+      { id: "light", src: "./assets/shot_light.png", tr: "Açık Tema", en: "Light Theme", capTr: "Açık tema · Gelişmiş Personel Filtresi", capEn: "Light theme · Advanced Staff Filter" },
+      { id: "staff", src: "./assets/shot_staff.png", tr: "Koyu Tema", en: "Dark Theme", capTr: "Koyu tema · 5★ Antrenör & TD Hariç", capEn: "Dark theme · 5★ Coach & No Managers" },
+      { id: "scout", src: "./assets/shot_scout.png", tr: "Oyuncu Scout", en: "Player Scout", capTr: "Gizli özellikler, uyruk ve rol reytingi", capEn: "Hidden attributes, nationality & role rating" },
+      { id: "settings", src: "./assets/shot_settings_light.png", tr: "Ayarlar", en: "Settings", capTr: "4 canlı tema, 12 dil, para birimi ve grafikler", capEn: "4 live themes, 12 languages, currency & graphics" },
+      { id: "de", src: "./assets/shot_de.png", tr: "Almanca", en: "Deutsch", capTr: "12 dilden biri · Almanca FM terminolojisi", capEn: "1 of 12 languages · German FM terminology" },
+      { id: "ja", src: "./assets/shot_ja.png", tr: "Japonca", en: "日本語", capTr: "12 dilden biri · Japonca FM terminolojisi", capEn: "1 of 12 languages · Japanese FM terminology" }
+    ];
 
     const I18N = {
       tr: {
-        "nav.features": "Özellikler", "nav.languages": "12 Dil", "nav.faq": "Kurulum & SSS", "nav.dl": "İndir",
-        "hero.meta": "ÜCRETSİZ · AÇIK KAYNAK · WINDOWS",
-        "hero.title": "FM27 için gerçek zamanlı editör ve scout.",
-        "hero.lead": "Oyuncuları, kulüpleri, personelleri ve finansı oyun açıkken doğrudan düzenle. Gerçek regenleri ve 5 yıldızlı antrenörleri saniyeler içinde bul. Her yazma doğrulanır ve Ctrl+Z ile geri alınır.",
-        "hero.dl": "Windows için İndir (.exe)", "hero.video": "40 sn Tanıtım",
-        "spec.langs": "12 FM Dili", "spec.undo": "Ctrl+Z Geri Alma", "spec.backup": "Tek Tık .fm Yedek",
-        "view.video": "Tanıtım (40s)", "view.staff": "Personel Filtresi", "view.scout": "Oyuncu Scout",
-        "video.t": "40 Saniyelik Tanıtım Videosu Alanı",
-        "video.p": "Videonu hazırladığında SITE_CONFIG.videoUrl satırına MP4 yolunu veya YouTube linkini yazman yeterli.",
-        "feat.h": "Özellikler", "feat.p": "Süslü vaatler değil; FM27 kaydınla canlı çalışan, doğrudan test edilmiş araçlar.",
-        "f1.t": "Gerçek Regen & Gelişmiş Scout", "f1.d": "Doğrulanmış FM27 Newgen UID aralığıyla sadece oyunun ürettiği regenleri listele. Uyruk, mevki, rol reytingi ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar) filtrele.",
-        "f2.t": "Personel Filtresi & Rol Seçimli İşe Alma", "f2.d": "Antrenör, gözlemci ve fizyoterapistleri 1–20 özellikleriyle ara. Tek tıkla teknik direktörleri (boştakiler dahil) gizle ve kulübe alırken görevini (Asistan, Kaleci, Kondisyon vb.) seç.",
-        "f3.t": "Anında Transfer & Sözleşme Düzenleme", "f3.d": "Önbellekli bellek taraması sayesinde transfer planlaması milisaniyeler sürer. Bonservisli transfer, sözleşme maddeleri, ikinci uyruk, konuşulan diller ve kulüp ilişkilerini canlı düzenle.",
-        "f4.t": "Doğrulamalı Yazma, Yedek & Ctrl+Z", "f4.d": "Yazmadan önce bellek adresi doğrulanır, her değişiklik geçmişe işlenir. Tek tıkla .fm kayıt yedeği al, Salt Okunur modda güvenle gez veya istediğin işlemi Ctrl+Z ile geri al.",
-        "f5.t": "Tek Tık Kadro, Wonderkid & Tesis", "f5.d": "Tüm kadroyu maça hazırla, tekrar zar atılabilen gerçekçi Wonderkid oluştur, Model Kişilik uygula, En İyi 11 dizilişini gör veya kulüp tesislerini tek tıkla 20 yap.",
-        "f6.t": "Klavye Odaklı Hız & 4 Canlı Tema", "f6.d": "Ctrl+K Komut Paleti, Ctrl+F global arama, fare tekeriyle sayı artırma, 2 oyuncu karşılaştırma, PNG oyuncu kartı dışa aktarma ve anında değişen 4 tema (Gece, OLED, WTCS Altın, Açık).",
-        "lang.h": "12 Dil", "lang.p": "Tüm arayüz, 282 FM27 oyun terimi ve sistem mesajları 12 dilde eksiksiz. Her kutunun altında \"Finishing\" özelliğinin gerçek FM karşılığı yer alır.",
-        "faq.h": "Kurulum & SSS",
-        "s1.t": "İndir ve aç", "s1.d": "Kurulum yok; tek dosya SquadEditor.exe doğrudan çalışır.",
-        "s2.t": "FM27 kaydını yükle", "s2.d": "Oyun açıkken otomatik bağlanır ve veritabanını okur.",
-        "s3.t": "Yedek al ve düzenle", "s3.d": "Üst bardan tek tıkla .fm yedeği alıp güvenle düzenle.",
-        "q1.q": "Tamamen ücretsiz mi?", "q1.a": "Evet. SquadEditor tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.",
-        "q2.q": "Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?", "q2.a": "Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. \"Ek bilgi → Yine de çalıştır\" adımıyla açabilirsin.",
-        "q3.q": "Kariyer kaydımı bozar mı?", "q3.a": "Her yazma öncesinde bellek doğrulaması yapılır ve tüm değişiklikler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce üst bardaki Yedek butonuyla kaydının kopyasını alman önerilir.",
-        "q4.q": "Hangi sürüm ve sistemle uyumlu?", "q4.a": "Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. .NET 10 Desktop Runtime gerektirir.",
-        "cta.h": "SquadEditor İndir", "cta.p": "Windows 10/11 (x64) · Tek dosya · 12 dil · Ücretsiz", "cta.btn": "SquadEditor v1.0.0 İndir",
-        "foot.legal": "SquadEditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
+        "nav.features": "Özellikler", "nav.languages": "Diller", "nav.about": "Hakkında", "nav.faq": "SSS", "nav.dl": "İndir",
+        "hero.kicker": "Football Manager 27 · Ücretsiz Masaüstü Aracı",
+        "hero.title": "Kariyerin için <em>hızlı ve ücretsiz</em> gerçek zamanlı editör.",
+        "hero.lead": "Oyun açıkken oyuncuları, personelleri, kulüpleri ve finansı anında düzenle. Gerçek regenleri ve 5 yıldızlı antrenörleri zahmetsizce bul, yaptığın her değişikliği tek tuşla geri al.",
+        "hero.dl": "Windows için Ücretsiz İndir", "hero.explore": "Tüm Özelliklere Bak",
+        "hero.note": "Kurulum gerektirmez, tek dosya olarak çalışır. Steam Football Manager 27 ile uyumludur.",
+        "feat.h": "Bir editörden ve scout aracından beklediğin her şey.",
+        "feat.p": "Oyuncu aramadan personel transferine, kulüp tesislerinden canlı tema geçişine kadar tüm araçlar tek çatı altında.",
+        "g1.h": "Oyuncu Arama & Scout",
+        "g1.f1t": "Gerçek Regen (Newgen) Filtresi", "g1.f1d": "Gerçek genç oyuncularla karışmadan sadece oyunun ürettiği yeni yetenekleri listeler.",
+        "g1.f2t": "Gelişmiş Oyuncu Filtresi & Hazır Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol reytingi, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama.",
+        "g1.f3t": "8 Eksenli Radar, Karşılaştırma & Oyuncu Kartı", "g1.f3d": "İki oyuncuyu yan yana kıyasla, sağ panelden hızlı önizleme aç veya tek tıkla paylaşılabilir PNG oyuncu kartı oluştur.",
+        "g1.f4t": "Wonderkid Oluşturucu, Model Kişilik & Tercih Edilen Hareketler", "g1.f4d": "Tekrar zar atılabilen dengeli Wonderkid üretici, tek tıkla kişilik iyileştirme ve tüm oyuncu alışkanlıklarını (Traits) düzenleme.",
+        "g2.h": "Personel & Transfer Yönetimi",
+        "g2.f1t": "5★ Antrenör, Gözlemci & Fizyoterapist Filtresi", "g2.f1d": "1–20 personel özelliklerine göre doğrudan arama; tek tıkla \"TD Hariç\" seçeneğiyle boştaki teknik direktörleri gizleme.",
+        "g2.f2t": "Rol Seçerek Personel İşe Alma & Taşıma", "g2.f2d": "Boştaki veya sözleşmeli personeli istediğin göreve (Asistan Menajer, Kaleci Antrenörü, Gözlemci, Fizyoterapist vb.) atayarak kulübe ekle.",
+        "g2.f3t": "Hızlı Oyuncu Transferi & Kiralık İşlemleri", "g2.f3d": "Bedelsiz veya bonservisli anında kulüp değişimi, serbest oyuncu imzalatma, kiralık oyuncuyu geri çağırma veya kalıcı transfer yapma.",
+        "g2.f4t": "Sözleşme Maddeleri, İkinci Uyruk & Diller", "g2.f4d": "Serbest kalma bedeli ve bonus maddeleri ekle/sil; oyuncunun ana uyruğunu, ikinci uyruklarını, konuştuğu dilleri ve favori kulüplerini düzenle.",
+        "g3.h": "Kulüp, Kadro & Finans",
+        "g3.f1t": "Tek Tıkla Tüm Kadroyu Maça Hazırla", "g3.f1d": "Sakatlıkları iyileştir, cezaları kaldır; kondisyon, maç formu, moral ve sözleşme memnuniyetini tüm takımda anında yükselt.",
+        "g3.f2t": "En İyi 11 & Kadro Derinliği", "g3.f2d": "Seçtiğin dizilişe göre kulübün en güçlü ilk 11'ini ve yedek derinliğini saha görünümünde otomatik çıkarır.",
+        "g3.f3t": "Finans, Tesisler & Kulüp İlişkileri", "g3.f3d": "Bakiye, transfer ve maaş bütçesini düzenle; tüm tesisleri tek tıkla 20 yap; rakip kulüpleri, efsaneleri ve sevilmeyen kişileri yönet.",
+        "g3.f4t": "Toplu Düzenleme, Sözleşme Uzatma & Dondurma", "g3.f4d": "Birden fazla oyuncunun özelliklerini toplu değiştir, tüm kadronun sözleşmesini toplu uzat veya seçtiğin değerleri sabit tutmak için dondur.",
+        "g4.h": "Kullanım Rahatlığı & Güvenlik",
+        "g4.f1t": "4 Canlı Tema & Logo / Yüz Paketi Desteği", "g4.f1d": "FM Gece Laciverti, OLED Siyah, WTCS Kömür & Altın ve Açık tema arasında anında geç. FM graphics klasöründeki logoları ve yüzleri otomatik gösterir.",
+        "g4.f2t": "Komut Paleti, Global Arama & Hızlı Kısayollar", "g4.f2d": "Oyuncu, kulüp, ülke ve liglerde anında arama yap; fare tekeriyle sayıları hızla değiştir; kısa liste (Shortlist) oluştur ve CSV dışa aktar.",
+        "g4.f3t": "Doğrulamalı Yazma & Tam Geri Alma Geçmişi", "g4.f3d": "Yazmadan önce bellek adresi doğrulanır, yapılan her düzenleme oturum geçmişinde tutulur ve tek tuşla geri alınabilir.",
+        "g4.f4t": "Kayıt Yedekleme & Salt Okunur Mod", "g4.f4d": "Üst bardan tek tıkla güncel kariyer kaydının yedeğini al; sadece scout yapmak istersen Salt Okunur modu aç.",
+        "lang.h": "12 dilde eksiksiz Football Manager terminolojisi.",
+        "lang.p": "Menülerden gizli özelliklere, personel görevlerinden sözleşme maddelerine kadar her ekran kendi dilinde tutarlı çalışır.",
+        "about.h": "Hakkında",
+        "about.p1": "Squadeditor, Football Manager topluluğu için tamamen ücretsiz ve açık kaynaklı bir alternatif sunmak amacıyla geliştirildi. Karmaşık arayüzler ve ücretli duvarlar olmadan; hızlı çalışan, kayda zarar vermeyen ve gerçekten oyuncunun işini gören bir araç olmasını hedefledim.",
+        "about.p2": "Geri bildirimlerini, bulduğun hataları veya yeni fikirlerini sosyal medya hesaplarımdan ya da GitHub üzerinden paylaşabilirsin.",
+        "about.by": "Geliştiren", "about.repo": "GitHub Deposu",
+        "q1.q": "Tamamen ücretsiz mi?", "q1.a": "Evet. Squadeditor tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.",
+        "q2.q": "Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?", "q2.a": "Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. \"Ek bilgi → Yine de çalıştır\" adımıyla güvenle açabilirsin.",
+        "q3.q": "Kariyer kaydıma zarar verir mi?", "q3.a": "Her yazma öncesinde bellek doğrulaması yapılır ve tüm değişiklikler geri alınabilir. Yine de büyük düzenlemelerden önce üst bardaki Yedek butonuyla kaydının kopyasını alman en güvenli yöntemdir.",
+        "q4.q": "Nasıl kullanılır ve hangi sürümle uyumlu?", "q4.a": "Steam üzerinden çalışan Windows Football Manager 27 (27.0.1) ile uyumludur. Oyunda kariyerini yükledikten sonra Squadeditor'ı açman yeterli; otomatik bağlanır.",
+        "cta.h": "Hemen denemek için indir.", "cta.p": "Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.", "cta.btn": "Squadeditor İndir (Windows)",
+        "foot.legal": "Squadeditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
       },
       en: {
-        "nav.features": "Features", "nav.languages": "12 Languages", "nav.faq": "Setup & FAQ", "nav.dl": "Download",
-        "hero.meta": "FREE · OPEN SOURCE · WINDOWS",
-        "hero.title": "Real-time editor & scout for FM27.",
-        "hero.lead": "Edit players, clubs, staff and finances live while Football Manager 27 runs. Find true regens and 5-star coaches in seconds. Every write is verified and undoable with Ctrl+Z.",
-        "hero.dl": "Download for Windows (.exe)", "hero.video": "40s Walkthrough",
-        "spec.langs": "12 FM Languages", "spec.undo": "Ctrl+Z Undo", "spec.backup": "1-Click .fm Backup",
-        "view.video": "Video (40s)", "view.staff": "Staff Filter", "view.scout": "Player Scout",
-        "video.t": "40-Second Promo Video Slot",
-        "video.p": "Set SITE_CONFIG.videoUrl to a local MP4 path or YouTube embed URL to display your promo video here.",
-        "feat.h": "Capabilities", "feat.p": "No fluff — real tools tested directly against live FM27 memory.",
-        "f1.t": "True Regen & Advanced Scout", "f1.d": "Filter strictly to game-generated newgens via verified FM27 UID ranges. Search by nationality, position, role rating and hidden attributes (Professionalism, Consistency, Important Matches).",
-        "f2.t": "Staff Search & Role-Based Hiring", "f2.d": "Filter coaches, scouts and physios by 1–20 attributes. Exclude head coaches (including unemployed ones) in one click, and pick the exact role & club department when hiring.",
-        "f3.t": "Instant Transfers & Contract Editor", "f3.d": "Cached memory planning calculates moves in milliseconds. Support for transfer fees, contract clauses, second nationalities, spoken languages and club relationships.",
-        "f4.t": "Guarded Writes, Backup & Ctrl+Z", "f4.d": "Every write validates live bytes before committing and records to Change History. Back up your .fm save in one click, browse safely in Read-Only mode, or undo with Ctrl+Z.",
-        "f5.t": "Squad Prep, Wonderkid & Facilities", "f5.d": "Prepare your whole squad for matchday, reroll realistic Wonderkids, apply Model Personality, inspect Best XI depth, or max all club facilities in one click.",
-        "f6.t": "Keyboard-First & 4 Live Themes", "f6.d": "Ctrl+K command palette, Ctrl+F global search, mouse-wheel editing, 2-player radar comparison, PNG player card export and 4 live themes (Midnight, OLED, WTCS Gold, Light).",
-        "lang.h": "12 Languages", "lang.p": "Full UI, 282 FM27 game terms and core messages localized across 12 languages. Below each language is its native Football Manager term for \"Finishing\".",
-        "faq.h": "Setup & FAQ",
-        "s1.t": "Download & run", "s1.d": "No installer — single-file SquadEditor.exe runs straight from any folder.",
-        "s2.t": "Load your FM27 save", "s2.d": "Attaches automatically while the game is running and indexes the database.",
-        "s3.t": "Back up & edit", "s3.d": "Take a 1-click .fm backup from the top bar and edit safely.",
-        "q1.q": "Is it completely free?", "q1.a": "Yes. SquadEditor is free and open source with no paywalls, license keys or locked features.",
-        "q2.q": "Why does Windows SmartScreen show a warning?", "q2.a": "Independent open-source Windows executables without a paid code-signing certificate trigger SmartScreen on first run. Click \"More info → Run anyway\" to open.",
-        "q3.q": "Can it corrupt my save?", "q3.a": "All memory writes are verified before committing and undoable via Ctrl+Z. As with any real-time editor, backing up your save with the built-in Backup button before major changes is recommended.",
-        "q4.q": "What version is supported?", "q4.a": "Verified on Windows 10/11 (64-bit) with Steam Football Manager 27 (27.0.1). Requires .NET 10 Desktop Runtime.",
-        "cta.h": "Download SquadEditor", "cta.p": "Windows 10/11 (x64) · Single executable · 12 languages · Free", "cta.btn": "Download SquadEditor v1.0.0",
-        "foot.legal": "SquadEditor is an independent, free community tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
+        "nav.features": "Features", "nav.languages": "Languages", "nav.about": "About", "nav.faq": "FAQ", "nav.dl": "Download",
+        "hero.kicker": "Football Manager 27 · Free Desktop Tool",
+        "hero.title": "A <em>fast, free</em> real-time editor and scout for FM27.",
+        "hero.lead": "Edit players, staff, clubs and finances live while Football Manager 27 runs. Discover true regens and 5-star coaches effortlessly, with safe undo for every change.",
+        "hero.dl": "Download Free for Windows", "hero.explore": "Explore All Features",
+        "hero.note": "Single executable, no installer needed. Built for Steam Football Manager 27 on Windows.",
+        "feat.h": "Everything you expect from a real-time editor and scout.",
+        "feat.p": "From player scouting and role-based staff hiring to club facilities and live theme switching — all in one fast app.",
+        "g1.h": "Player Search & Scouting",
+        "g1.f1t": "True Regen (Newgen) Filter", "g1.f1d": "Finds only game-generated newgens without mixing in real young players.",
+        "g1.f2t": "Advanced Scout Filters & Presets", "g1.f2d": "Filter by nationality, region, position, role rating, expiring contracts, CA/PA and hidden attributes (Professionalism, Consistency, Important Matches, Injury Proneness).",
+        "g1.f3t": "8-Axis Radar, Player Comparison & PNG Card", "g1.f3d": "Compare two players side by side, inspect via the quick preview drawer, or export a shareable PNG player card in one click.",
+        "g1.f4t": "Wonderkid Reroller, Model Personality & Player Traits", "g1.f4d": "Reroll balanced Wonderkids until you like the roll, max out personality traits, and toggle any player preferred move.",
+        "g2.h": "Staff & Transfers",
+        "g2.f1t": "5★ Coach, Scout & Physio Search", "g2.f1d": "Filter staff directly by 1–20 attributes and exclude head coaches (including unemployed managers) with one click.",
+        "g2.f2t": "Role-Based Staff Hiring & Transfers", "g2.f2d": "Pick the exact job (Assistant Manager, GK Coach, Fitness Coach, Scout, Physio, etc.) and matching club department when hiring or moving staff.",
+        "g2.f3t": "Instant Player Transfers & Loan Controls", "g2.f3d": "Move players with or without a transfer fee, sign free agents, recall loanees, or make loans permanent.",
+        "g2.f4t": "Contract Clauses, Second Nationalities & Languages", "g2.f4d": "Add or remove release clauses and bonuses; edit primary/second nationalities, spoken languages and favoured clubs.",
+        "g3.h": "Clubs, Squads & Finances",
+        "g3.f1t": "1-Click Matchday Squad Prep", "g3.f1d": "Heal injuries, lift suspensions, and restore condition, match sharpness, morale and happiness across the entire squad.",
+        "g3.f2t": "Best XI & Squad Depth View", "g3.f2d": "Automatically maps your strongest starting eleven and positional depth onto a tactical pitch view.",
+        "g3.f3t": "Finances, Facilities & Club Relationships", "g3.f3d": "Adjust balance, transfer and wage budgets; max all club facilities to 20; edit rival clubs, legends and disliked personnel.",
+        "g3.f4t": "Mass Edit, Bulk Contract Extend & Freezing", "g3.f4d": "Bulk-edit attributes across selected players, extend contracts for the whole squad, or freeze values so the game never lowers them.",
+        "g4.h": "Craft & Safety",
+        "g4.f1t": "4 Live Themes & FM Graphics Support", "g4.f1d": "Switch live between Midnight, OLED Black, WTCS Charcoal & Gold, and Light themes. Automatically loads logos and faces from your FM graphics folder.",
+        "g4.f2t": "Command Palette, Global Search & Shortcuts", "g4.f2d": "Search players, clubs, nations and leagues instantly; tweak numbers with the mouse wheel; manage shortlists and export CSV.",
+        "g4.f3t": "Verified Writes & Full Undo History", "g4.f3d": "Every memory write is validated beforehand, logged to session history, and reversible with one keystroke.",
+        "g4.f4t": "Save Backup & Read-Only Mode", "g4.f4d": "Back up your latest career save from the top bar in one click, or enable Read-Only mode for pure scouting.",
+        "lang.h": "12 languages with authentic Football Manager terminology.",
+        "lang.p": "Menus, hidden attributes, staff roles and contract clauses stay completely consistent in every language.",
+        "about.h": "About",
+        "about.p1": "Squadeditor was built to give the Football Manager community a genuinely free, open-source alternative — fast, clean, save-safe, and free of paywalls or clutter.",
+        "about.p2": "Feel free to share feedback, bug reports or ideas through my social channels or on GitHub.",
+        "about.by": "Created by", "about.repo": "GitHub Repository",
+        "q1.q": "Is it completely free?", "q1.a": "Yes. Squadeditor is completely free and open source — no license keys, subscriptions or locked features.",
+        "q2.q": "Why does Windows SmartScreen show a notice?", "q2.a": "Independent open-source Windows apps without a paid code-signing certificate trigger SmartScreen on first launch. Click \"More info → Run anyway\" to open safely.",
+        "q3.q": "Will it harm my save file?", "q3.a": "Memory addresses are verified before writing and every change is undoable. Taking a quick backup with the top-bar Backup button before major edits is always recommended.",
+        "q4.q": "How do I use it and which version is supported?", "q4.a": "Built for Steam Football Manager 27 (27.0.1) on Windows. Simply load your save in FM27 and open Squadeditor — it connects automatically.",
+        "cta.h": "Download and try it now.", "cta.p": "Single file for Windows, no installer needed, completely free.", "cta.btn": "Download Squadeditor (Windows)",
+        "foot.legal": "Squadeditor is an independent, free community tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
       }
     };
 
     let lang = localStorage.getItem("se_lang") || "tr";
-    let view = SITE_CONFIG.videoUrl ? "video" : "staff";
+    let theme = localStorage.getItem("se_site_theme") || "light";
+    let slideIdx = 0;
+    let paused = false;
+    let elapsed = 0;
+    const SLIDE_MS = 5200;
 
-    function renderStage() {
-      const stage = document.getElementById("frameStage");
-      const cap = document.getElementById("frameCaption");
-      document.querySelectorAll(".frame-tab").forEach(t => t.classList.toggle("active", t.dataset.view === view));
+    function applyTheme(next) {
+      theme = next;
+      localStorage.setItem("se_site_theme", theme);
+      document.documentElement.setAttribute("data-theme", theme);
+      document.getElementById("themeIcon").innerHTML = theme === "dark"
+        ? `<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>`
+        : `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>`;
+    }
 
-      if (view === "video") {
-        cap.textContent = SITE_CONFIG.videoUrl ? "promo" : "SITE_CONFIG.videoUrl";
-        if (SITE_CONFIG.videoUrl) {
-          if (SITE_CONFIG.videoUrl.includes("youtube.com") || SITE_CONFIG.videoUrl.includes("youtu.be")) {
-            stage.innerHTML = `<iframe src="${SITE_CONFIG.videoUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
-          } else {
-            stage.innerHTML = `<video src="${SITE_CONFIG.videoUrl}" controls playsinline></video>`;
-          }
-        } else {
-          stage.innerHTML = `
-            <div class="video-placeholder">
-              <div class="play-ring"><svg class="ic" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg></div>
-              <h3>${I18N[lang]["video.t"]}</h3>
-              <p>${I18N[lang]["video.p"]}</p>
-              <code>./assets/promo.mp4</code>
-            </div>`;
-        }
-        return;
+    function renderSlides() {
+      const tabs = document.getElementById("slideTabs");
+      tabs.innerHTML = SLIDES.map((s, i) =>
+        `<button type="button" class="slide-tab ${i === slideIdx ? "active" : ""}" data-idx="${i}">${lang === "tr" ? s.tr : s.en}</button>`
+      ).join("");
+      tabs.querySelectorAll(".slide-tab").forEach(b => b.addEventListener("click", () => goSlide(Number(b.dataset.idx))));
+      const cur = SLIDES[slideIdx];
+      document.getElementById("slideCaption").textContent = lang === "tr" ? cur.capTr : cur.capEn;
+      const img = document.getElementById("slideImg");
+      if (img.getAttribute("src") !== cur.src) {
+        img.classList.add("fading");
+        setTimeout(() => {
+          img.src = cur.src;
+          img.alt = lang === "tr" ? cur.capTr : cur.capEn;
+          img.classList.remove("fading");
+        }, 160);
       }
+    }
 
-      const shots = {
-        staff: { src: "./assets/shot_staff.png", label: "StaffFilterWindow · TR" },
-        scout: { src: "./assets/shot_scout.png", label: "ScoutFilterWindow · TR" },
-        de: { src: "./assets/shot_de.png", label: "StaffFilterWindow · Deutsch (de)" },
-        ja: { src: "./assets/shot_ja.png", label: "StaffFilterWindow · 日本語 (ja)" }
-      };
-      const s = shots[view];
-      cap.textContent = s.label;
-      stage.innerHTML = `<img src="${s.src}" alt="${s.label}" />`;
+    function goSlide(idx) {
+      slideIdx = (idx + SLIDES.length) % SLIDES.length;
+      elapsed = 0;
+      document.getElementById("progressFill").style.width = "0%";
+      renderSlides();
     }
 
     function applyLang(next) {
@@ -923,36 +1064,61 @@
       localStorage.setItem("se_lang", lang);
       document.documentElement.lang = lang;
       document.querySelectorAll(".lang-toggle button").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
-      const d = I18N[lang];
+      const dict = I18N[lang];
       document.querySelectorAll("[data-i18n]").forEach(el => {
         const k = el.getAttribute("data-i18n");
-        if (d[k]) el.textContent = d[k];
+        if (dict[k]) el.textContent = dict[k];
       });
-      renderStage();
+      document.querySelectorAll("[data-i18n-html]").forEach(el => {
+        const k = el.getAttribute("data-i18n-html");
+        if (dict[k]) el.innerHTML = dict[k];
+      });
+      renderSlides();
     }
 
-    // Wire config
-    document.getElementById("hdrVersion").textContent = SITE_CONFIG.version;
-    document.getElementById("fmTag").textContent = SITE_CONFIG.fmVersion;
+    // Render 12 languages with inline SVG flags
+    document.getElementById("langGrid").innerHTML = LANGUAGES.map(l => `
+      <div class="lang-card">
+        ${l.flag}
+        <div class="lang-info">
+          <strong>${l.name}</strong>
+          <span>${l.sample}</span>
+        </div>
+      </div>`).join("");
+
+    // Wire links & socials
     ["navDl", "heroDl", "bottomDl"].forEach(id => {
       const a = document.getElementById(id);
       a.href = SITE_CONFIG.downloadUrl;
       if (SITE_CONFIG.downloadUrl.startsWith("http")) { a.target = "_blank"; a.rel = "noopener"; }
     });
-
+    document.getElementById("aboutGh").href = SITE_CONFIG.repoUrl;
     document.getElementById("socialLinks").innerHTML = SITE_CONFIG.socials
-      .filter(s => s.url)
       .map(s => `<a class="social-btn" href="${s.url}" target="_blank" rel="noopener">${SOCIAL_SVGS[s.id] || ""}<span>${s.label}</span></a>`)
       .join("");
 
-    document.querySelectorAll(".lang-toggle button").forEach(b => b.addEventListener("click", () => applyLang(b.dataset.lang)));
-    document.querySelectorAll(".frame-tab").forEach(t => t.addEventListener("click", () => { view = t.dataset.view; renderStage(); }));
-    document.getElementById("watchVideoBtn").addEventListener("click", () => {
-      view = "video";
-      renderStage();
-      document.getElementById("mediaFrame").scrollIntoView({ behavior: "smooth", block: "center" });
+    // Controls
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      applyTheme(theme === "dark" ? "light" : "dark");
+      goSlide(theme === "dark" ? 1 : 0);
     });
+    document.querySelectorAll(".lang-toggle button").forEach(b => b.addEventListener("click", () => applyLang(b.dataset.lang)));
+    document.getElementById("prevSlide").addEventListener("click", () => goSlide(slideIdx - 1));
+    document.getElementById("nextSlide").addEventListener("click", () => goSlide(slideIdx + 1));
+    const sc = document.getElementById("showcase");
+    sc.addEventListener("mouseenter", () => paused = true);
+    sc.addEventListener("mouseleave", () => paused = false);
 
+    // Smooth auto-advance timer
+    setInterval(() => {
+      if (paused) return;
+      elapsed += 100;
+      document.getElementById("progressFill").style.width = `${Math.min(100, (elapsed / SLIDE_MS) * 100)}%`;
+      if (elapsed >= SLIDE_MS) goSlide(slideIdx + 1);
+    }, 100);
+
+    applyTheme(theme);
+    slideIdx = theme === "dark" ? 1 : 0;
     applyLang(lang);
   </script>
 </body>
