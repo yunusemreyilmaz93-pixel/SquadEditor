@@ -5,21 +5,19 @@ using SquadEditor.Core.Memory;
 
 namespace SquadEditor.App.Ui;
 
+public sealed record StaffRoleOption(byte? Code, string LabelTr, string LabelEn, long DeptOffset)
+{
+	public string Display => Build.T(LabelTr, LabelEn);
+}
+
 /// <summary>
-/// Moving a member of staff to another club, keeping his job, or releasing him.
+/// Moving a member of staff to another club (keeping or changing his job), hiring unemployed staff
+/// into a chosen role, or releasing him.
 ///
 /// A club keeps its staff in three department lists (begin, end, capacity) of object pointers:
 /// +0x60 medical, +0x78 coaching, +0x90 scouting (a fitness coach may be in two). A member of
 /// staff's object starts 0x100 before his person block; his contract (block +0xA8) points back
-/// at the block (+0x08) and at the team he works for and the senior team (+0x10, +0x18). Some
-/// staff have a 40-byte BASIC_CONTRACT without dates.
-///
-/// A move takes him out of every department list of his club that holds him and adds him to the
-/// same lists of the new club, where their memory has room, and points his contract at the new
-/// club's senior team (signed and joined today for a full contract). Only staff the club and its
-/// teams do not point at directly move: not a manager (team +0x80), a director of football (club
-/// +0x148), the board, or the human manager. A release takes him out of the lists and leaves him
-/// without a contract, as the game's unemployed staff are.
+/// at the block (+0x08) and at the team he works for and the senior team (+0x10, +0x18).
 /// </summary>
 public static class StaffMoves
 {
@@ -27,14 +25,54 @@ public static class StaffMoves
 	private const long ContractOwner = 0x08, ContractTeam = 0x10, ContractSenior = 0x18, ContractJob = 0x26;
 	private const long TeamClub = 0x30, ClubTeams = 0x18;
 	private const int ClubBytes = 0x170, TeamBytes = 0x800;
+
 	private static readonly (long Offset, string Tr, string En)[] Departments =
 	{
-		(0x60, "sağlık ekibi", "medical team"), (0x78, "antrenör ekibi", "coaching staff"), (0x90, "gözlemci ekibi", "scouting staff")
+		(0x60, "sağlık ekibi", "medical team"),
+		(0x78, "antrenör ekibi", "coaching staff"),
+		(0x90, "gözlemci ekibi", "scouting staff")
 	};
+
+	public static readonly IReadOnlyList<StaffRoleOption> RoleOptions = new List<StaffRoleOption>
+	{
+		new(20, "Asistan Menajer", "Assistant Manager", 0x78),
+		new(2, "Antrenör", "Coach", 0x78),
+		new(34, "Kaleci Antrenörü", "Goalkeeping Coach", 0x78),
+		new(26, "Kondisyon Antrenörü", "Fitness Coach", 0x78),
+		new(40, "Duran Top Antrenörü", "Set Piece Coach", 0x78),
+		new(64, "Altyapı Sorumlusu", "Head of Youth Development", 0x78),
+		new(14, "Gözlemci", "Scout", 0x90),
+		new(44, "Baş Gözlemci", "Chief Scout", 0x90),
+		new(60, "Performans Analisti", "Performance Analyst", 0x90),
+		new(62, "Transfer Analisti", "Recruitment Analyst", 0x90),
+		new(12, "Fizyoterapist", "Physio", 0x60),
+		new(50, "Baş Fizyoterapist", "Head Physio", 0x60),
+		new(28, "Spor Bilimcisi", "Sports Scientist", 0x60),
+		new(30, "Spor Bilimi Sorumlusu", "Head of Sports Science", 0x60),
+		new(46, "Doktor", "Doctor", 0x60)
+	};
+
+	public static bool IsUnemployed(IMemory m, ulong block)
+	{
+		try { return m.ReadPointer(block + Contract) == 0; } catch { return true; }
+	}
+
+	private static (long Offset, string Tr, string En) DepartmentForJob(byte job)
+	{
+		StaffRoleOption? opt = RoleOptions.FirstOrDefault(r => r.Code == job);
+		long off = opt?.DeptOffset ?? 0x78;
+		return Departments.First(d => d.Offset == off);
+	}
+
+	private static string RoleLabel(byte job)
+	{
+		StaffRoleOption? opt = RoleOptions.FirstOrDefault(r => r.Code == job);
+		return opt?.Display ?? $"#{job}";
+	}
 
 	private sealed record StaffList(ulong Header, ulong Begin, ulong End, ulong Capacity, ulong[] Items);
 
-	public static MovePlan Plan(GameData data, ulong block, ulong club)
+	public static MovePlan Plan(GameData data, ulong block, ulong club, byte? newJob = null)
 	{
 		IMemory m = data.Memory;
 		ulong obj = block - ObjectStart;
@@ -46,7 +84,7 @@ public static class StaffMoves
 			{
 				throw Refuse("Bu kişi zaten kulüpsüz.", "This person is already unemployed.");
 			}
-			return HireUnemployed(data, block, obj, club, name);
+			return HireUnemployed(data, block, obj, club, name, newJob ?? 2);
 		}
 		byte job = m.Read<byte>(contract + ContractJob);
 		ulong team = m.ReadPointer(contract + ContractTeam), senior = m.ReadPointer(contract + ContractSenior);
@@ -112,7 +150,10 @@ public static class StaffMoves
 			}
 			newSenior = teams[0];
 			string newName = ClubName(data, club);
-			foreach (var dep in held)
+			var targetDeps = newJob.HasValue
+				? new List<(long Offset, string Tr, string En)> { DepartmentForJob(newJob.Value) }
+				: held;
+			foreach (var dep in targetDeps)
 			{
 				StaffList list = ReadList(m, club + (ulong)dep.Offset);
 				if (list.Items.Contains(obj))
@@ -131,6 +172,10 @@ public static class StaffMoves
 			}
 			writes.Add(new PlannedWrite(contract + ContractTeam, GameWrite.U64(team), GameWrite.U64(newSenior), field, oldName, newName));
 			writes.Add(new PlannedWrite(contract + ContractSenior, GameWrite.U64(senior), GameWrite.U64(newSenior), field, oldName, newName));
+			if (newJob.HasValue && newJob.Value != job)
+			{
+				writes.Add(new PlannedWrite(contract + ContractJob, new[] { job }, new[] { newJob.Value }, Build.T("Görev", "Job")));
+			}
 			if (full)
 			{
 				foreach (long offset in new long[] { 0x44, 0x4C })
@@ -145,15 +190,24 @@ public static class StaffMoves
 					}
 				}
 			}
-			steps.Add(Build.T("Sözleşmesi yeni kulübe geçer (görev, maaş ve bitiş aynı kalır).", "His contract moves to the new club (same job, wage and end)."));
-			summary = Build.T($"{name}: {oldName} → {newName}.", $"{name}: {oldName} → {newName}.");
+			if (newJob.HasValue)
+			{
+				string roleText = RoleLabel(newJob.Value);
+				steps.Add(Build.T($"Yeni görevi: {roleText} (maaş ve bitiş aynı kalır).", $"New role: {roleText} (same wage and end)."));
+				summary = Build.T($"{name}: {oldName} → {newName} ({roleText}).", $"{name}: {oldName} → {newName} ({roleText}).");
+			}
+			else
+			{
+				steps.Add(Build.T("Sözleşmesi yeni kulübe geçer (görev, maaş ve bitiş aynı kalır).", "His contract moves to the new club (same job, wage and end)."));
+				summary = Build.T($"{name}: {oldName} → {newName}.", $"{name}: {oldName} → {newName}.");
+			}
 		}
 		return new MovePlan(summary, steps, writes.Where(w => !w.Expected.AsSpan().SequenceEqual(w.Bytes)).ToList(), club, newSenior);
 	}
 
 	private static Exception Refuse(string tr, string en) => new InvalidOperationException(Build.T(tr, en));
 
-	private static MovePlan HireUnemployed(GameData data, ulong block, ulong obj, ulong club, string name)
+	private static MovePlan HireUnemployed(GameData data, ulong block, ulong obj, ulong club, string name, byte chosenJob)
 	{
 		const int ContractSize = 0xC8;
 		IMemory m = data.Memory;
@@ -164,23 +218,24 @@ public static class StaffMoves
 		}
 		ulong newSenior = teams[0];
 		string newName = ClubName(data, club);
-		// Pick a department with room and a model FULL_CONTRACT (coaching first, then scouting, then medical).
-		var order = new[] { Departments[1], Departments[2], Departments[0] };
-		(long Offset, string Tr, string En) chosen = default;
-		StaffList? targetList = null;
-		ulong model = 0;
-		foreach (var dep in order)
+		var chosen = DepartmentForJob(chosenJob);
+		StaffList targetList = ReadList(m, club + (ulong)chosen.Offset);
+		if (targetList.Items.Contains(obj))
 		{
-			StaffList list = ReadList(m, club + (ulong)dep.Offset);
-			if (list.Items.Contains(obj))
-			{
-				throw Refuse("Yeni kulübün listesinde zaten var.", "Already in the new club's list.");
-			}
-			if (list.Begin == 0 || (list.End - list.Begin) / 8 >= Transfers.Room(m, list.Begin, list.Capacity))
-			{
-				continue;
-			}
-			ulong foundModel = 0;
+			throw Refuse("Yeni kulübün listesinde zaten var.", "Already in the new club's list.");
+		}
+		if (targetList.Begin == 0 || (targetList.End - targetList.Begin) / 8 >= Transfers.Room(m, targetList.Begin, targetList.Capacity))
+		{
+			throw Refuse($"{newName} {chosen.Tr} listesi dolu ve oyunun belleğinde yer yok. Önce oradan birini görevden al, sonra tekrar dene.",
+				$"{newName}'s {chosen.En} list is full and the game's memory has no room. Release someone there first, then try again.");
+		}
+
+		// Find a model FULL_CONTRACT from the target department first, then fall back to any department of the club.
+		ulong model = 0;
+		var searchOrder = new[] { chosen }.Concat(Departments.Where(d => d.Offset != chosen.Offset));
+		foreach (var dep in searchOrder)
+		{
+			StaffList list = dep.Offset == chosen.Offset ? targetList : ReadList(m, club + (ulong)dep.Offset);
 			foreach (ulong memberObj in list.Items)
 			{
 				try
@@ -188,7 +243,7 @@ public static class StaffMoves
 					ulong c = m.ReadPointer(memberObj + ObjectStart + Contract);
 					if (c != 0 && IsFullContract(m, c) && m.ReadPointer(c + ContractSenior) == newSenior)
 					{
-						foundModel = c;
+						model = c;
 						break;
 					}
 				}
@@ -196,18 +251,12 @@ public static class StaffMoves
 				{
 				}
 			}
-			if (foundModel != 0)
-			{
-				chosen = dep;
-				targetList = list;
-				model = foundModel;
-				break;
-			}
+			if (model != 0) break;
 		}
-		if (targetList == null || model == 0)
+		if (model == 0)
 		{
-			throw Refuse($"{newName} personel listelerinde boş yer ya da örnek alınacak tam sözleşme bulunamadı.",
-				$"No room or model full contract was found in {newName}'s staff lists.");
+			throw Refuse($"{newName} personel listelerinde örnek alınacak tam sözleşme bulunamadı.",
+				$"No model full contract was found in {newName}'s staff lists.");
 		}
 		GamePool pool = GamePool.Find(m, ContractSize, model);
 		var writes = new List<PlannedWrite>();
@@ -229,6 +278,7 @@ public static class StaffMoves
 		Put(ContractOwner, GameWrite.U64(block));
 		Put(ContractTeam, GameWrite.U64(newSenior));
 		Put(ContractSenior, GameWrite.U64(newSenior));
+		bytes[ContractJob] = chosenJob;
 		Put(0x44, MakeDate(0x44, today));
 		Put(0x4C, MakeDate(0x4C, today));
 		Put(0x48, MakeDate(0x48, new DateTime(endYear, 6, 30)));
@@ -248,13 +298,14 @@ public static class StaffMoves
 		writes.Add(new PlannedWrite(block + Contract, GameWrite.U64(0), GameWrite.U64(slot), Build.T("Sözleşme", "Contract"), "", newName));
 
 		int wage = BitConverter.ToInt32(bytes, 0x20);
+		string roleText = RoleLabel(chosenJob);
 		var steps = new List<string>
 		{
 			Build.T($"Oyunun sözleşme havuzundan yeni sözleşme alınır ({pool.Free} boş yer).", $"A new contract is taken from the game's pool ({pool.Free} free)."),
-			Build.T($"{newName} {chosen.Tr} listesine eklenir (maaş {Money.Format(wage, true)}, bitiş 30.06.{endYear}).",
-				$"Joins {newName}'s {chosen.En} ({Money.Format(wage, true)}, until 30.06.{endYear}).")
+			Build.T($"{newName} {chosen.Tr} listesine {roleText} olarak eklenir (maaş {Money.Format(wage, true)}, bitiş 30.06.{endYear}).",
+				$"Joins {newName}'s {chosen.En} as {roleText} ({Money.Format(wage, true)}, until 30.06.{endYear}).")
 		};
-		return new MovePlan(Build.T($"{name}, {newName} ekibine katılır.", $"{name} joins {newName}."), steps, writes, club, newSenior);
+		return new MovePlan(Build.T($"{name}, {newName} kulübüne {roleText} olarak katılır.", $"{name} joins {newName} as {roleText}."), steps, writes, club, newSenior);
 	}
 
 	private static string ClubName(GameData data, ulong club)

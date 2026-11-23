@@ -331,6 +331,34 @@ public static partial class Transfers
 
 	private static byte[] Concat(ulong a, ulong b) => GameWrite.U64(a).Concat(GameWrite.U64(b)).ToArray();
 
+	private static readonly object _tacticsLock = new object();
+	private static (IMemory? Memory, ulong Vtable, List<ulong> Objects, DateTime ScannedAt) _tacticsCache;
+
+	/// <summary>Pre-scans match selection objects in the background so the first club click in MoveWindow is instant.</summary>
+	public static void Warmup(IMemory m)
+	{
+		try
+		{
+			if (!m.TryGetModule("game_plugin.dll", out MemoryRegion module)) return;
+			lock (_tacticsLock)
+			{
+				if (_tacticsCache.Memory == m && _tacticsCache.Vtable != 0 && (DateTime.UtcNow - _tacticsCache.ScannedAt).TotalSeconds < 60)
+				{
+					return;
+				}
+				ulong? foundVtable = (_tacticsCache.Memory == m && _tacticsCache.Vtable != 0)
+					? _tacticsCache.Vtable
+					: Rtti.FindVtable(m, module, ".?AVPREPARED_TACTICS_CREATOR_ARRAY@simatch@@");
+				if (foundVtable == null) return;
+				List<ulong> objects = ObjectScanner.FindObjects(m, foundVtable.Value, 100000).ToList();
+				_tacticsCache = (m, foundVtable.Value, objects, DateTime.UtcNow);
+			}
+		}
+		catch
+		{
+		}
+	}
+
 	/// <summary>
 	/// Empties the player's slots in every prepared selection that holds him and whose filled
 	/// slots are mostly players of his club's teams. Returns how many copies change.
@@ -342,10 +370,28 @@ public static partial class Transfers
 		{
 			return 0;
 		}
-		ulong? vtable = Rtti.FindVtable(m, module, ".?AVPREPARED_TACTICS_CREATOR_ARRAY@simatch@@");
-		if (vtable == null)
+		ulong vtable;
+		List<ulong> objects;
+		lock (_tacticsLock)
 		{
-			throw Refuse("Oyunun maç kadrosu seçimleri bu sürümde bulunamadı; taşıma yapılmadı.", "The game's match selections were not found in this version; nothing was moved.");
+			if (_tacticsCache.Memory == m && _tacticsCache.Vtable != 0 && (DateTime.UtcNow - _tacticsCache.ScannedAt).TotalSeconds < 60)
+			{
+				vtable = _tacticsCache.Vtable;
+				objects = _tacticsCache.Objects;
+			}
+			else
+			{
+				ulong? foundVtable = (_tacticsCache.Memory == m && _tacticsCache.Vtable != 0)
+					? _tacticsCache.Vtable
+					: Rtti.FindVtable(m, module, ".?AVPREPARED_TACTICS_CREATOR_ARRAY@simatch@@");
+				if (foundVtable == null)
+				{
+					throw Refuse("Oyunun maç kadrosu seçimleri bu sürümde bulunamadı; taşıma yapılmadı.", "The game's match selections were not found in this version; nothing was moved.");
+				}
+				vtable = foundVtable.Value;
+				objects = ObjectScanner.FindObjects(m, vtable, 100000).ToList();
+				_tacticsCache = (m, vtable, objects, DateTime.UtcNow);
+			}
 		}
 		var clubIds = new HashSet<uint>();
 		foreach (ulong t in clubTeams)
@@ -362,10 +408,14 @@ public static partial class Transfers
 			}
 		}
 		int changed = 0;
-		foreach (ulong o in ObjectScanner.FindObjects(m, vtable.Value, 100000))
+		foreach (ulong o in objects)
 		{
 			try
 			{
+				if (m.ReadPointer(o) != vtable)
+				{
+					continue;
+				}
 				ulong begin = m.ReadPointer(o + 8), end = m.ReadPointer(o + 16), cap = m.ReadPointer(o + 24);
 				if (begin == 0 || end <= begin || cap < end)
 				{

@@ -62,6 +62,8 @@ public sealed class StaffRow
 	public uint ClubUid { get; set; }
 	public string Club { get; set; } = "";
 	public string Job { get; set; } = "";
+	public byte JobCode { get; set; }
+	public bool IsManagerProfile { get; init; }
 	public string Nation { get; init; } = "";
 	public string DateOfBirth { get; init; } = "";
 	public DateTime? Born { get; init; }
@@ -422,7 +424,13 @@ public sealed class GameData : IDisposable
 				ulong club = ulong.TryParse(Read(a, def, "Club Ref"), out ulong c) ? c : 0;
 				string dob = Read(a, def, "Date of Birth");
 				string jobKey = Read(a, def, "Job");
+				byte jobCode = byte.TryParse(jobKey, out byte jc) ? jc : (byte)0;
 				string job = Field(def, "Job").Options.TryGetValue(jobKey, out string? j) ? Layout.Text(Loc.Instance.Language, j) : (jobKey.Length > 0 && jobKey != "0" ? "#" + jobKey : "");
+				bool isMgrFlag = false;
+				if (!isHuman)
+				{
+					try { isMgrFlag = Memory.Read<byte>(a - 0xAC) == 12; } catch { }
+				}
 				string clubName = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "";
 				string nation = Read(a, def, "Nation");
 				staff[i] = new StaffRow
@@ -435,6 +443,8 @@ public sealed class GameData : IDisposable
 					Club = clubName,
 					ClubUid = row?.Uid ?? 0,
 					Job = job,
+					JobCode = jobCode,
+					IsManagerProfile = isMgrFlag || jobCode is 16 or 18 or 66 or 68,
 					Nation = nation,
 					DateOfBirth = dob,
 					Born = ParseDate(dob),
@@ -609,6 +619,9 @@ public sealed class GameData : IDisposable
 		row.ClubAddress = club;
 		row.Club = ClubsByAddress.TryGetValue(club, out ClubRow? c) ? c.Name : "";
 		row.ClubUid = c?.Uid ?? 0;
+		string jobKey = club == 0 ? "" : Read(staffAddress, StaffDef, "Job");
+		row.JobCode = byte.TryParse(jobKey, out byte jc) ? jc : (byte)0;
+		row.Job = club == 0 ? "" : (Field(StaffDef, "Job").Options.TryGetValue(jobKey, out string? j) ? Layout.Text(Loc.Instance.Language, j) : (jobKey.Length > 0 && jobKey != "0" ? "#" + jobKey : ""));
 		row.ContractEnd = club == 0 ? "" : Read(staffAddress, StaffDef, "Contract Expires");
 		row.Search = Normalize($"{row.Name} {row.Club} {row.Nation} {row.Job}");
 		StaffByClub = Staff.Where(s => s.ClubAddress != 0).ToLookup(s => s.ClubAddress);

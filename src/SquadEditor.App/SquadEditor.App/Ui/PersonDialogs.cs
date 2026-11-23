@@ -145,35 +145,52 @@ public sealed class RenameWindow : ActionWindow
 public sealed class MoveWindow : ActionWindow
 {
 	private readonly GameData _data;
-	private readonly Func<ulong, long, MovePlan> _planner;
+	private readonly Func<ulong, long, byte?, MovePlan> _planner;
 	private readonly TextBox _search = new TextBox { Height = 32, FontSize = 14 };
 	private readonly TextBox _fee = new TextBox { Height = 28, Width = 140, FontSize = 13, Text = "0", Padding = new Thickness(6, 1, 6, 1), VerticalContentAlignment = VerticalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left };
+	private readonly ComboBox? _roleBox;
 	private readonly ListBox _clubs = new ListBox { Height = 200, Background = Build.Res("Field"), Foreground = Build.Res("Text"), BorderBrush = Build.Res("Stroke") };
 	private readonly RadioButton _move, _release;
+	private readonly System.Windows.Threading.DispatcherTimer _feeDebounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
 	private MovePlan? _plan;
 
 	/// <summary>A player: moved (with optional transfer fee), signed when he is a free agent, or released.</summary>
 	public static MoveWindow ForPlayer(GameData data, ulong player, string who, bool freeAgent)
 	{
-		return new MoveWindow(data, (club, feeGbp) => Transfers.Plan(data, player, club, feeGbp), who,
+		if (!freeAgent)
+		{
+			System.Threading.Tasks.Task.Run(() => Transfers.Warmup(data.Memory));
+		}
+		return new MoveWindow(data, (club, feeGbp, _) => Transfers.Plan(data, player, club, feeGbp), who,
 			freeAgent ? Build.T("Kulübe imzalat", "Sign for a club") : Build.T("Başka kulübe transfer et", "Transfer to another club"),
 			freeAgent ? null : Build.T("Serbest bırak (sözleşmesi feshedilir)", "Release (contract ended)"),
 			freeAgent ? Build.T("Oyunun kendi sözleşme havuzundan yeni bir sözleşme alır; A takıma katılır.", "Gets a new contract from the game's own contract pool and joins the senior team.")
 				: Build.T("Oyuncu A takıma katılır; sözleşmesi (maaş, bitiş) aynı kalır. Bonservis girersen alıcı kasasından düşülüp satıcıya eklenir.",
 					"Joins the senior team on his contract. If you enter a transfer fee, it is deducted from the buyer and paid to the seller."),
-			showFee: !freeAgent);
+			showFee: !freeAgent,
+			staffRoles: null);
 	}
 
-	/// <summary>A member of staff (person block): moved keeping his job, hired, or released.</summary>
+	/// <summary>A member of staff (person block): moved (keeping or changing role), hired into a chosen role, or released.</summary>
 	public static MoveWindow ForStaff(GameData data, ulong block, string who)
 	{
-		return new MoveWindow(data, (club, _) => StaffMoves.Plan(data, block, club), who,
-			Build.T("Başka kulübe taşı / İşe al", "Move / Hire to club"), Build.T("Görevden al (kulüpsüz kalır)", "Release (no club)"),
-			Build.T("Aynı personel listelerine (antrenör, sağlık, gözlemci) eklenir; sözleşmesi aynı kalır.", "Joins the same staff lists (coaching, medical, scouting); same contract."),
-			showFee: false);
+		bool unemployed = StaffMoves.IsUnemployed(data.Memory, block);
+		var roles = new List<StaffRoleOption>();
+		if (!unemployed)
+		{
+			roles.Add(new StaffRoleOption(null, "Mevcut görevi koru", "Keep current role", 0));
+		}
+		roles.AddRange(StaffMoves.RoleOptions);
+		return new MoveWindow(data, (club, _, job) => StaffMoves.Plan(data, block, club, job), who,
+			unemployed ? Build.T("Kulübe işe al", "Hire to club") : Build.T("Başka kulübe taşı", "Move to another club"),
+			unemployed ? null : Build.T("Görevden al (kulüpsüz kalır)", "Release (no club)"),
+			Build.T("Seçtiğin göreve uygun personel listesine (antrenör, gözlemci veya sağlık) eklenir.", "Joins the matching club staff list (coaching, scouting or medical) in the selected role."),
+			showFee: false,
+			staffRoles: roles,
+			defaultRoleCode: unemployed ? (byte?)2 : null);
 	}
 
-	private MoveWindow(GameData data, Func<ulong, long, MovePlan> planner, string who, string moveText, string? releaseText, string hintText, bool showFee)
+	private MoveWindow(GameData data, Func<ulong, long, byte?, MovePlan> planner, string who, string moveText, string? releaseText, string hintText, bool showFee, IReadOnlyList<StaffRoleOption>? staffRoles, byte? defaultRoleCode = null)
 		: base(Build.T("Kulübe taşı", "Move to club") + " · " + who, Build.T("Uygula", "Apply"))
 	{
 		_data = data;
@@ -182,13 +199,31 @@ public sealed class MoveWindow : ActionWindow
 		_release = new RadioButton { Content = releaseText ?? "", GroupName = "mv", Visibility = releaseText == null ? Visibility.Collapsed : Visibility.Visible };
 		Body.Children.Add(_move);
 		Body.Children.Add(_release);
+		if (staffRoles != null)
+		{
+			var roleRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 2) };
+			roleRow.Children.Add(new TextBlock { Text = Build.T("Görev / Rol: ", "Role / Job: "), Foreground = Build.Res("Muted"), FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) });
+			_roleBox = new ComboBox
+			{
+				Width = 240,
+				Height = 28,
+				FontSize = 12.5,
+				ItemsSource = staffRoles,
+				DisplayMemberPath = nameof(StaffRoleOption.Display),
+				SelectedItem = staffRoles.FirstOrDefault(r => r.Code == defaultRoleCode) ?? staffRoles[0]
+			};
+			_roleBox.SelectionChanged += (_, _) => Check();
+			roleRow.Children.Add(_roleBox);
+			Body.Children.Add(roleRow);
+		}
 		if (showFee)
 		{
 			var feeRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 2) };
 			feeRow.Children.Add(new TextBlock { Text = Build.T($"Bonservis ({Money.Current.Code}, 0 = bedelsiz): ", $"Transfer fee ({Money.Current.Code}, 0 = free): "), Foreground = Build.Res("Muted"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
 			feeRow.Children.Add(_fee);
 			Body.Children.Add(feeRow);
-			_fee.TextChanged += (_, _) => Check();
+			_feeDebounce.Tick += (_, _) => { _feeDebounce.Stop(); Check(); };
+			_fee.TextChanged += (_, _) => { _feeDebounce.Stop(); _feeDebounce.Start(); };
 		}
 		Body.Children.Add(Label(Build.T("Kulüp ara", "Search club")));
 		Body.Children.Add(_search);
@@ -201,8 +236,9 @@ public sealed class MoveWindow : ActionWindow
 		Body.Children.Add(hint);
 		_search.TextChanged += (_, _) => Filter();
 		_clubs.SelectionChanged += (_, _) => Check();
-		_move.Checked += (_, _) => { _clubs.IsEnabled = _search.IsEnabled = _fee.IsEnabled = true; Check(); };
-		_release.Checked += (_, _) => { _clubs.IsEnabled = _search.IsEnabled = _fee.IsEnabled = false; Check(); };
+		_clubs.MouseDoubleClick += (_, _) => { if (_plan != null && Ok.IsEnabled) Apply(); };
+		_move.Checked += (_, _) => { _clubs.IsEnabled = _search.IsEnabled = _fee.IsEnabled = true; if (_roleBox != null) _roleBox.IsEnabled = true; Check(); };
+		_release.Checked += (_, _) => { _clubs.IsEnabled = _search.IsEnabled = _fee.IsEnabled = false; if (_roleBox != null) _roleBox.IsEnabled = false; Check(); };
 		Ok.Click += (_, _) => Apply();
 		Filter();
 	}
@@ -229,17 +265,26 @@ public sealed class MoveWindow : ActionWindow
 			Result.Text = "";
 			return;
 		}
+		byte? selectedJob = (_roleBox?.SelectedItem as StaffRoleOption)?.Code;
 		try
 		{
-			Cursor = System.Windows.Input.Cursors.Wait;
-			Result.Foreground = Build.Res("Muted");
-			Result.Text = Build.T("Kontrol ediliyor...", "Checking...");
 			long feeGbp = 0;
 			if (_release.IsChecked != true && double.TryParse(_fee.Text.Trim().Replace(" ", "").Replace(".", "").Replace(",", ""), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double feeShown) && feeShown > 0)
 			{
 				feeGbp = (long)Math.Round(Money.FromDisplay(feeShown, false));
 			}
-			MovePlan plan = await System.Threading.Tasks.Task.Run(() => _planner(club, feeGbp));
+			var task = System.Threading.Tasks.Task.Run(() => _planner(club, feeGbp, selectedJob));
+			if (!task.IsCompleted)
+			{
+				var doneFirst = await System.Threading.Tasks.Task.WhenAny(task, System.Threading.Tasks.Task.Delay(120));
+				if (doneFirst != task && mine == _checks)
+				{
+					Cursor = System.Windows.Input.Cursors.Wait;
+					Result.Foreground = Build.Res("Muted");
+					Result.Text = Build.T("Kontrol ediliyor...", "Checking...");
+				}
+			}
+			MovePlan plan = await task;
 			if (mine != _checks)
 			{
 				return;

@@ -36,12 +36,18 @@ public sealed class GamePool
 
 	public bool Contains(ulong address) => Chunks.Any(c => address >= c.Start && address < c.End);
 
+	private static readonly System.Collections.Concurrent.ConcurrentDictionary<(IMemory, uint), ulong> _poolCache = new();
+
 	/// <summary>The pool of <paramref name="slotSize"/>-byte slots one of whose chunks holds <paramref name="member"/>.</summary>
 	public static GamePool Find(IMemory memory, uint slotSize, ulong member)
 	{
 		if (member == 0 || !memory.TryGetModule("game_plugin.dll", out MemoryRegion module))
 		{
 			throw new InvalidOperationException(Build.T("Oyunun nesne havuzu bulunamadı.", "The game's object pool was not found."));
+		}
+		if (_poolCache.TryGetValue((memory, slotSize), out ulong cachedAddr) && ReadAt(memory, cachedAddr) is { } cachedPool && cachedPool.IsSlot(member))
+		{
+			return cachedPool;
 		}
 		foreach (MemoryRegion region in PatternScanner.Clip(memory.GetRegions(), module).Where(r => r.IsWritable))
 		{
@@ -54,6 +60,7 @@ public sealed class GamePool
 			{
 				if (BitConverter.ToUInt32(buffer, i + 0x28) == slotSize && Read(memory, region.Start + (ulong)i, buffer.AsSpan(i, 0x38)) is { } pool && pool.IsSlot(member))
 				{
+					_poolCache[(memory, slotSize)] = pool.Address;
 					return pool;
 				}
 			}

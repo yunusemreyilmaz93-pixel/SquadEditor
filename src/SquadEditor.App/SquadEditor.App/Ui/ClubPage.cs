@@ -781,6 +781,23 @@ public sealed class ClubPage : UserControl, IPage
 				new MassEditWindow(data, data.StaffDef, targets, nav) { Owner = Window.GetWindow(grid) }.ShowDialog();
 			}
 		};
+		var moveStaff = new MenuItem { Header = Build.T("⇄ Kulübe taşı / İşe al…", "⇄ Move / Hire to club…"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		moveStaff.Click += (_, _) =>
+		{
+			if (grid.SelectedItem is StaffRow row)
+			{
+				var dialog = MoveWindow.ForStaff(data, row.Address, row.Name);
+				dialog.Owner = Window.GetWindow(grid);
+				if (dialog.ShowDialog() == true && dialog.Done is { } done)
+				{
+					data.StaffMoved(row.Address, done.NewClub);
+					grid.Items.Refresh();
+					nav.SetStatus(done.Summary + Build.T(" Ctrl+Z geri alır.", " Ctrl+Z undoes it."));
+				}
+			}
+		};
+		menu.Items.Add(moveStaff);
+		menu.Items.Add(new Separator());
 		menu.Items.Add(freezeStaff);
 		menu.Items.Add(unfreezeStaff);
 		menu.Items.Add(new Separator());
@@ -1090,7 +1107,7 @@ public sealed class HomePage : UserControl, IPage
 	private readonly ScoutFilter _scoutFilter = new ScoutFilter();
 	private readonly ComboBox _staffJob;
 	private readonly TextBox _staffCaMin, _staffPaMin;
-	private readonly CheckBox _staffFreeOnly;
+	private readonly CheckBox _staffFreeOnly, _staffNoMgr;
 	private readonly Button _staffAdvBtn;
 	private readonly StaffFilter _staffFilter = new StaffFilter();
 	private readonly TextBlock _matchCount;
@@ -1423,6 +1440,15 @@ public sealed class HomePage : UserControl, IPage
 		_staffFreeOnly = new CheckBox { Content = Build.T("Boşta (Kulüpsüz)", "Unemployed"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(10, 0, 0, 0) };
 		_staffFreeOnly.Checked += (_, _) => Apply();
 		_staffFreeOnly.Unchecked += (_, _) => Apply();
+		_staffNoMgr = new CheckBox
+		{
+			Content = Build.T("TD Hariç", "No Managers"),
+			Style = Build.StyleOf("FilterChip"),
+			Margin = new Thickness(6, 0, 0, 0),
+			ToolTip = Build.T("Hem görevdeki hem de boştaki Teknik Direktörleri gizle", "Hide both employed and unemployed Managers")
+		};
+		_staffNoMgr.Checked += (_, _) => { _staffFilter.ExcludeManagers = true; Apply(); };
+		_staffNoMgr.Unchecked += (_, _) => { _staffFilter.ExcludeManagers = false; Apply(); };
 		_staffAdvBtn = new Button
 		{
 			Content = Build.T("🔍 Gelişmiş (Özellikler)", "🔍 Advanced (Attributes)"),
@@ -1436,6 +1462,7 @@ public sealed class HomePage : UserControl, IPage
 			var win = new StaffFilterWindow(_staffFilter, _data.Staff.Select(s => s.Nation)) { Owner = Window.GetWindow(this) };
 			if (win.ShowDialog() == true)
 			{
+				_staffNoMgr.IsChecked = _staffFilter.ExcludeManagers;
 				_staffAdvBtn.Style = _staffFilter.IsActive ? Build.StyleOf("AccentButton") : (Style)Application.Current.FindResource(typeof(Button));
 				Apply();
 			}
@@ -1446,6 +1473,7 @@ public sealed class HomePage : UserControl, IPage
 			_staffJob.SelectedValue = "";
 			_staffCaMin.Text = _staffPaMin.Text = "";
 			_staffFreeOnly.IsChecked = false;
+			_staffNoMgr.IsChecked = false;
 			_staffFilter.Clear();
 			_staffAdvBtn.Style = (Style)Application.Current.FindResource(typeof(Button));
 			Apply();
@@ -1465,6 +1493,7 @@ public sealed class HomePage : UserControl, IPage
 		staffFilters.Children.Add(Lbl("PA ≥"));
 		staffFilters.Children.Add(_staffPaMin);
 		staffFilters.Children.Add(_staffFreeOnly);
+		staffFilters.Children.Add(_staffNoMgr);
 		staffFilters.Children.Add(_staffAdvBtn);
 		staffFilters.Children.Add(clearStaff);
 		staffDock.Children.Add(staffFilters);
