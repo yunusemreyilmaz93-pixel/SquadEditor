@@ -1085,7 +1085,7 @@ public sealed class HomePage : UserControl, IPage
 	private readonly Border _staffFilterBar;
 	private readonly ComboBox _pos, _region;
 	private readonly ComboBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
-	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly, _previewToggle;
+	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _regenOnly, _shortlistOnly, _previewToggle;
 	private readonly Button _advFilterBtn;
 	private readonly ScoutFilter _scoutFilter = new ScoutFilter();
 	private readonly ComboBox _staffJob;
@@ -1229,11 +1229,12 @@ public sealed class HomePage : UserControl, IPage
 		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year") };
 		_injuredOnly = new CheckBox { Content = Build.T("Sakat/Cezalı", "Inj/Ban"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
 		_wonderkid = new CheckBox { Content = Build.T("Wonderkid", "Wonderkid"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Yaş ≤ 21 ve PA ≥ 150", "Age ≤ 21 and PA ≥ 150") };
+		_regenOnly = new CheckBox { Content = Build.T("🧬 Regen", "🧬 Newgen"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Sadece oyunun sonradan ürettiği Regen / Newgen oyuncular (UID ≥ 2.000.000.000)", "Only game-generated Newgens / Regens (UID ≥ 2,000,000,000)") };
 		_shortlistOnly = new CheckBox { Content = Build.T("★ Kısa Liste", "★ Shortlist"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Oyuncu profilinde ☆ Kısa Listeye Ekle veya listede sağ tıkla yıldızladığın oyuncular", "Players starred from their profile or via right-click") };
 		_previewToggle = new CheckBox { Content = Build.T("◧ Önizleme", "◧ Preview"), Style = Build.StyleOf("FilterChip"), IsChecked = true, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Seçili oyuncunun sağda hızlı özet kartını göster/gizle", "Show/hide quick player preview drawer on the right") };
 		_previewToggle.Checked += (_, _) => UpdatePreviewVisibility();
 		_previewToggle.Unchecked += (_, _) => UpdatePreviewVisibility();
-		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly })
+		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _regenOnly, _shortlistOnly })
 		{
 			cb.Checked += (_, _) => Apply();
 			cb.Unchecked += (_, _) => Apply();
@@ -1301,7 +1302,7 @@ public sealed class HomePage : UserControl, IPage
 				cb.Text = "";
 			}
 			_search.Text = "";
-			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = _shortlistOnly.IsChecked = false;
+			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = _regenOnly.IsChecked = _shortlistOnly.IsChecked = false;
 			_scoutFilter.Clear();
 			_advFilterBtn.Style = (Style)Application.Current.FindResource(typeof(Button));
 		}
@@ -1319,6 +1320,7 @@ public sealed class HomePage : UserControl, IPage
 			AddPreset("⭐ Yerli Genç Yetenekler (Türkiye · Yaş ≤ 21 · PA ≥ 135)", "⭐ Turkish Wonderkids (Türkiye · Age ≤ 21 · PA ≥ 135)", () => { _search.Text = "Türkiye"; _ageMax.Text = "21"; _paMin.Text = "135"; });
 			AddPreset("⭐ Genç Kaleciler (GK · Yaş ≤ 23 · PA ≥ 150)", "⭐ Young Goalkeepers (GK · Age ≤ 23 · PA ≥ 150)", () => { _pos.SelectedValue = "GK"; _ageMax.Text = "23"; _paMin.Text = "150"; });
 			AddPreset("⭐ Boştaki Yıldızlar (Serbest · CA ≥ 125)", "⭐ Best Free Agents (Free · CA ≥ 125)", () => { _freeOnly.IsChecked = true; _caMin.Text = "125"; });
+			AddPreset("🧬 En İyi Regenler (Newgen · PA ≥ 150)", "🧬 Best Newgens (Regen · PA ≥ 150)", () => { _regenOnly.IsChecked = true; _paMin.Text = "150"; });
 			menu.PlacementTarget = presetsBtn;
 			menu.IsOpen = true;
 		};
@@ -1366,6 +1368,7 @@ public sealed class HomePage : UserControl, IPage
 		chips.Children.Add(_expiringOnly);
 		chips.Children.Add(_injuredOnly);
 		chips.Children.Add(_wonderkid);
+		chips.Children.Add(_regenOnly);
 		chips.Children.Add(_shortlistOnly);
 		chips.Children.Add(_advFilterBtn);
 		chips.Children.Add(clear);
@@ -1532,6 +1535,7 @@ public sealed class HomePage : UserControl, IPage
 			bool expiringOnly = _expiringOnly.IsChecked == true;
 			bool injuredOnly = _injuredOnly.IsChecked == true;
 			bool wonderkid = _wonderkid.IsChecked == true;
+			bool regenOnly = _regenOnly.IsChecked == true;
 			bool shortlistOnly = _shortlistOnly.IsChecked == true;
 			HashSet<uint>? shortlist = shortlistOnly ? new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey)) : null;
 			long? maxWageGbp = _scoutFilter.MaxWageDisplay.HasValue ? (long)Math.Round(Money.FromDisplay(_scoutFilter.MaxWageDisplay.Value, true)) : null;
@@ -1550,11 +1554,12 @@ public sealed class HomePage : UserControl, IPage
 			if (expiringOnly) query = query.Where(p => p.ClubAddress != 0 && p.ContractDate is { } cd && cd <= expireCutoff);
 			if (injuredOnly) query = query.Where(p => p.Status.Length > 0);
 			if (wonderkid) query = query.Where(p => p.Age > 0 && p.Age <= 21 && p.PA >= 150);
+			if (regenOnly) query = query.Where(p => p.IsRegen);
 			if (shortlist != null) query = query.Where(p => shortlist.Contains(p.Uid));
 			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp));
 			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
 			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
-			RebuildActiveChips(pos, ageMin, ageMax, caMin, caMax, paMin, maxValM, freeOnly, expiringOnly, injuredOnly, wonderkid, shortlistOnly);
+			RebuildActiveChips(pos, region, ageMin, ageMax, caMin, caMax, paMin, maxValM, freeOnly, expiringOnly, injuredOnly, wonderkid, regenOnly, shortlistOnly);
 			var pg = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
 			pg.SelectionChanged += (_, _) =>
 			{
@@ -1590,8 +1595,8 @@ public sealed class HomePage : UserControl, IPage
 		_previewCard.Visibility = _mode == "players" && _previewToggle.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 	}
 
-	private void RebuildActiveChips(string pos, int? ageMin, int? ageMax, int? caMin, int? caMax, int? paMin, double? maxValM,
-		bool freeOnly, bool expiringOnly, bool injuredOnly, bool wonderkid, bool shortlistOnly)
+	private void RebuildActiveChips(string pos, string region, int? ageMin, int? ageMax, int? caMin, int? caMax, int? paMin, double? maxValM,
+		bool freeOnly, bool expiringOnly, bool injuredOnly, bool wonderkid, bool regenOnly, bool shortlistOnly)
 	{
 		_activeChips.Children.Clear();
 		void Chip(string text, Action remove)
@@ -1610,6 +1615,7 @@ public sealed class HomePage : UserControl, IPage
 			_activeChips.Children.Add(btn);
 		}
 		if (pos.Length > 0) Chip(Build.T($"Mevki: {pos}", $"Pos: {pos}"), () => _pos.SelectedValue = "");
+		if (region.Length > 0) Chip(Build.T($"Bölge: {region}", $"Region: {region}"), () => _region.SelectedValue = "");
 		if (ageMin.HasValue) Chip(Build.T($"Yaş ≥ {ageMin}", $"Age ≥ {ageMin}"), () => { _ageMin.SelectedIndex = -1; _ageMin.Text = ""; });
 		if (ageMax.HasValue) Chip(Build.T($"Yaş ≤ {ageMax}", $"Age ≤ {ageMax}"), () => { _ageMax.SelectedIndex = -1; _ageMax.Text = ""; });
 		if (caMin.HasValue) Chip($"CA ≥ {caMin}", () => { _caMin.SelectedIndex = -1; _caMin.Text = ""; });
@@ -1620,6 +1626,7 @@ public sealed class HomePage : UserControl, IPage
 		if (expiringOnly) Chip(Build.T("Sözl. ≤1y", "Exp. ≤1y"), () => _expiringOnly.IsChecked = false);
 		if (injuredOnly) Chip(Build.T("Sakat/Cezalı", "Inj/Ban"), () => _injuredOnly.IsChecked = false);
 		if (wonderkid) Chip("Wonderkid", () => _wonderkid.IsChecked = false);
+		if (regenOnly) Chip(Build.T("🧬 Regen", "🧬 Newgen"), () => _regenOnly.IsChecked = false);
 		if (shortlistOnly) Chip(Build.T("★ Kısa Liste", "★ Shortlist"), () => _shortlistOnly.IsChecked = false);
 		if (_scoutFilter.IsActive) Chip(Build.T("🔍 Gelişmiş", "🔍 Advanced"), () => { _scoutFilter.Clear(); _advFilterBtn.Style = (Style)Application.Current.FindResource(typeof(Button)); });
 		_activeChips.Visibility = _activeChips.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
