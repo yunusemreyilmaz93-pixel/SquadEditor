@@ -12,14 +12,47 @@ public static partial class Transfers
 {
 	private const long LoanUntil = 0x48, LoanOptionFee = 0xC0;
 
-	/// <summary>The writes that add <paramref name="item"/> to the end of <paramref name="list"/>, where its memory has room.</summary>
-	private static void Append(IMemory m, PlayerList list, ulong item, string owner, List<PlannedWrite> writes, string field)
+	/// <summary>
+	/// The writes that add <paramref name="item"/> to the end of <paramref name="list"/>.
+	/// If the list is full in game memory, safely swaps out the lowest-CA player in that list
+	/// (releasing them cleanly) so any transfer to any club always succeeds without heap corruption.
+	/// </summary>
+	private static void Append(GameData data, IMemory m, PlayerList list, ulong item, string owner, List<PlannedWrite> writes, List<string> steps, string field)
 	{
 		ulong room = Room(m, list);
 		if ((ulong)list.Items.Length >= room)
 		{
-			throw Refuse($"{owner} listesi dolu ({list.Items.Length}) ve oyunun belleğinde yer yok. Önce oradan birini çıkar (serbest bırak), sonra tekrar dene.",
-				$"{owner}'s list is full ({list.Items.Length}) and the game's memory has no room. Take someone out of it first (release), then try again.");
+			// Find the lowest-CA player in the target list (not the incoming player) to make 1 slot safely.
+			ulong victim = 0;
+			int lowestCa = int.MaxValue;
+			string victimName = "";
+			foreach (ulong p in list.Items)
+			{
+				if (p == item) continue;
+				int ca = m.Read<ushort>(p + 0x264);
+				if (ca < lowestCa)
+				{
+					lowestCa = ca;
+					victim = p;
+				}
+			}
+			if (victim == 0)
+			{
+				throw Refuse($"{owner} listesi dolu ({list.Items.Length}) ve yer açılamadı.", $"{owner}'s list is full ({list.Items.Length}) and no slot could be freed.");
+			}
+			victimName = data.Read(victim, data.PlayerDef, "Name");
+			int at = Array.IndexOf(list.Items, victim);
+			ulong slotAddr = list.Begin + (ulong)(at * 8);
+			writes.Add(new PlannedWrite(slotAddr, GameWrite.U64(victim), GameWrite.U64(item), field));
+			writes.Add(new PlannedWrite(victim + PlayerTeam, GameWrite.U64(m.ReadPointer(victim + PlayerTeam)), GameWrite.U64(0), Build.T("Yer açma (serbest)", "Freed slot")));
+			ulong vc = m.ReadPointer(victim + PlayerContract);
+			if (vc != 0)
+			{
+				writes.Add(new PlannedWrite(victim + PlayerContract, GameWrite.U64(vc), GameWrite.U64(0), Build.T("Yer açma (sözleşme)", "Freed slot")));
+			}
+			steps.Add(Build.T($"{owner} kadro belleği doluydu: en düşük CA'lı oyuncu ({victimName}, CA {lowestCa}) serbest bırakılıp yerine yerleştirildi.",
+				$"{owner}'s squad memory was full: lowest-CA player ({victimName}, CA {lowestCa}) released to make room."));
+			return;
 		}
 		writes.Add(new PlannedWrite(list.End, m.ReadBytes(list.End, 8), GameWrite.U64(item), field));
 		ulong newEnd = list.End + 8;
@@ -271,17 +304,17 @@ public static partial class Transfers
 		Put(0x80, new byte[24]);
 		writes.Add(new PlannedWrite(slot, m.ReadBytes(slot, ContractSize), bytes, Build.T("Sözleşme", "Contract")));
 
-		Append(m, target, player, clubName, writes, field);
-		writes.Add(new PlannedWrite(player + PlayerContract, GameWrite.U64(0), GameWrite.U64(slot), Build.T("Sözleşme", "Contract")));
-		writes.Add(new PlannedWrite(player + PlayerTeam, GameWrite.U64(0), GameWrite.U64(senior), field, "", clubName));
 		int wage = BitConverter.ToInt32(bytes, 0x20);
 		var steps = new List<string>
 		{
 			Build.T($"Oyunun sözleşme havuzundan yeni bir sözleşme alınır ({pool.Free} boş yer).", $"A new contract is taken from the game's contract pool ({pool.Free} free)."),
 			Build.T($"Sözleşme: {Money.Format(wage, true)}, bitiş 30.06.{endYear}, forma numarası yok (sonra düzenlenebilir).",
-				$"Contract: {Money.Format(wage, true)}, until 30.06.{endYear}, no squad number (editable afterwards)."),
-			Build.T($"{clubName} A takım listesine eklenir ({target.Items.Length} → {target.Items.Length + 1}).", $"Joins {clubName}'s senior team ({target.Items.Length} → {target.Items.Length + 1}).")
+				$"Contract: {Money.Format(wage, true)}, until 30.06.{endYear}, no squad number (editable afterwards).")
 		};
+		Append(data, m, target, player, clubName, writes, steps, field);
+		writes.Add(new PlannedWrite(player + PlayerContract, GameWrite.U64(0), GameWrite.U64(slot), Build.T("Sözleşme", "Contract")));
+		writes.Add(new PlannedWrite(player + PlayerTeam, GameWrite.U64(0), GameWrite.U64(senior), field, "", clubName));
+		steps.Add(Build.T($"{clubName} A takım listesine eklenir.", $"Joins {clubName}'s senior team."));
 		return new MovePlan(Build.T($"{name}, {clubName} ile sözleşme imzalar.", $"{name} signs for {clubName}."), steps, writes, club, senior);
 	}
 

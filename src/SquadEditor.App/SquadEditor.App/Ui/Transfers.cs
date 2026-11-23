@@ -163,9 +163,8 @@ public static partial class Transfers
 			{
 				throw Refuse("Oyuncu zaten o takımın listesinde.", "The player is in that team's list already.");
 			}
-			Append(m, target, player, newName, writes, field);
-			steps.Add(Build.T($"{newName} A takım listesine eklenir ({target.Items.Length} → {target.Items.Length + 1}).",
-				$"Joins {newName}'s senior team ({target.Items.Length} → {target.Items.Length + 1})."));
+			Append(data, m, target, player, newName, writes, steps, field);
+			steps.Add(Build.T($"{newName} A takımına katılır.", $"Joins {newName}'s senior team."));
 
 			writes.Add(new PlannedWrite(player + PlayerTeam, GameWrite.U64(team), GameWrite.U64(senior), field, oldName, newName));
 			writes.Add(new PlannedWrite(contract + ContractTeam, GameWrite.U64(employer), GameWrite.U64(senior), field, oldName, newName));

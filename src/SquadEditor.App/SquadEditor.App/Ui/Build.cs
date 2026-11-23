@@ -83,11 +83,14 @@ public static class Build
 			grid.Children.Add(combo);
 			return grid;
 		}
+		double boxWidth = field.IsAttribute ? 44
+			: (field.IsMoney || field.IsDate ? 132
+			: (field.IsNumeric ? 88 : 180));
 		var box = new TextBox
 		{
-			Width = field.IsAttribute ? 44 : 180,
+			Width = boxWidth,
 			Height = 25,
-			HorizontalContentAlignment = field.IsAttribute ? HorizontalAlignment.Center : HorizontalAlignment.Left,
+			HorizontalContentAlignment = field.IsAttribute ? HorizontalAlignment.Center : (field.IsNumeric || field.IsDate ? HorizontalAlignment.Right : HorizontalAlignment.Left),
 			FontWeight = field.IsAttribute ? FontWeights.Bold : FontWeights.Normal,
 			Padding = new Thickness(6, 1, 6, 1),
 			VerticalContentAlignment = VerticalAlignment.Center

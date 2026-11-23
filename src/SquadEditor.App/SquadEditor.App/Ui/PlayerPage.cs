@@ -426,22 +426,22 @@ public sealed class PlayerPage : UserControl, IPage
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))));
 		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))),
-			Build.Card(Build.T("Mevki", "Position"), MiniPitch(244)));
+			Build.Card(Build.T("Kişilik (1-20)", "Personality (1-20)"), Build.Rows(Group("Personality"))));
 		AddColumn(grid, 3,
 			Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
 			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
-			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))));
+			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),
+			Build.Card(Build.T("Mevki", "Position"), MiniPitch(244)));
 		return Build.Scroll(grid);
 	}
 
 	private UIElement Personal()
 	{
-		var grid = new Grid();
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
+		var grid = new Grid { MaxWidth = 1080, HorizontalAlignment = HorizontalAlignment.Left };
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
 		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"),
 			Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "Nation", "City of Birth", "Height"))),
-			Build.Card(Build.T("Kişilik (1-20)", "Personality (1-20)"), Build.Rows(Group("Personality"))),
 			Build.Card(Build.T("Tercih Ettiği Hareketler", "Player Traits"), TraitsPanel()),
 			Build.Card(Build.T("Milli takım", "International"), Build.Rows(Group("International"))));
 		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
@@ -549,51 +549,83 @@ public sealed class PlayerPage : UserControl, IPage
 
 	private UIElement Positions()
 	{
-		var grid = new Grid();
+		var grid = new Grid { HorizontalAlignment = HorizontalAlignment.Left };
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 300 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(340) });
 		AddColumn(grid, 0, Build.Card(Build.T("Saha", "Pitch"), MiniPitch(380)));
 		AddColumn(grid, 1, Build.Card(Build.T("Mevki puanları (1-20)", "Position ratings (1-20)"), Build.Rows(Group("Positions"))));
 		return Build.Scroll(grid);
 	}
 
-	/// <summary>Pitch with an editable box per position; colour follows the game (green natural ... red awkward).</summary>
+	/// <summary>Real football pitch with penalty boxes, center circle, grass stripes and crisp square position badges.</summary>
 	private FrameworkElement MiniPitch(double width)
 	{
 		double w = width, h = width * 1.32;
-		var canvas = new Canvas { Width = w, Height = h };
+		var canvas = new Canvas { Width = w, Height = h, ClipToBounds = true };
+		var lineBrush = new SolidColorBrush(Color.FromArgb(0x45, 0xFF, 0xFF, 0xFF));
 		var turf = new Border
 		{
 			Width = w,
 			Height = h,
-			CornerRadius = new CornerRadius(8),
-			Background = new LinearGradientBrush(Color.FromRgb(0x17, 0x3B, 0x2A), Color.FromRgb(0x12, 0x2E, 0x21), 90),
-			BorderBrush = new SolidColorBrush(Color.FromArgb(0x50, 0xFF, 0xFF, 0xFF)),
+			CornerRadius = new CornerRadius(6),
+			Background = new SolidColorBrush(Color.FromRgb(0x14, 0x38, 0x26)),
+			BorderBrush = lineBrush,
 			BorderThickness = new Thickness(1)
 		};
 		canvas.Children.Add(turf);
-		var half = new Border { Width = w, Height = 1, Background = new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF)) };
+		// Subtle mowed grass stripes
+		int stripes = 8;
+		double sh = h / stripes;
+		for (int i = 0; i < stripes; i += 2)
+		{
+			var stripe = new Border { Width = w - 2, Height = sh, Background = new SolidColorBrush(Color.FromArgb(0x12, 0xFF, 0xFF, 0xFF)) };
+			Canvas.SetLeft(stripe, 1);
+			Canvas.SetTop(stripe, i * sh);
+			canvas.Children.Add(stripe);
+		}
+		// Halfway line & center circle
+		var half = new Border { Width = w, Height = 1, Background = lineBrush };
 		Canvas.SetTop(half, h / 2);
 		canvas.Children.Add(half);
+		double cr = w * 0.24;
+		var circle = new System.Windows.Shapes.Ellipse { Width = cr, Height = cr, Stroke = lineBrush, StrokeThickness = 1 };
+		Canvas.SetLeft(circle, (w - cr) / 2);
+		Canvas.SetTop(circle, (h - cr) / 2);
+		canvas.Children.Add(circle);
+		// Top & bottom penalty boxes and 6-yard boxes
+		double pbW = w * 0.56, pbH = h * 0.145, gbW = w * 0.28, gbH = h * 0.055;
+		void Box(double bw2, double bh2, double top, Thickness th)
+		{
+			var b = new Border { Width = bw2, Height = bh2, BorderBrush = lineBrush, BorderThickness = th };
+			Canvas.SetLeft(b, (w - bw2) / 2);
+			Canvas.SetTop(b, top);
+			canvas.Children.Add(b);
+		}
+		Box(pbW, pbH, 0, new Thickness(1, 0, 1, 1));
+		Box(gbW, gbH, 0, new Thickness(1, 0, 1, 1));
+		Box(pbW, pbH, h - pbH, new Thickness(1, 1, 1, 0));
+		Box(gbW, gbH, h - gbH, new Thickness(1, 1, 1, 0));
+
 		bool large = width >= 320;
-		double bw = large ? 84 : 66, bh = large ? 30 : 24;
+		double bw = large ? 82 : 66, bh = large ? 28 : 24;
 		foreach (var (code, x, y) in Pitch)
 		{
 			EditField f = _f[code];
 			var cell = new DockPanel { LastChildFill = true };
-			var label = Build.Text(code, large ? 12 : 10.5, Brushes.White, FontWeights.SemiBold);
-			label.Margin = new Thickness(8, 0, 2, 0);
+			var label = Build.Text(code, large ? 11.5 : 10, Brushes.White, FontWeights.SemiBold);
+			label.Margin = new Thickness(6, 0, 2, 0);
 			label.TextTrimming = TextTrimming.None;
 			var box = new TextBox
 			{
-				Width = large ? 32 : 28,
-				Height = bh - 6,
-				FontSize = large ? 13 : 12,
+				Width = large ? 30 : 26,
+				Height = bh - 4,
+				FontSize = large ? 12.5 : 11.5,
 				FontWeight = FontWeights.Bold,
 				HorizontalContentAlignment = HorizontalAlignment.Center,
+				VerticalContentAlignment = VerticalAlignment.Center,
 				Padding = new Thickness(0),
-				Margin = new Thickness(0, 0, 3, 0),
-				Background = new SolidColorBrush(Color.FromArgb(0x70, 0, 0, 0)),
+				Margin = new Thickness(0, 0, 2, 0),
+				Background = new SolidColorBrush(Color.FromArgb(0x78, 0, 0, 0)),
 				BorderThickness = new Thickness(0)
 			};
 			FieldBox.SetField(box, f);
@@ -604,8 +636,10 @@ public sealed class PlayerPage : UserControl, IPage
 			{
 				Width = bw,
 				Height = bh,
-				CornerRadius = new CornerRadius(bh / 2),
+				CornerRadius = new CornerRadius(5),
 				Background = PositionBrush(f.Number),
+				BorderBrush = new SolidColorBrush(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF)),
+				BorderThickness = new Thickness(1),
 				Child = cell
 			};
 			f.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(EditField.Value)) chip.Background = PositionBrush(f.Number); };
@@ -613,7 +647,7 @@ public sealed class PlayerPage : UserControl, IPage
 			Canvas.SetTop(chip, y * h - bh / 2);
 			canvas.Children.Add(chip);
 		}
-		return new Border { Padding = new Thickness(14, 4, 14, 14), Child = canvas };
+		return new Border { Padding = new Thickness(10, 4, 10, 12), HorizontalAlignment = HorizontalAlignment.Center, Child = canvas };
 	}
 
 	private static Brush PositionBrush(int rating) => new SolidColorBrush(rating switch

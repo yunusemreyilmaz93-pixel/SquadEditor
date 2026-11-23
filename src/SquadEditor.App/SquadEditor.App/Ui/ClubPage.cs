@@ -323,12 +323,7 @@ public sealed class ClubPage : UserControl, IPage
 			}
 			_nav.SetStatus(Build.T($"✓ {_club.Name} maaş bütçesi iki katına çıkarıldı.", $"✓ {_club.Name} wage budget doubled."));
 		});
-		QuickBtn(Build.T("Bilet Fiyatı 1", "Ticket Price 1"), () =>
-		{
-			EditField tp = F("Ticket Price");
-			_data.Session.WriteField(_club.Address, tp.Def, "1", _club.Name);
-			_nav.SetStatus(Build.T($"✓ {_club.Name} bilet fiyatı 1 yapıldı.", $"✓ {_club.Name} ticket price set to 1."));
-		});
+		QuickBtn(Build.T("+100M Transfer Bütçesi", "+100M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M Transfer"));
 		QuickBtn(Build.T("💎 Zengin Patron (+500M / +200M)", "💎 Rich Owner (+500M / +200M)"), () =>
 		{
 			using (_data.Session.History.BeginBatch(Build.T($"{_club.Name}: Zengin patron", $"{_club.Name}: Rich owner")))
@@ -353,9 +348,9 @@ public sealed class ClubPage : UserControl, IPage
 
 	private UIElement Info()
 	{
-		var grid = new Grid();
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 380 });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 380 });
+		var grid = new Grid { MaxWidth = 1040, HorizontalAlignment = HorizontalAlignment.Left };
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 400 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 400 });
 		var left = new StackPanel();
 		left.Children.Add(Build.Card(Build.T("Genel", "General"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "General"))));
 		left.Children.Add(Build.Card(Build.T("Taraftarlar (1-20)", "Supporters (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Supporters"))));

@@ -396,7 +396,14 @@ public sealed class GameData : IDisposable
 			}
 			foreach (PlayerRow p in playerList)
 			{
-				p.Team = teamNames.TryGetValue(p.TeamAddress, out string? tn) ? tn : "";
+				if (p.TeamAddress != 0 && p.Wage == 0 && p.ContractEnd.Length == 0 && p.Value == 0)
+				{
+					p.Team = Build.T("Altyapı / Gri Oyuncular", "Youth / Virtual");
+				}
+				else
+				{
+					p.Team = teamNames.TryGetValue(p.TeamAddress, out string? tn) ? tn : "";
+				}
 			}
 			TeamNames = teamNames;
 			foreach (ClubRow club in clubs)

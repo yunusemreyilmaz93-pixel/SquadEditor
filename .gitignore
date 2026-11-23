@@ -5,3 +5,5 @@ dist/
 .vs/
 *.user
 *.suo
+
+build_latest/
