@@ -42,7 +42,11 @@ public static class StaffMoves
 		ulong contract = m.ReadPointer(block + Contract);
 		if (contract == 0)
 		{
-			throw Refuse("Bu kişinin kulübü yok; kulüpsüz personeli işe almak henüz desteklenmiyor.", "This person has no club; hiring unemployed staff is not supported yet.");
+			if (club == 0)
+			{
+				throw Refuse("Bu kişi zaten kulüpsüz.", "This person is already unemployed.");
+			}
+			return HireUnemployed(data, block, obj, club, name);
 		}
 		byte job = m.Read<byte>(contract + ContractJob);
 		ulong team = m.ReadPointer(contract + ContractTeam), senior = m.ReadPointer(contract + ContractSenior);
@@ -148,6 +152,110 @@ public static class StaffMoves
 	}
 
 	private static Exception Refuse(string tr, string en) => new InvalidOperationException(Build.T(tr, en));
+
+	private static MovePlan HireUnemployed(GameData data, ulong block, ulong obj, ulong club, string name)
+	{
+		const int ContractSize = 0xC8;
+		IMemory m = data.Memory;
+		List<ulong> teams = Teams(m, club);
+		if (teams.Count == 0)
+		{
+			throw Refuse("Kulübün A takımı bulunamadı.", "The club's senior team was not found.");
+		}
+		ulong newSenior = teams[0];
+		string newName = ClubName(data, club);
+		// Pick a department with room and a model FULL_CONTRACT (coaching first, then scouting, then medical).
+		var order = new[] { Departments[1], Departments[2], Departments[0] };
+		(long Offset, string Tr, string En) chosen = default;
+		StaffList? targetList = null;
+		ulong model = 0;
+		foreach (var dep in order)
+		{
+			StaffList list = ReadList(m, club + (ulong)dep.Offset);
+			if (list.Items.Contains(obj))
+			{
+				throw Refuse("Yeni kulübün listesinde zaten var.", "Already in the new club's list.");
+			}
+			if (list.Begin == 0 || (list.End - list.Begin) / 8 >= Transfers.Room(m, list.Begin, list.Capacity))
+			{
+				continue;
+			}
+			ulong foundModel = 0;
+			foreach (ulong memberObj in list.Items)
+			{
+				try
+				{
+					ulong c = m.ReadPointer(memberObj + ObjectStart + Contract);
+					if (c != 0 && IsFullContract(m, c) && m.ReadPointer(c + ContractSenior) == newSenior)
+					{
+						foundModel = c;
+						break;
+					}
+				}
+				catch (MemoryAccessException)
+				{
+				}
+			}
+			if (foundModel != 0)
+			{
+				chosen = dep;
+				targetList = list;
+				model = foundModel;
+				break;
+			}
+		}
+		if (targetList == null || model == 0)
+		{
+			throw Refuse($"{newName} personel listelerinde boş yer ya da örnek alınacak tam sözleşme bulunamadı.",
+				$"No room or model full contract was found in {newName}'s staff lists.");
+		}
+		GamePool pool = GamePool.Find(m, ContractSize, model);
+		var writes = new List<PlannedWrite>();
+		(ulong slot, PlannedWrite header) = pool.Take(m);
+		writes.Add(header);
+
+		byte[] bytes = m.ReadBytes(model, ContractSize);
+		void Put(long offset, byte[] value) => value.CopyTo(bytes, (int)offset);
+		DateTime today = data.GameDate;
+		int endYear = today.Month <= 6 ? today.Year + 1 : today.Year + 2;
+		byte[] MakeDate(long offset, DateTime day)
+		{
+			ushort flags = (ushort)(BitConverter.ToUInt16(bytes, (int)offset) & ~0x1FF);
+			var d = new byte[4];
+			BitConverter.GetBytes((ushort)(flags | day.DayOfYear)).CopyTo(d, 0);
+			BitConverter.GetBytes((ushort)day.Year).CopyTo(d, 2);
+			return d;
+		}
+		Put(ContractOwner, GameWrite.U64(block));
+		Put(ContractTeam, GameWrite.U64(newSenior));
+		Put(ContractSenior, GameWrite.U64(newSenior));
+		Put(0x44, MakeDate(0x44, today));
+		Put(0x4C, MakeDate(0x4C, today));
+		Put(0x48, MakeDate(0x48, new DateTime(endYear, 6, 30)));
+		Put(0x38, new byte[4]);
+		foreach (long offset in new long[] { 0x28, 0x30, 0x98, 0xA0 })
+		{
+			Put(offset, new byte[8]);
+		}
+		Put(0x68, new byte[24]);
+		Put(0x80, new byte[24]);
+		writes.Add(new PlannedWrite(slot, m.ReadBytes(slot, ContractSize), bytes, Build.T("Sözleşme", "Contract")));
+
+		string field = Build.T("Kulüp", "Club");
+		writes.Add(new PlannedWrite(targetList.End, m.ReadBytes(targetList.End, 8), GameWrite.U64(obj), field));
+		writes.Add(new PlannedWrite(targetList.Header + 8, GameWrite.U64(targetList.End).Concat(GameWrite.U64(targetList.Capacity)).ToArray(),
+			GameWrite.U64(targetList.End + 8).Concat(GameWrite.U64(Math.Max(targetList.Capacity, targetList.End + 8))).ToArray(), field));
+		writes.Add(new PlannedWrite(block + Contract, GameWrite.U64(0), GameWrite.U64(slot), Build.T("Sözleşme", "Contract"), "", newName));
+
+		int wage = BitConverter.ToInt32(bytes, 0x20);
+		var steps = new List<string>
+		{
+			Build.T($"Oyunun sözleşme havuzundan yeni sözleşme alınır ({pool.Free} boş yer).", $"A new contract is taken from the game's pool ({pool.Free} free)."),
+			Build.T($"{newName} {chosen.Tr} listesine eklenir (maaş {Money.Format(wage, true)}, bitiş 30.06.{endYear}).",
+				$"Joins {newName}'s {chosen.En} ({Money.Format(wage, true)}, until 30.06.{endYear}).")
+		};
+		return new MovePlan(Build.T($"{name}, {newName} ekibine katılır.", $"{name} joins {newName}."), steps, writes, club, newSenior);
+	}
 
 	private static string ClubName(GameData data, ulong club)
 	{

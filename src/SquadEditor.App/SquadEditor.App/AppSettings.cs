@@ -61,6 +61,17 @@ public sealed class AppSettings
 	/// <summary>Tabs open at the last exit, by unique ID ("player:29179241").</summary>
 	public List<string> LastTabs { get; set; } = new List<string>();
 
+	public string? LastActiveTab { get; set; }
+
+	/// <summary>Frozen entities persisted across reloads and restarts ("player:29179241", "staff:1234").</summary>
+	public List<string> FrozenUids { get; set; } = new List<string>();
+
+	/// <summary>When true, frozen attributes may increase organically but never drop.</summary>
+	public bool FreezeAllowIncrease { get; set; } = true;
+
+	/// <summary>Most recently opened club UID for 1-click access from Home.</summary>
+	public uint LastClubUid { get; set; }
+
 	private static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SquadEditor", "settings.json");
 
 	public static AppSettings Current { get; } = Load();

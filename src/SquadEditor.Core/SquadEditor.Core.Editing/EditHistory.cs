@@ -85,7 +85,16 @@ public sealed class EditHistory
 			return null;
 		}
 		IReadOnlyList<EditBatch> batches = Batches;
-		EditBatch editBatch = batches[batches.Count - 1];
+		return UndoBatch(memory, batches[batches.Count - 1].Id);
+	}
+
+	public EditBatch? UndoBatch(IMemory memory, int batchId)
+	{
+		EditBatch? editBatch = Batches.FirstOrDefault(b => b.Id == batchId);
+		if (editBatch == null)
+		{
+			return null;
+		}
 		foreach (EditRecord guarded in editBatch.Entries.Where(r => r.Guarded))
 		{
 			if (!((ReadOnlySpan<byte>)memory.ReadBytes(guarded.Address, guarded.NewBytes.Length)).SequenceEqual(guarded.NewBytes))

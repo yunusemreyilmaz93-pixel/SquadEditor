@@ -48,6 +48,7 @@ public sealed class EditField : INotifyPropertyChanged
 
 	/// <summary>Attribute on the 1-20 scale whatever the display preference (for colours).</summary>
 	public int Rating => Def != Original && Original.Scale is double s ? (int)Math.Round(Number / s) : Number;
+	public bool IsInverseAttribute => Def.Name is "Injury Proneness" or "Dirtiness" or "Controversy";
 	public bool IsNumeric => Def.IsNumeric;
 
 	public string Value
@@ -108,7 +109,7 @@ public sealed class EditField : INotifyPropertyChanged
 
 	public int Number => int.TryParse(_value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int n) ? n : 0;
 
-	public Brush ValueBrush => IsAttribute ? Colors.Attribute(Rating) : Colors.Text;
+	public Brush ValueBrush => IsAttribute ? Colors.Attribute(IsInverseAttribute ? 21 - Math.Clamp(Rating, 1, 20) : Rating) : Colors.Text;
 
 	public string? Error
 	{

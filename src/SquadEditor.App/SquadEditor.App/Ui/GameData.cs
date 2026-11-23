@@ -32,25 +32,28 @@ public sealed class PlayerRow
 	public string Team { get; set; } = "";
 	public string Status { get; set; } = "";
 	public string ContractEnd { get; set; } = "";
+	public DateTime? ContractDate { get; set; }
 	public string Search { get; set; } = "";
 }
 
 public sealed class StaffRow
 {
 	public ulong Address { get; init; }
-	public string Name { get; init; } = "";
+	public string Name { get; set; } = "";
 	public uint Uid { get; init; }
-	public ulong ClubAddress { get; init; }
-	public uint ClubUid { get; init; }
-	public string Club { get; init; } = "";
-	public string Job { get; init; } = "";
+	public ulong ClubAddress { get; set; }
+	public uint ClubUid { get; set; }
+	public string Club { get; set; } = "";
+	public string Job { get; set; } = "";
 	public string Nation { get; init; } = "";
 	public string DateOfBirth { get; init; } = "";
 	public DateTime? Born { get; init; }
 	public int Age { get; set; }
+	public int CA { get; set; }
+	public int PA { get; set; }
 	public long Wage { get; init; }
-	public string ContractEnd { get; init; } = "";
-	public string Search { get; init; } = "";
+	public string ContractEnd { get; set; } = "";
+	public string Search { get; set; } = "";
 }
 
 public sealed class ClubRow
@@ -190,15 +193,18 @@ public sealed class GameData : IDisposable
 				string name = Read(a, PlayerDef, "Name");
 				ulong club = ulong.TryParse(Read(a, PlayerDef, "Club Ref"), out ulong c) ? c : 0;
 				string dob = Read(a, PlayerDef, "Date of Birth");
+				string nation = Read(a, PlayerDef, "Nation");
+				string clubName = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "";
+				string contractEnd = Read(a, PlayerDef, "Contract Expires");
 				players[i] = new PlayerRow
 				{
 					Address = a,
 					Name = name,
 					Uid = (uint)ReadInt(a, PlayerDef, "Unique ID"),
 					ClubAddress = club,
-					Club = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "",
+					Club = clubName,
 					ClubUid = row?.Uid ?? 0,
-					Nation = Read(a, PlayerDef, "Nation"),
+					Nation = nation,
 					Positions = ReadPositions(a),
 					DateOfBirth = dob,
 					Born = ParseDate(dob),
@@ -209,8 +215,9 @@ public sealed class GameData : IDisposable
 					CA = ReadInt(a, PlayerDef, "CA"),
 					PA = ReadInt(a, PlayerDef, "PA"),
 					Wage = ReadInt(a, PlayerDef, "Wage"),
-					ContractEnd = Read(a, PlayerDef, "Contract Expires"),
-					Search = Normalize(name)
+					ContractEnd = contractEnd,
+					ContractDate = ParseDate(contractEnd),
+					Search = Normalize($"{name} {clubName} {nation}")
 				};
 			});
 			var playerList = players.Where(p => p.Name.Length > 0).ToList();
@@ -245,21 +252,25 @@ public sealed class GameData : IDisposable
 				string dob = Read(a, StaffDef, "Date of Birth");
 				string jobKey = Read(a, StaffDef, "Job");
 				string job = Field(StaffDef, "Job").Options.TryGetValue(jobKey, out string? j) ? Layout.Text(Loc.Instance.Language, j) : (jobKey.Length > 0 && jobKey != "0" ? "#" + jobKey : "");
+				string clubName = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "";
+				string nation = Read(a, StaffDef, "Nation");
 				staff[i] = new StaffRow
 				{
 					Address = a,
 					Name = name,
 					Uid = (uint)ReadInt(a, StaffDef, "Unique ID"),
 					ClubAddress = club,
-					Club = clubMap.TryGetValue(club, out ClubRow? row) ? row.Name : "",
+					Club = clubName,
 					ClubUid = row?.Uid ?? 0,
 					Job = job,
-					Nation = Read(a, StaffDef, "Nation"),
+					Nation = nation,
 					DateOfBirth = dob,
 					Born = ParseDate(dob),
+					CA = ReadInt(a, StaffDef, "CA"),
+					PA = ReadInt(a, StaffDef, "PA"),
 					Wage = ReadInt(a, StaffDef, "Wage"),
 					ContractEnd = Read(a, StaffDef, "Contract Expires"),
-					Search = Normalize(name)
+					Search = Normalize($"{name} {clubName} {nation} {job}")
 				};
 			});
 			var staffList = staff.Where(s => s.Name.Length > 0).ToList();
@@ -323,8 +334,31 @@ public sealed class GameData : IDisposable
 		if (club == 0)
 		{
 			row.ContractEnd = "";
+			row.ContractDate = null;
 		}
+		else
+		{
+			row.ContractEnd = Read(player, PlayerDef, "Contract Expires");
+			row.ContractDate = ParseDate(row.ContractEnd);
+		}
+		row.Search = Normalize($"{row.Name} {row.Club} {row.Nation}");
 		Squads = Players.Where(p => p.ClubAddress != 0).ToLookup(p => p.ClubAddress);
+	}
+
+	/// <summary>Brings the staff lists up to date after a staff move, hire or release.</summary>
+	public void StaffMoved(ulong staffAddress, ulong club)
+	{
+		StaffRow? row = Staff.FirstOrDefault(s => s.Address == staffAddress);
+		if (row == null)
+		{
+			return;
+		}
+		row.ClubAddress = club;
+		row.Club = ClubsByAddress.TryGetValue(club, out ClubRow? c) ? c.Name : "";
+		row.ClubUid = c?.Uid ?? 0;
+		row.ContractEnd = club == 0 ? "" : Read(staffAddress, StaffDef, "Contract Expires");
+		row.Search = Normalize($"{row.Name} {row.Club} {row.Nation} {row.Job}");
+		StaffByClub = Staff.Where(s => s.ClubAddress != 0).ToLookup(s => s.ClubAddress);
 	}
 
 	/// <summary>Brings a renamed player's or member of staff's row up to date.</summary>
@@ -333,7 +367,12 @@ public sealed class GameData : IDisposable
 		if (Players.FirstOrDefault(p => p.Address == address) is { } row)
 		{
 			row.Name = name;
-			row.Search = Normalize(name);
+			row.Search = Normalize($"{row.Name} {row.Club} {row.Nation}");
+		}
+		else if (Staff.FirstOrDefault(s => s.Address == address) is { } staff)
+		{
+			staff.Name = name;
+			staff.Search = Normalize($"{staff.Name} {staff.Club} {staff.Nation} {staff.Job}");
 		}
 	}
 

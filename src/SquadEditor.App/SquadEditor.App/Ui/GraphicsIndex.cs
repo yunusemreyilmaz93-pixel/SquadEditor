@@ -16,7 +16,7 @@ namespace SquadEditor.App.Ui;
 /// </summary>
 public sealed class GraphicsIndex
 {
-	private static readonly Regex Target = new Regex(@"graphics/pictures/(?<kind>[a-z_]+)/(?:r-)?(?<id>\d+)/(?<type>[a-z_ ]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+	private static readonly Regex Target = new Regex(@"graphics/pictures/(?<kind>[a-z_]+)/(?:r-)?(?<id>\d+)/(?<type>[a-z_ ]+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 	private static readonly string[] Extensions = { ".png", ".jpg", ".jpeg" };
 
@@ -103,7 +103,9 @@ public sealed class GraphicsIndex
 				{
 					continue;
 				}
-				string? file = Extensions.Select(e => from + e).Where(present.Contains).Select(name => Path.Combine(dir, name)).FirstOrDefault();
+				string? file = from.Contains('/') || from.Contains('\\')
+					? Extensions.Select(e => Path.Combine(dir, from.Replace('/', Path.DirectorySeparatorChar) + e)).FirstOrDefault(File.Exists)
+					: Extensions.Select(e => from + e).Where(present.Contains).Select(name => Path.Combine(dir, name)).FirstOrDefault();
 				if (file != null && (primary || !_files.ContainsKey(key)))
 				{
 					_files[key] = file;

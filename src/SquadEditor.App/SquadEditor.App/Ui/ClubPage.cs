@@ -118,12 +118,77 @@ public sealed class ClubPage : UserControl, IPage
 			button.Checked += (_, _) => Show(team);
 			bar.Children.Add(button);
 		}
-		var hint = Build.Text(Build.T("Çift tık: oyuncuyu aç  ·  Sağ tık: seçilenlere ön ayar uygula", "Double-click: open player  ·  Right-click: apply a preset to the selection"), 11.5, Build.Res("Faint"));
-		hint.Margin = new Thickness(16, 0, 0, 0);
+		var hint = Build.Text(Build.T("Ctrl+A: tümünü seç · Çift tık: aç · Sağ tık: toplu düzenle", "Ctrl+A: select all · Double-click: open · Right-click: bulk edit"), 11.5, Build.Res("Faint"));
+		hint.Margin = new Thickness(12, 0, 0, 0);
 		bar.Children.Add(hint);
+
+		var quickBar = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+		var prepare = new Button
+		{
+			Content = Build.T("⚡ Tüm Kadroyu Maça Hazırla", "⚡ Prepare Squad for Match"),
+			ToolTip = Build.T("Kadroda görünen tüm oyuncuların sakatlıklarını iyileştirir, cezalarını kaldırır, kondisyon ve morallerini fuller (Ctrl+Z geri alır)",
+				"Heals injuries, lifts bans, and maxes condition & morale for all players in the current view (Ctrl+Z undoes it)"),
+			Style = Build.StyleOf("AccentButton"),
+			Padding = new Thickness(10, 4, 10, 4),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		prepare.Click += (_, _) =>
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).ToList();
+			if (rows.Count == 0)
+			{
+				return;
+			}
+			int healed = 0, lifted = 0, boosted = 0;
+			using (_data.Session.History.BeginBatch(Build.T($"{_club.Name}: Kadroyu maça hazırla", $"{_club.Name}: Prepare squad")))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					if (Medical.Heal(_data, r.Address, r.Name)) healed++;
+					if (Medical.LiftBans(_data, r.Address, r.Name)) lifted++;
+					r.Status = Medical.Status(_data.Memory, r.Address, _data.GameDate);
+				}
+				var actions = new[]
+				{
+					new SquadEditor.Core.Layout.PresetAction { Field = "Condition", Value = "max" },
+					new SquadEditor.Core.Layout.PresetAction { Field = "Match Sharpness", Value = "max" },
+					new SquadEditor.Core.Layout.PresetAction { Field = "Morale", Value = "max" }
+				};
+				var targets = rows.Select(r => new BulkTarget(r.Address, r.Name)).ToList();
+				foreach (var t in targets)
+				{
+					foreach (var a in actions)
+					{
+						var fd = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == a.Field && f.IsWritable && f.IsNumeric);
+						if (fd != null && fd.Max.HasValue)
+						{
+							try
+							{
+								_data.Session.WriteField(t.Address, fd, fd.Max.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), t.Label);
+								boosted++;
+							}
+							catch (Exception)
+							{
+							}
+						}
+					}
+				}
+			}
+			Show(_team);
+			_nav.SetStatus(Build.T($"✓ {rows.Count} oyuncu maça hazırlandı ({healed} sakatlık iyileşti, {lifted} ceza kalktı, {boosted} kondisyon/moral güncellendi). Ctrl+Z geri alır.",
+				$"✓ {rows.Count} players prepared ({healed} healed, {lifted} bans lifted, {boosted} fitness/morale updated). Ctrl+Z undoes it."));
+		};
+		quickBar.Children.Add(prepare);
+		var topBar = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+		DockPanel.SetDock(quickBar, Dock.Right);
+		topBar.Children.Add(quickBar);
+		bar.Margin = new Thickness(0);
+		topBar.Children.Add(bar);
+
 		var dock = new DockPanel();
-		DockPanel.SetDock(bar, Dock.Top);
-		dock.Children.Add(bar);
+		DockPanel.SetDock(topBar, Dock.Top);
+		dock.Children.Add(topBar);
 		dock.Children.Add(host);
 		string? first = _team ?? teams.FirstOrDefault();
 		RadioButton? pick = bar.Children.OfType<RadioButton>().FirstOrDefault(r => first != null && (r.Content as string ?? "").StartsWith(first + " ("));
@@ -134,7 +199,7 @@ public sealed class ClubPage : UserControl, IPage
 	private UIElement StaffList()
 	{
 		var staff = _data.StaffByClub[_club.Address].OrderBy(s => s.Job).ThenBy(s => s.Name);
-		return new Border { Style = Build.StyleOf("CardBorder"), Padding = new Thickness(4), Child = StaffGrid(staff, _nav, showClub: false) };
+		return new Border { Style = Build.StyleOf("CardBorder"), Padding = new Thickness(4), Child = StaffGrid(_data, staff, _nav, showClub: false) };
 	}
 
 	private UIElement Finances()
@@ -268,21 +333,58 @@ public sealed class ClubPage : UserControl, IPage
 			nav.SetStatus(Build.T($"Dondurma kaldırıldı: {done} oyuncu.", $"Unfrozen: {done} players."));
 		};
 		grid.ContextMenu.Items.Add(unfreezeSel);
+		grid.ContextMenu.Items.Add(new Separator());
+		var massEdit = new MenuItem { Header = Build.T("✎ Toplu düzenle…", "✎ Mass edit…"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		massEdit.Click += (_, _) =>
+		{
+			var targets = grid.SelectedItems.OfType<PlayerRow>().Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			if (targets.Count == 0)
+			{
+				return;
+			}
+			var dlg = new MassEditWindow(data, data.PlayerDef, targets, nav) { Owner = Window.GetWindow(grid) };
+			dlg.ShowDialog();
+		};
+		grid.ContextMenu.Items.Add(massEdit);
+		var cloneSel = new MenuItem { Header = Build.T("⧉ Özellikleri klonla (ilk seçilenden diğerlerine)", "⧉ Clone attributes (first selected to others)"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		cloneSel.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			if (rows.Count < 2)
+			{
+				nav.SetStatus(Build.T("Klonlamak için en az 2 oyuncu seç (önce kaynak oyuncuyu seç).", "Select at least 2 players to clone (select the source player first)."));
+				return;
+			}
+			PlayerRow src = rows[0];
+			var targets = rows.Skip(1).Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			if (AppSettings.Current.ConfirmBulkEdits && MessageBox.Show(
+				Build.T($"{src.Name} oyuncusunun özellikleri {targets.Count} oyuncuya kopyalansın mı? Ctrl+Z geri alır.", $"Clone {src.Name}'s attributes to {targets.Count} players? Ctrl+Z undoes it."),
+				"SquadEditor", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+			{
+				return;
+			}
+			BulkResult res = BulkEdit.Clone(data.Session, data.PlayerDef, src.Address, PlayerPage.FreezeGroups, targets, Build.T($"Klonla: {src.Name}", $"Clone: {src.Name}"));
+			nav.SetStatus(Build.T($"✓ {src.Name} → {targets.Count} oyuncu klonlandı ({res.Written} değer). Ctrl+Z geri alır.",
+				$"✓ Cloned {src.Name} → {targets.Count} players ({res.Written} values). Ctrl+Z undoes it."));
+		};
+		grid.ContextMenu.Items.Add(cloneSel);
 		return grid;
 	}
 
-	public static DataGrid StaffGrid(IEnumerable<StaffRow> staff, INavigator nav, bool showClub)
+	public static DataGrid StaffGrid(GameData data, IEnumerable<StaffRow> staff, INavigator nav, bool showClub)
 	{
 		var grid = new DataGrid { ItemsSource = staff.ToList(), RowHeight = AppSettings.Current.Compact ? 27 : 34 };
-		grid.Columns.Add(Build.TemplateColumn(Build.T("Personel", "Staff"), "PlayerNameCell", "Name", 250));
-		grid.Columns.Add(Build.TextColumn(Build.T("Görev", "Job"), "Job", 190));
-		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 50));
+		grid.Columns.Add(Build.TemplateColumn(Build.T("Personel", "Staff"), "PlayerNameCell", "Name", 240));
+		grid.Columns.Add(Build.TextColumn(Build.T("Görev", "Job"), "Job", 175));
+		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 48));
 		if (showClub)
 		{
-			grid.Columns.Add(Build.TemplateColumn(Build.T("Kulüp", "Club"), "PlayerClubCell", "Club", 190));
+			grid.Columns.Add(Build.TemplateColumn(Build.T("Kulüp", "Club"), "PlayerClubCell", "Club", 180));
 		}
-		grid.Columns.Add(Build.TextColumn(Build.T("Uyruk", "Nation"), "Nation", 130));
-		grid.Columns.Add(MoneyColumn(Build.T("Maaş", "Wage"), "Wage", true, 130));
+		grid.Columns.Add(Build.TextColumn(Build.T("Uyruk", "Nation"), "Nation", 120));
+		grid.Columns.Add(Build.TemplateColumn("CA", "CACell", "CA", 52));
+		grid.Columns.Add(Build.TemplateColumn("PA", "PACell", "PA", 52));
+		grid.Columns.Add(MoneyColumn(Build.T("Maaş", "Wage"), "Wage", true, 125));
 		grid.Columns.Add(Build.TextColumn(Build.T("Sözleşme", "Contract"), "ContractEnd", 95));
 		grid.MouseDoubleClick += (_, _) =>
 		{
@@ -291,6 +393,49 @@ public sealed class ClubPage : UserControl, IPage
 				nav.OpenStaff(row.Address);
 			}
 		};
+		grid.PreviewKeyDown += (_, e) =>
+		{
+			if (e.Key == System.Windows.Input.Key.Enter && grid.SelectedItem is StaffRow row)
+			{
+				nav.OpenStaff(row.Address);
+				e.Handled = true;
+			}
+		};
+		var menu = new ContextMenu();
+		var freezeStaff = new MenuItem { Header = Build.T("❄ Seçilenleri dondur", "❄ Freeze selected"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		freezeStaff.Click += (_, _) =>
+		{
+			int done = grid.SelectedItems.OfType<StaffRow>().Count(r => data.Session.FreezeEntity(r.Address, r.Name, data.StaffDef, StaffPage.StaffFreezeGroups) > 0);
+			nav.SetStatus(Build.T($"Donduruldu: {done} personel.", $"Frozen: {done} staff."));
+		};
+		var unfreezeStaff = new MenuItem { Header = Build.T("Seçilenlerin dondurmasını kaldır", "Unfreeze selected") };
+		unfreezeStaff.Click += (_, _) =>
+		{
+			int done = 0;
+			foreach (StaffRow r in grid.SelectedItems.OfType<StaffRow>())
+			{
+				if (data.Session.Freezer.IsFrozen(r.Address))
+				{
+					data.Session.Freezer.Unfreeze(r.Address);
+					done++;
+				}
+			}
+			nav.SetStatus(Build.T($"Dondurma kaldırıldı: {done} personel.", $"Unfrozen: {done} staff."));
+		};
+		var massStaff = new MenuItem { Header = Build.T("✎ Toplu düzenle…", "✎ Mass edit…"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		massStaff.Click += (_, _) =>
+		{
+			var targets = grid.SelectedItems.OfType<StaffRow>().Select(s => new BulkTarget(s.Address, s.Name)).ToList();
+			if (targets.Count > 0)
+			{
+				new MassEditWindow(data, data.StaffDef, targets, nav) { Owner = Window.GetWindow(grid) }.ShowDialog();
+			}
+		};
+		menu.Items.Add(freezeStaff);
+		menu.Items.Add(unfreezeStaff);
+		menu.Items.Add(new Separator());
+		menu.Items.Add(massStaff);
+		grid.ContextMenu = menu;
 		return grid;
 	}
 
@@ -367,15 +512,16 @@ public sealed class ClubPage : UserControl, IPage
 /// <summary>Staff member page: personal details and contract.</summary>
 public sealed class StaffPage : UserControl, IPage
 {
-	private static readonly HashSet<string> StaffFreezeGroups = new HashSet<string>
+	public static readonly HashSet<string> StaffFreezeGroups = new HashSet<string>
 	{
 		"Coaching", "Medical", "Mental", "Knowledge", "Personality"
 	};
 
 	private readonly Dictionary<string, EditField> _f;
-
 	private readonly GameData _data;
 	private readonly INavigator _nav;
+	private readonly DockPanel _root = new DockPanel();
+	private Border _header;
 
 	public StaffPage(GameData data, StaffRow row, INavigator nav)
 	{
@@ -385,39 +531,60 @@ public sealed class StaffPage : UserControl, IPage
 		Row = row;
 		_f = data.StaffDef.Fields.Where(f => f.GroupKey != "Internal" && f.Concat.Count == 0)
 			.ToDictionary(f => f.Name, f => new EditField(data, row.Address, f, data.Layout.Text(lang, f.Name)));
-		Loaded += (_, _) => FieldBox.EntityLabel = row.Name;
+		Loaded += (_, _) => FieldBox.EntityLabel = Row.Name;
 
-		var root = new DockPanel();
-		var line1 = Build.Text(string.Join("  ·  ", new[] { row.Job, row.Nation, row.Age > 0 ? Build.T($"{row.Age} yaşında", $"{row.Age} years old") : "" }.Where(s => s.Length > 0)), 13, new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xFF, 0xFF)));
+		_header = BuildHeader();
+		DockPanel.SetDock(_header, Dock.Top);
+		_root.Children.Add(_header);
+		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
+		Build.NavItem(menu, Build.T("Genel Bakış", "Overview"), () => content.Content = Overview(), isChecked: true);
+		_root.Children.Add(body);
+		Content = _root;
+		Background = Build.Res("Bg");
+	}
+
+	private Border BuildHeader()
+	{
+		var line1 = Build.Text(string.Join("  ·  ", new[] { Row.Job, Row.Nation, Row.Age > 0 ? Build.T($"{Row.Age} yaşında", $"{Row.Age} years old") : "" }.Where(s => s.Length > 0)), 13, new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xFF, 0xFF)));
 		line1.Margin = new Thickness(0, 4, 0, 0);
 		var line2 = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
-		if (data.ClubsByAddress.TryGetValue(row.ClubAddress, out ClubRow? club))
+		if (_data.ClubsByAddress.TryGetValue(Row.ClubAddress, out ClubRow? club))
 		{
 			if (ImageLookup.Graphics.Club(club.Uid) is { } logo)
 			{
 				line2.Children.Add(new Image { Source = logo, Width = 20, Height = 20, Margin = new Thickness(0, 0, 8, 0) });
 			}
 			var link = new Button { Content = club.Name, Style = Build.StyleOf("LinkButton"), FontSize = 14, FontWeight = FontWeights.SemiBold };
-			link.Click += (_, _) => nav.OpenClub(club.Address);
+			link.Click += (_, _) => _nav.OpenClub(club.Address);
 			line2.Children.Add(link);
 		}
+		else
+		{
+			line2.Children.Add(Build.Text(Build.T("Kulüpsüz", "Unemployed"), 13, Build.Res("Muted")));
+		}
 		var pills = new List<UIElement>();
-		if (row.Wage > 0)
+		if (_f.TryGetValue("CA", out EditField? ca) && _f.TryGetValue("PA", out EditField? pa))
 		{
-			pills.Add(Build.Pill(Money.Format(row.Wage, true), Build.T("Maaş", "Wage")));
+			pills.Add(Build.Pill($"{ca.Number} / {pa.Number}", "CA / PA", Colors.Attribute((int)Math.Round(ca.Number / 10.0))));
 		}
-		if (row.ContractEnd.Length > 0)
+		if (Row.Wage > 0)
 		{
-			pills.Add(Build.Pill(Dates.Show(row.ContractEnd), Build.T("Sözleşme bitişi", "Contract ends")));
+			pills.Add(Build.Pill(Money.Format(Row.Wage, true), Build.T("Maaş", "Wage")));
 		}
-		Border header = Build.Header(Build.Avatar(Icon, row.Name, 74, round: true), row.Name, line1, line2, pills);
-		DockPanel.SetDock(header, Dock.Top);
-		root.Children.Add(header);
-		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
-		Build.NavItem(menu, Build.T("Genel Bakış", "Overview"), () => content.Content = Overview(), isChecked: true);
-		root.Children.Add(body);
-		Content = root;
-		Background = Build.Res("Bg");
+		if (Row.ContractEnd.Length > 0)
+		{
+			pills.Add(Build.Pill(Dates.Show(Row.ContractEnd), Build.T("Sözleşme bitişi", "Contract ends")));
+		}
+		return Build.Header(Build.Avatar(Icon, Row.Name, 74, round: true), Row.Name, line1, line2, pills);
+	}
+
+	private void RebuildHeader()
+	{
+		Border fresh = BuildHeader();
+		DockPanel.SetDock(fresh, Dock.Top);
+		_root.Children.Remove(_header);
+		_root.Children.Insert(0, fresh);
+		_header = fresh;
 	}
 
 	public StaffRow Row { get; }
@@ -482,17 +649,21 @@ public sealed class StaffPage : UserControl, IPage
 			if (dialog.ShowDialog() == true)
 			{
 				RefreshValues();
+				_data.Renamed(Row.Address, _data.Read(Row.Address, _data.StaffDef, "Name"));
+				RebuildHeader();
 				_nav.SetStatus(Build.T("Ad değiştirildi. Ctrl+Z geri alır.", "Renamed. Ctrl+Z undoes it."));
 			}
 		};
-		var move = new Button { Content = Build.T("Kulübe taşı", "Move to club"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		var move = new Button { Content = Build.T("Kulübe taşı / İşe al", "Move / Hire"), Margin = new Thickness(0, 0, 6, 6), IsEnabled = !AppSettings.Current.ReadOnlyMode };
 		move.Click += (_, _) =>
 		{
 			var dialog = MoveWindow.ForStaff(_data, Row.Address, Row.Name);
 			dialog.Owner = Window.GetWindow(this);
 			if (dialog.ShowDialog() == true && dialog.Done is { } done)
 			{
+				_data.StaffMoved(Row.Address, done.NewClub);
 				RefreshValues();
+				RebuildHeader();
 				_nav.SetStatus(done.Summary + Build.T(" Ctrl+Z geri alır.", " Ctrl+Z undoes it."));
 			}
 		};
@@ -519,13 +690,19 @@ public sealed class HomePage : UserControl, IPage
 	private readonly INavigator _nav;
 	private readonly TextBox _search;
 	private readonly Border _filterBar;
+	private readonly Border _staffFilterBar;
 	private readonly ComboBox _pos;
-	private readonly TextBox _ageMin, _ageMax, _caMin, _paMin;
-	private readonly CheckBox _freeOnly, _injuredOnly, _wonderkid;
+	private readonly TextBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
+	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid;
+	private readonly ComboBox _staffJob;
+	private readonly TextBox _staffCaMin, _staffPaMin;
+	private readonly CheckBox _staffFreeOnly;
 	private readonly TextBlock _matchCount;
+	private readonly TextBlock _staffMatchCount;
 	private readonly RadioButton _frozenTab;
 	private readonly ContentControl _host = new ContentControl();
 	private readonly System.Windows.Threading.DispatcherTimer _debounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
+	private List<PlayerRow> _lastPlayers = new List<PlayerRow>();
 	private string _mode = "players";
 
 	public HomePage(GameData data, INavigator nav)
@@ -535,11 +712,32 @@ public sealed class HomePage : UserControl, IPage
 		var root = new DockPanel { Margin = new Thickness(16, 12, 16, 0) };
 
 		var top = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+		var leftHeader = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 		var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
 		title.Children.Add(Build.Text(Build.T("Veritabanı", "Database"), 17, Build.Res("Text"), FontWeights.SemiBold));
 		title.Children.Add(Build.Text($"{data.Players.Count:N0} {Build.T("oyuncu", "players")}  ·  {data.Staff.Count:N0} {Build.T("personel", "staff")}  ·  {data.Clubs.Count:N0} {Build.T("kulüp", "clubs")}  ·  {data.GameDate:dd.MM.yyyy}", 12, Build.Res("Muted")));
-		DockPanel.SetDock(title, Dock.Left);
-		top.Children.Add(title);
+		leftHeader.Children.Add(title);
+		if (AppSettings.Current.LastClubUid > 0 && data.Clubs.FirstOrDefault(c => c.Uid == AppSettings.Current.LastClubUid) is { } lastClub)
+		{
+			var clubBtn = new Button
+			{
+				Margin = new Thickness(14, 0, 0, 0),
+				Padding = new Thickness(10, 4, 10, 4),
+				VerticalAlignment = VerticalAlignment.Center,
+				ToolTip = Build.T("Son açtığın kulübe hızlı git", "Jump to your last opened club")
+			};
+			var cbRow = new StackPanel { Orientation = Orientation.Horizontal };
+			if (ImageLookup.Graphics.Club(lastClub.Uid) is { } logo)
+			{
+				cbRow.Children.Add(new Image { Source = logo, Width = 16, Height = 16, Margin = new Thickness(0, 0, 6, 0) });
+			}
+			cbRow.Children.Add(Build.Text(lastClub.Name, 12, Build.Res("Text"), FontWeights.SemiBold));
+			clubBtn.Content = cbRow;
+			clubBtn.Click += (_, _) => _nav.OpenClub(lastClub.Address);
+			leftHeader.Children.Add(clubBtn);
+		}
+		DockPanel.SetDock(leftHeader, Dock.Left);
+		top.Children.Add(leftHeader);
 
 		var segments = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 		RadioButton? frozenBtn = null;
@@ -560,7 +758,7 @@ public sealed class HomePage : UserControl, IPage
 			}
 		}
 		_frozenTab = frozenBtn!;
-		_search = new TextBox { Style = Build.StyleOf("SearchBox"), Width = 300, Height = 30, Margin = new Thickness(12, 0, 0, 0), ToolTip = Build.T("İsim, kulüp veya ülke yaz (aksan fark etmez)", "Type name, club or nation (accents ignored)") };
+		_search = new TextBox { Style = Build.StyleOf("SearchBox"), Width = 280, Height = 30, Margin = new Thickness(12, 0, 0, 0), ToolTip = Build.T("İsim, kulüp veya ülke yaz (aksan fark etmez)", "Type name, club or nation (accents ignored)") };
 		_search.TextChanged += (_, _) => ScheduleApply();
 		_debounce.Tick += (_, _) => { _debounce.Stop(); Apply(); };
 		var searchHost = new Grid { VerticalAlignment = VerticalAlignment.Center };
@@ -573,50 +771,58 @@ public sealed class HomePage : UserControl, IPage
 		DockPanel.SetDock(top, Dock.Top);
 		root.Children.Add(top);
 
-		// Compact FMRTE-style player scout filter bar.
-		TextBox NumBox(string tip, double w = 42)
+		TextBox NumBox(string tip, double w = 38)
 		{
-			var tb = new TextBox { Width = w, Height = 24, FontSize = 12, Padding = new Thickness(4, 1, 4, 1), HorizontalContentAlignment = HorizontalAlignment.Center, ToolTip = tip };
+			var tb = new TextBox { Width = w, Height = 24, FontSize = 12, Padding = new Thickness(3, 1, 3, 1), HorizontalContentAlignment = HorizontalAlignment.Center, ToolTip = tip };
 			tb.TextChanged += (_, _) => ScheduleApply();
 			return tb;
 		}
-		TextBlock Lbl(string text) => new TextBlock { Text = text, Foreground = Build.Res("Muted"), FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 4, 0) };
+		TextBlock Lbl(string text) => new TextBlock { Text = text, Foreground = Build.Res("Muted"), FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 4, 0) };
 
-		_pos = new ComboBox { Width = 78, Height = 24, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+		// Player scout filter bar
+		_pos = new ComboBox { Width = 72, Height = 24, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
 		_pos.ItemsSource = Positions.Select(p => new KeyValuePair<string, string>(p, p.Length == 0 ? Build.T("Tümü", "All") : p)).ToList();
 		_pos.DisplayMemberPath = "Value";
 		_pos.SelectedValuePath = "Key";
 		_pos.SelectedValue = "";
 		_pos.SelectionChanged += (_, _) => Apply();
 
-		_ageMin = NumBox(Build.T("En az yaş", "Min age"), 36);
-		_ageMax = NumBox(Build.T("En fazla yaş", "Max age"), 36);
-		_caMin = NumBox(Build.T("En az CA", "Min CA"));
-		_paMin = NumBox(Build.T("En az PA", "Min PA"));
+		_ageMin = NumBox(Build.T("En az yaş", "Min age"), 34);
+		_ageMax = NumBox(Build.T("En fazla yaş", "Max age"), 34);
+		_caMin = NumBox(Build.T("En az CA", "Min CA"), 38);
+		_caMax = NumBox(Build.T("En fazla CA", "Max CA"), 38);
+		_paMin = NumBox(Build.T("En az PA", "Min PA"), 38);
+		_maxValM = NumBox(Build.T($"En fazla değer (milyon {Money.Current.Symbol})", $"Max value (million {Money.Current.Symbol})"), 44);
 
-		_freeOnly = new CheckBox { Content = Build.T("Serbest", "Free agents"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(10, 0, 0, 0) };
-		_injuredOnly = new CheckBox { Content = Build.T("Sakat / Cezalı", "Injured / Banned"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(6, 0, 0, 0) };
-		_wonderkid = new CheckBox { Content = Build.T("Wonderkid (≤21, PA≥150)", "Wonderkid (≤21, PA≥150)"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(6, 0, 0, 0) };
-		foreach (CheckBox cb in new[] { _freeOnly, _injuredOnly, _wonderkid })
+		_freeOnly = new CheckBox { Content = Build.T("Serbest", "Free"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(8, 0, 0, 0) };
+		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year") };
+		_injuredOnly = new CheckBox { Content = Build.T("Sakat/Cezalı", "Inj/Ban"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0) };
+		_wonderkid = new CheckBox { Content = Build.T("Wonderkid", "Wonderkid"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(5, 0, 0, 0), ToolTip = Build.T("Yaş ≤ 21 ve PA ≥ 150", "Age ≤ 21 and PA ≥ 150") };
+		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid })
 		{
 			cb.Checked += (_, _) => Apply();
 			cb.Unchecked += (_, _) => Apply();
 		}
 
-		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 2, 8, 2), FontSize = 11.5, Margin = new Thickness(8, 0, 0, 0) };
+		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(6, 0, 0, 0) };
 		clear.Click += (_, _) =>
 		{
 			_pos.SelectedValue = "";
-			_ageMin.Text = _ageMax.Text = _caMin.Text = _paMin.Text = "";
-			_freeOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = false;
+			_ageMin.Text = _ageMax.Text = _caMin.Text = _caMax.Text = _paMin.Text = _maxValM.Text = "";
+			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = false;
 			Apply();
 		};
+		var exportCsv = new Button { Content = Build.T("CSV", "CSV"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered list to CSV") };
+		exportCsv.Click += (_, _) => ExportPlayersCsv();
+
 		_matchCount = Build.Text("", 11.5, Build.Res("Faint"));
 		_matchCount.Margin = new Thickness(8, 0, 4, 0);
 
 		var filterDock = new DockPanel();
 		DockPanel.SetDock(_matchCount, Dock.Right);
+		DockPanel.SetDock(exportCsv, Dock.Right);
 		filterDock.Children.Add(_matchCount);
+		filterDock.Children.Add(exportCsv);
 		var filters = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 		var posLbl = Lbl(Build.T("Mevki", "Pos"));
 		posLbl.Margin = new Thickness(0, 0, 4, 0);
@@ -624,13 +830,18 @@ public sealed class HomePage : UserControl, IPage
 		filters.Children.Add(_pos);
 		filters.Children.Add(Lbl(Build.T("Yaş", "Age")));
 		filters.Children.Add(_ageMin);
-		filters.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(3, 0, 3, 0) });
+		filters.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 2, 0) });
 		filters.Children.Add(_ageMax);
-		filters.Children.Add(Lbl("CA ≥"));
+		filters.Children.Add(Lbl("CA"));
 		filters.Children.Add(_caMin);
+		filters.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 2, 0) });
+		filters.Children.Add(_caMax);
 		filters.Children.Add(Lbl("PA ≥"));
 		filters.Children.Add(_paMin);
+		filters.Children.Add(Lbl(Build.T($"≤M{Money.Current.Symbol}", $"≤M{Money.Current.Symbol}")));
+		filters.Children.Add(_maxValM);
 		filters.Children.Add(_freeOnly);
+		filters.Children.Add(_expiringOnly);
 		filters.Children.Add(_injuredOnly);
 		filters.Children.Add(_wonderkid);
 		filters.Children.Add(clear);
@@ -648,6 +859,49 @@ public sealed class HomePage : UserControl, IPage
 		};
 		DockPanel.SetDock(_filterBar, Dock.Top);
 		root.Children.Add(_filterBar);
+
+		// Staff filter bar
+		var jobs = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("", Build.T("Tüm görevler", "All jobs")) };
+		jobs.AddRange(data.Staff.Select(s => s.Job).Where(j => j.Length > 0).Distinct().OrderBy(j => j).Select(j => new KeyValuePair<string, string>(j, j)));
+		_staffJob = new ComboBox { Width = 180, Height = 24, FontSize = 12, ItemsSource = jobs, DisplayMemberPath = "Value", SelectedValuePath = "Key", SelectedValue = "" };
+		_staffJob.SelectionChanged += (_, _) => Apply();
+		_staffCaMin = NumBox(Build.T("En az CA", "Min CA"), 42);
+		_staffPaMin = NumBox(Build.T("En az PA", "Min PA"), 42);
+		_staffFreeOnly = new CheckBox { Content = Build.T("Boşta (Kulüpsüz)", "Unemployed"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(10, 0, 0, 0) };
+		_staffFreeOnly.Checked += (_, _) => Apply();
+		_staffFreeOnly.Unchecked += (_, _) => Apply();
+		var clearStaff = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(8, 0, 0, 0) };
+		clearStaff.Click += (_, _) => { _staffJob.SelectedValue = ""; _staffCaMin.Text = _staffPaMin.Text = ""; _staffFreeOnly.IsChecked = false; Apply(); };
+		_staffMatchCount = Build.Text("", 11.5, Build.Res("Faint"));
+
+		var staffDock = new DockPanel();
+		DockPanel.SetDock(_staffMatchCount, Dock.Right);
+		staffDock.Children.Add(_staffMatchCount);
+		var staffFilters = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+		var jobLbl = Lbl(Build.T("Görev", "Job"));
+		jobLbl.Margin = new Thickness(0, 0, 4, 0);
+		staffFilters.Children.Add(jobLbl);
+		staffFilters.Children.Add(_staffJob);
+		staffFilters.Children.Add(Lbl("CA ≥"));
+		staffFilters.Children.Add(_staffCaMin);
+		staffFilters.Children.Add(Lbl("PA ≥"));
+		staffFilters.Children.Add(_staffPaMin);
+		staffFilters.Children.Add(_staffFreeOnly);
+		staffFilters.Children.Add(clearStaff);
+		staffDock.Children.Add(staffFilters);
+		_staffFilterBar = new Border
+		{
+			Background = Build.Res("Panel"),
+			BorderBrush = Build.Res("StrokeSoft"),
+			BorderThickness = new Thickness(1),
+			CornerRadius = new CornerRadius(5),
+			Padding = new Thickness(10, 6, 10, 6),
+			Margin = new Thickness(0, 0, 0, 10),
+			Visibility = Visibility.Collapsed,
+			Child = staffDock
+		};
+		DockPanel.SetDock(_staffFilterBar, Dock.Top);
+		root.Children.Add(_staffFilterBar);
 
 		root.Children.Add(new Border { Style = Build.StyleOf("CardBorder"), Margin = new Thickness(0, 0, 0, 12), Padding = new Thickness(3), Child = _host });
 		Content = root;
@@ -688,9 +942,12 @@ public sealed class HomePage : UserControl, IPage
 
 	private static int? ParseInt(TextBox box) => int.TryParse(box.Text.Trim(), out int v) ? v : null;
 
+	private static double? ParseDouble(TextBox box) => double.TryParse(box.Text.Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double v) ? v : null;
+
 	private void Apply()
 	{
 		_filterBar.Visibility = _mode == "players" ? Visibility.Visible : Visibility.Collapsed;
+		_staffFilterBar.Visibility = _mode == "staff" ? Visibility.Visible : Visibility.Collapsed;
 		string q = GameData.Normalize(_search.Text.Trim());
 		switch (_mode)
 		{
@@ -698,34 +955,83 @@ public sealed class HomePage : UserControl, IPage
 			_host.Content = ClubPage.ClubGrid(_data.Clubs.Where(c => c.SquadSize > 0 && (q.Length == 0 || c.Search.Contains(q))).OrderByDescending(c => c.AverageCA), _nav);
 			break;
 		case "staff":
-			_host.Content = ClubPage.StaffGrid(_data.Staff.Where(s => q.Length == 0 || s.Search.Contains(q)).OrderBy(s => s.Club.Length == 0).ThenBy(s => s.Club).ThenBy(s => s.Job), _nav, showClub: true);
+		{
+			string job = _staffJob.SelectedValue as string ?? "";
+			int? caMin = ParseInt(_staffCaMin), paMin = ParseInt(_staffPaMin);
+			bool freeOnly = _staffFreeOnly.IsChecked == true;
+			IEnumerable<StaffRow> sq = _data.Staff;
+			if (q.Length > 0) sq = sq.Where(s => s.Search.Contains(q));
+			if (job.Length > 0) sq = sq.Where(s => s.Job == job);
+			if (caMin.HasValue) sq = sq.Where(s => s.CA >= caMin.Value);
+			if (paMin.HasValue) sq = sq.Where(s => s.PA >= paMin.Value);
+			if (freeOnly) sq = sq.Where(s => s.ClubAddress == 0);
+			List<StaffRow> list = sq.OrderByDescending(s => s.CA).ThenBy(s => s.Club.Length == 0).ToList();
+			_staffMatchCount.Text = $"{list.Count:N0} / {_data.Staff.Count:N0}";
+			_host.Content = ClubPage.StaffGrid(_data, list, _nav, showClub: true);
 			break;
+		}
 		case "frozen":
 			_host.Content = FrozenView(q);
 			break;
 		default:
 		{
 			string pos = _pos.SelectedValue as string ?? "";
-			int? ageMin = ParseInt(_ageMin), ageMax = ParseInt(_ageMax), caMin = ParseInt(_caMin), paMin = ParseInt(_paMin);
+			int? ageMin = ParseInt(_ageMin), ageMax = ParseInt(_ageMax), caMin = ParseInt(_caMin), caMax = ParseInt(_caMax), paMin = ParseInt(_paMin);
+			double? maxValM = ParseDouble(_maxValM);
+			long? maxValGbp = maxValM.HasValue ? (long)Math.Round(Money.FromDisplay(maxValM.Value * 1_000_000.0, false)) : null;
 			bool freeOnly = _freeOnly.IsChecked == true;
+			bool expiringOnly = _expiringOnly.IsChecked == true;
 			bool injuredOnly = _injuredOnly.IsChecked == true;
 			bool wonderkid = _wonderkid.IsChecked == true;
+			DateTime expireCutoff = _data.GameDate.AddYears(1);
 			IEnumerable<PlayerRow> query = _data.Players;
 			if (q.Length > 0) query = query.Where(p => p.Search.Contains(q));
 			if (pos.Length > 0) query = query.Where(p => p.Positions.Split(' ', '/', ',').Any(tok => tok == pos));
 			if (ageMin.HasValue) query = query.Where(p => p.Age >= ageMin.Value);
 			if (ageMax.HasValue) query = query.Where(p => p.Age > 0 && p.Age <= ageMax.Value);
 			if (caMin.HasValue) query = query.Where(p => p.CA >= caMin.Value);
+			if (caMax.HasValue) query = query.Where(p => p.CA <= caMax.Value);
 			if (paMin.HasValue) query = query.Where(p => p.PA >= paMin.Value);
+			if (maxValGbp.HasValue) query = query.Where(p => p.Value <= maxValGbp.Value);
 			if (freeOnly) query = query.Where(p => p.ClubAddress == 0);
+			if (expiringOnly) query = query.Where(p => p.ClubAddress != 0 && p.ContractDate is { } cd && cd <= expireCutoff);
 			if (injuredOnly) query = query.Where(p => p.Status.Length > 0);
 			if (wonderkid) query = query.Where(p => p.Age > 0 && p.Age <= 21 && p.PA >= 150);
-			List<PlayerRow> rows = query.OrderByDescending(p => p.CA).ToList();
-			_matchCount.Text = Build.T($"{rows.Count:N0} / {_data.Players.Count:N0}", $"{rows.Count:N0} / {_data.Players.Count:N0}");
-			_host.Content = ClubPage.PlayerGrid(_data, rows, _nav, showClub: true);
+			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
+			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
+			_host.Content = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
 			break;
 		}
 		}
+	}
+
+	private void ExportPlayersCsv()
+	{
+		if (_lastPlayers.Count == 0)
+		{
+			return;
+		}
+		var dlg = new Microsoft.Win32.SaveFileDialog
+		{
+			Filter = "CSV (*.csv)|*.csv",
+			FileName = $"squadeditor_scout_{_data.GameDate:yyyyMMdd}.csv"
+		};
+		if (dlg.ShowDialog() != true)
+		{
+			return;
+		}
+		static string Esc(string s) => "\"" + s.Replace("\"", "\"\"") + "\"";
+		var lines = new List<string>(_lastPlayers.Count + 1)
+		{
+			"UID,Name,Positions,Age,Club,Nation,CA,PA,Value,Wage,ContractEnd,Status"
+		};
+		foreach (PlayerRow p in _lastPlayers)
+		{
+			lines.Add($"{p.Uid},{Esc(p.Name)},{Esc(p.Positions)},{p.Age},{Esc(p.Club)},{Esc(p.Nation)},{p.CA},{p.PA},{p.Value},{p.Wage},{Esc(p.ContractEnd)},{Esc(p.Status)}");
+		}
+		System.IO.File.WriteAllLines(dlg.FileName, lines, System.Text.Encoding.UTF8);
+		_nav.SetStatus(Build.T($"✓ {_lastPlayers.Count:N0} oyuncu dışa aktarıldı: {System.IO.Path.GetFileName(dlg.FileName)}",
+			$"✓ Exported {_lastPlayers.Count:N0} players to {System.IO.Path.GetFileName(dlg.FileName)}"));
 	}
 
 	private UIElement FrozenView(string q)
@@ -733,29 +1039,35 @@ public sealed class HomePage : UserControl, IPage
 		var entities = _data.Session.Freezer.Entities
 			.Where(e => q.Length == 0 || GameData.Normalize(e.Label).Contains(q))
 			.ToList();
-		if (entities.Count == 0)
-		{
-			return new TextBlock
-			{
-				Text = Build.T("Henüz dondurulmuş oyuncu ya da personel yok. Bir profil açıp \"❄ Dondur\" butonuna basabilir ya da listede sağ tıkla seçilenleri dondurabilirsin.",
-					"No frozen players or staff yet. Open a profile and click \"❄ Freeze\", or right-click a selection in any list."),
-				Foreground = Build.Res("Muted"),
-				FontSize = 13,
-				TextWrapping = TextWrapping.Wrap,
-				Margin = new Thickness(20, 24, 20, 24)
-			};
-		}
 		var panel = new DockPanel { Margin = new Thickness(12, 8, 12, 8) };
 		var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
-		var clearAll = new Button { Content = Build.T("Tüm dondurmaları kaldır", "Unfreeze all") };
-		clearAll.Click += (_, _) =>
+		var rightBtns = new StackPanel { Orientation = Orientation.Horizontal };
+		var allowInc = new CheckBox
 		{
-			_data.Session.Freezer.Clear();
-			_nav.SetStatus(Build.T("Tüm dondurmalar kaldırıldı.", "All frozen records unfrozen."));
+			Content = Build.T("Özellikler artabilir ama düşmesin", "Attributes can increase (never drop)"),
+			Style = Build.StyleOf("FilterChip"),
+			IsChecked = _data.Session.Freezer.AllowIncrease,
+			Margin = new Thickness(0, 0, 8, 0)
 		};
-		DockPanel.SetDock(clearAll, Dock.Right);
-		bar.Children.Add(clearAll);
-		bar.Children.Add(Build.Text(Build.T($"{entities.Count} kayıt dondurulmuş durumda (her 0,5 saniyede korunur).", $"{entities.Count} records frozen (kept every 0.5 s)."), 12.5, Build.Res("Muted")));
+		allowInc.Checked += (_, _) => { _data.Session.Freezer.AllowIncrease = AppSettings.Current.FreezeAllowIncrease = true; AppSettings.Current.Save(); };
+		allowInc.Unchecked += (_, _) => { _data.Session.Freezer.AllowIncrease = AppSettings.Current.FreezeAllowIncrease = false; AppSettings.Current.Save(); };
+		rightBtns.Children.Add(allowInc);
+		if (entities.Count > 0)
+		{
+			var clearAll = new Button { Content = Build.T("Tüm dondurmaları kaldır", "Unfreeze all") };
+			clearAll.Click += (_, _) =>
+			{
+				_data.Session.Freezer.Clear();
+				_nav.SetStatus(Build.T("Tüm dondurmalar kaldırıldı.", "All frozen records unfrozen."));
+			};
+			rightBtns.Children.Add(clearAll);
+		}
+		DockPanel.SetDock(rightBtns, Dock.Right);
+		bar.Children.Add(rightBtns);
+		bar.Children.Add(Build.Text(entities.Count == 0
+			? Build.T("Henüz dondurulmuş kayıt yok. Bir profil açıp \"❄ Dondur\" diyebilir ya da listede sağ tıkla seçilenleri dondurabilirsin.",
+				"No frozen records yet. Open a profile and click \"❄ Freeze\", or right-click a selection in any list.")
+			: Build.T($"{entities.Count} kayıt dondurulmuş (kapanışta ve F5'te korunur).", $"{entities.Count} records frozen (persisted across reloads and restarts)."), 12.5, Build.Res("Muted")));
 		DockPanel.SetDock(bar, Dock.Top);
 		panel.Children.Add(bar);
 

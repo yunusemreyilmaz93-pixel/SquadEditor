@@ -53,13 +53,22 @@ public partial class EditorWindow : Window, INavigator
 		UndoButton.ToolTip = Build.T("Son değişikliği geri al (Ctrl+Z)", "Undo the last change (Ctrl+Z)");
 		ReloadButton.ToolTip = Build.T("Kaydı yeniden oku (F5)", "Reload save from game (F5)");
 		FrozenButton.ToolTip = Build.T("Dondurulan kayıtları göster", "Show frozen records");
+		BackupText.Text = Build.T("💾 Yedek", "💾 Backup");
+		BackupButton.ToolTip = Build.T("En güncel FM kaydının yedeğini al", "Back up your latest FM save file");
+		HistoryButton.ToolTip = Build.T("Değişiklik geçmişini aç", "Open change history");
+		SettingsButton.ToolTip = Build.T("Ayarlar", "Settings");
 		_graphics = ReloadGraphicsAsync();
 		ApplyPreferences();
 		_connectTimer.Tick += (_, _) => TryConnect();
 		_liveTimer.Tick += (_, _) => LiveRefresh();
 		_freezeTimer.Tick += (_, _) => { if (!AppSettings.Current.ReadOnlyMode) _data?.Session.Freezer.Tick(_data.Memory); };
 		_searchTimer.Tick += (_, _) => { _searchTimer.Stop(); RunSearch(); };
-		EditField.Written += (_, f) => UpdateCounts();
+		EditField.Written += (_, f) =>
+		{
+			UpdateCounts();
+			SetStatus(Build.T($"✓ {f.Label} → {f.Display}  (Ctrl+Z geri alır · Oyunda görmek için profili kapatıp aç veya Devam'a bas)",
+				$"✓ {f.Label} → {f.Display}  (Ctrl+Z undoes · Reopen profile or press Continue in FM to see it)"));
+		};
 		SourceInitialized += (_, _) => DarkTitleBar();
 		Loaded += (_, _) =>
 		{
@@ -138,8 +147,10 @@ public partial class EditorWindow : Window, INavigator
 			await _graphics;
 			_data = data;
 			Build.Translator = s => data.Layout.Text(Loc.Instance.Language, s);
+			_data.Session.Freezer.AllowIncrease = AppSettings.Current.FreezeAllowIncrease;
+			RestoreFrozen(data);
 			_data.Session.History.Changed += (_, _) => Dispatcher.Invoke(UpdateCounts);
-			_data.Session.Freezer.Changed += (_, _) => Dispatcher.Invoke(UpdateCounts);
+			_data.Session.Freezer.Changed += (_, _) => Dispatcher.Invoke(() => { SaveFrozen(); UpdateCounts(); });
 			StatusDot.Fill = Build.Res("Positive");
 			StatusText.Text = $"{layout.Game}  ·  {layout.GameVersion}";
 			StatusPill.ToolTip = $"PID {pid}";
@@ -165,8 +176,10 @@ public partial class EditorWindow : Window, INavigator
 		catch (Exception ex)
 		{
 			_failedPid = pid;
-			OverlayTitle.Text = Build.T("Bağlanılamadı", "Could not connect");
-			OverlayText.Text = ex.Message + "\n\n" + Build.T("Kaydın yüklü olduğundan emin ol, sonra Tekrar dene'ye bas.", "Make sure a save is loaded, then press Retry.");
+			OverlayTitle.Text = Build.T("Oyun kaydına bağlanılamadı", "Could not connect to save");
+			OverlayText.Text = Build.T("Oyun açık görünüyor ama henüz bir kariyer kaydı yüklenmemiş olabilir. FM27'de kaydını yükleyip Tekrar dene'ye bas.",
+				"The game appears to be running, but a save may not be loaded yet. Load your save in FM27 and press Retry.")
+				+ $"\n\n({ex.Message})";
 			ConnectButton.Content = Build.T("Tekrar dene", "Retry");
 			ConnectButton.Visibility = Visibility.Visible;
 			OverlayProgress.Visibility = Visibility.Collapsed;
@@ -211,6 +224,7 @@ public partial class EditorWindow : Window, INavigator
 		TabStrip.Children.Clear();
 		ReloadButton.Visibility = Visibility.Collapsed;
 		FrozenButton.Visibility = Visibility.Collapsed;
+		HistoryButton.Visibility = Visibility.Collapsed;
 		ShowWaiting();
 		SetStatus(reason);
 	}
@@ -267,6 +281,79 @@ public partial class EditorWindow : Window, INavigator
 		}
 	}
 
+	private void History_Click(object sender, RoutedEventArgs e)
+	{
+		if (_data == null)
+		{
+			return;
+		}
+		var win = new HistoryWindow(_data, () => { _current?.RefreshValues(); UpdateCounts(); }) { Owner = this };
+		win.ShowDialog();
+	}
+
+	private void Backup_Click(object sender, RoutedEventArgs e)
+	{
+		FileInfo? save = SaveBackup.FindLatestSave();
+		if (save == null)
+		{
+			SetStatus(Build.T("Belgeler\\Sports Interactive\\Football Manager 27\\games klasöründe .fm kaydı bulunamadı.",
+				"No .fm save file found in Documents\\Sports Interactive\\Football Manager 27\\games."));
+			return;
+		}
+		try
+		{
+			string dest = SaveBackup.Create(save);
+			SetStatus(Build.T($"✓ Yedek alındı: {Path.GetFileName(dest)} (SquadEditor_Backups)",
+				$"✓ Backup created: {Path.GetFileName(dest)} (SquadEditor_Backups)"));
+		}
+		catch (Exception ex)
+		{
+			SetStatus(Build.T("Yedek alınamadı: ", "Backup failed: ") + ex.Message);
+		}
+	}
+
+	private void SaveFrozen()
+	{
+		if (_data == null)
+		{
+			return;
+		}
+		var uids = new List<string>();
+		foreach (var e in _data.Session.Freezer.Entities)
+		{
+			if (_data.Players.FirstOrDefault(p => p.Address == e.Entity) is { } p && p.Uid > 0)
+			{
+				uids.Add("player:" + p.Uid);
+			}
+			else if (_data.Staff.FirstOrDefault(s => s.Address == e.Entity) is { } s && s.Uid > 0)
+			{
+				uids.Add("staff:" + s.Uid);
+			}
+		}
+		AppSettings.Current.FrozenUids = uids;
+		AppSettings.Current.Save();
+	}
+
+	private static void RestoreFrozen(GameData data)
+	{
+		foreach (string key in AppSettings.Current.FrozenUids)
+		{
+			string[] parts = key.Split(':');
+			if (parts.Length != 2 || !uint.TryParse(parts[1], out uint uid) || uid == 0)
+			{
+				continue;
+			}
+			if (parts[0] == "player" && data.Players.FirstOrDefault(p => p.Uid == uid) is { } p)
+			{
+				data.Session.FreezeEntity(p.Address, p.Name, data.PlayerDef, PlayerPage.FreezeGroups);
+			}
+			else if (parts[0] == "staff" && data.Staff.FirstOrDefault(s => s.Uid == uid) is { } s)
+			{
+				data.Session.FreezeEntity(s.Address, s.Name, data.StaffDef, StaffPage.StaffFreezeGroups);
+			}
+		}
+	}
+
 	/// <summary>Open tabs are remembered by unique ID: memory addresses change every session.</summary>
 	private void RememberTabs()
 	{
@@ -274,15 +361,18 @@ public partial class EditorWindow : Window, INavigator
 		{
 			return;
 		}
-		AppSettings.Current.LastTabs = _pages.Select(p => p switch
-		{
-			PlayerPage pp => "player:" + pp.Uid,
-			ClubPage cp => "club:" + cp.Uid,
-			StaffPage sp => "staff:" + sp.Row.Uid,
-			_ => ""
-		}).Where(k => k.Length > 0).ToList();
+		AppSettings.Current.LastTabs = _pages.Select(PageUidKey).Where(k => k.Length > 0).ToList();
+		AppSettings.Current.LastActiveTab = _current == null ? null : PageUidKey(_current);
 		AppSettings.Current.Save();
 	}
+
+	private static string PageUidKey(IPage p) => p switch
+	{
+		PlayerPage pp => "player:" + pp.Uid,
+		ClubPage cp => "club:" + cp.Uid,
+		StaffPage sp => "staff:" + sp.Row.Uid,
+		_ => ""
+	};
 
 	private void RestoreTabs(GameData data)
 	{
@@ -291,6 +381,8 @@ public partial class EditorWindow : Window, INavigator
 			return;
 		}
 		IPage? home = _current;
+		IPage? active = null;
+		string? wanted = AppSettings.Current.LastActiveTab;
 		foreach (string key in AppSettings.Current.LastTabs)
 		{
 			string[] parts = key.Split(':');
@@ -304,8 +396,16 @@ public partial class EditorWindow : Window, INavigator
 			case "club" when data.Clubs.FirstOrDefault(c => c.Uid == uid) is { } club: OpenClub(club.Address); break;
 			case "staff" when data.Staff.FirstOrDefault(s => s.Uid == uid) is { } staff: OpenStaff(staff.Address); break;
 			}
+			if (key == wanted)
+			{
+				active = _current;
+			}
 		}
-		if (home != null)
+		if (active != null)
+		{
+			OpenPage(active);
+		}
+		else if (home != null)
 		{
 			OpenPage(home);
 		}
@@ -346,6 +446,11 @@ public partial class EditorWindow : Window, INavigator
 	{
 		if (_data != null && _data.ClubsByAddress.TryGetValue(address, out ClubRow? club))
 		{
+			if (club.Uid > 0 && AppSettings.Current.LastClubUid != club.Uid)
+			{
+				AppSettings.Current.LastClubUid = club.Uid;
+				AppSettings.Current.Save();
+			}
 			OpenPage(_pages.FirstOrDefault(p => p.Key == "club:" + address) ?? new ClubPage(_data, club, this));
 		}
 	}
@@ -587,9 +692,12 @@ public partial class EditorWindow : Window, INavigator
 			return;
 		}
 		int changes = _data.Session.History.Entries.Count;
+		int batches = _data.Session.History.Batches.Count;
 		int frozen = _data.Session.Freezer.Entities.Count;
 		FrozenText.Text = $"❄ {frozen}";
 		FrozenButton.Visibility = frozen > 0 ? Visibility.Visible : Visibility.Collapsed;
+		HistoryText.Text = $"📋 {batches}";
+		HistoryButton.Visibility = batches > 0 ? Visibility.Visible : Visibility.Collapsed;
 		Counts.Text = Build.T($"Oyuncu {_data.Players.Count:N0}  ·  Kulüp {_data.Clubs.Count:N0}  ·  Değişiklik {changes}" + (frozen > 0 ? $"  ·  Dondurulan {frozen}" : "") + $"  ·  Logo {ImageLookup.Graphics.ClubLogos:N0}  ·  Yüz {ImageLookup.Graphics.Faces:N0}",
 			$"Players {_data.Players.Count:N0}  ·  Clubs {_data.Clubs.Count:N0}  ·  Changes {changes}" + (frozen > 0 ? $"  ·  Frozen {frozen}" : "") + $"  ·  Logos {ImageLookup.Graphics.ClubLogos:N0}  ·  Faces {ImageLookup.Graphics.Faces:N0}");
 		UndoButton.IsEnabled = changes > 0;
@@ -648,6 +756,10 @@ public partial class EditorWindow : Window, INavigator
 
 	private void DarkTitleBar()
 	{
+		if (AppSettings.Current.UiTheme == "light")
+		{
+			return;
+		}
 		IntPtr hwnd = new WindowInteropHelper(this).Handle;
 		int on = 1;
 		DwmSetWindowAttribute(hwnd, 20, ref on, sizeof(int));

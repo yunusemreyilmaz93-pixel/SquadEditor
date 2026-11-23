@@ -278,8 +278,8 @@ public static partial class Transfers
 		var steps = new List<string>
 		{
 			Build.T($"Oyunun sözleşme havuzundan yeni bir sözleşme alınır ({pool.Free} boş yer).", $"A new contract is taken from the game's contract pool ({pool.Free} free)."),
-			Build.T($"Sözleşme: haftalık £{wage:N0}, bitiş 30.06.{endYear}, forma numarası yok (sonra düzenlenebilir).",
-				$"Contract: £{wage:N0} a week, until 30.06.{endYear}, no squad number (editable afterwards)."),
+			Build.T($"Sözleşme: {Money.Format(wage, true)}, bitiş 30.06.{endYear}, forma numarası yok (sonra düzenlenebilir).",
+				$"Contract: {Money.Format(wage, true)}, until 30.06.{endYear}, no squad number (editable afterwards)."),
 			Build.T($"{clubName} A takım listesine eklenir ({target.Items.Length} → {target.Items.Length + 1}).", $"Joins {clubName}'s senior team ({target.Items.Length} → {target.Items.Length + 1}).")
 		};
 		return new MovePlan(Build.T($"{name}, {clubName} ile sözleşme imzalar.", $"{name} signs for {clubName}."), steps, writes, club, senior);
