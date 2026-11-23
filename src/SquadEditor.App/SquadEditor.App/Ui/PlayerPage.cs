@@ -586,11 +586,13 @@ public sealed class PlayerPage : UserControl, IPage
 		var personalRows = Build.Rows(Named("First Name", "Last Name", "Common Name", "Full Name", "Unique ID", "Date of Birth", "City of Birth", "Height"));
 		personalRows.Children.Insert(6, NationPickerRow());
 		AddColumn(grid, 0, Build.Card(Build.T("Kişisel bilgiler", "Personal details"), personalRows),
+			Build.Card(Build.T("🌍 İkinci Uyruklar", "🌍 Second Nationalities"), SecondNationsPanel()),
 			Build.Card(Build.T("Konuştuğu Diller (1-10)", "Spoken Languages (1-10)"), LanguagesPanel()),
 			Build.Card(Build.T("Tercih Ettiği Hareketler", "Player Traits"), TraitsPanel()),
 			Build.Card(Build.T("Milli takım", "International"), Build.Rows(Group("International"))));
 		AddColumn(grid, 1, Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "League", "Squad Number", "Squad Status", "Contract Type", "Wage", "Loyalty Bonus", "Contract Signed", "Joined Club", "Contract Expires", "Contract Happiness", "Value", "Asking Price"))),
 			Build.Card(Build.T("Sözleşme Maddeleri ve Bonuslar", "Contract Clauses & Bonuses"), ClausesPanel()),
+			Build.Card(Build.T("⭐ Favori Kulüpler & Kişiler", "⭐ Favoured Clubs & Personnel"), PlayerRelationsPanel()),
 			Build.Card(Build.T("İtibar (0-10000)", "Reputation (0-10000)"), Build.Rows(Named("Current Reputation", "Home Reputation", "World Reputation"))));
 		return Build.Scroll(grid);
 	}
@@ -642,6 +644,148 @@ public sealed class PlayerPage : UserControl, IPage
 		Grid.SetColumn(combo, 1);
 		grid.Children.Add(combo);
 		return grid;
+	}
+
+	private UIElement SecondNationsPanel()
+	{
+		var host = new ContentControl();
+		void Fill()
+		{
+			var stack = new StackPanel { Margin = new Thickness(12, 2, 12, 10) };
+			var sec = PlayerIdentity.ReadRelations(_data, Address).Where(r => r.IsSecondNation).ToList();
+			if (sec.Count == 0)
+			{
+				stack.Children.Add(Build.Text(Build.T("Kayıtlı ikinci uyruk yok.", "No second nationalities recorded."), 12, Build.Res("Muted")));
+			}
+			bool canWrite = !AppSettings.Current.ReadOnlyMode;
+			foreach (PlayerRelation rel in sec)
+			{
+				PlayerRelation current = rel;
+				var row = new DockPanel { Margin = new Thickness(0, 2, 0, 2) };
+				var del = new Button { Content = "✕", Style = Build.StyleOf("GhostButton"), Padding = new Thickness(6, 1, 6, 1), FontSize = 11, IsEnabled = canWrite, ToolTip = Build.T("İkinci uyruğu sil (Ctrl+Z geri alır)", "Remove second nationality (Ctrl+Z undoes)") };
+				del.Click += (_, _) =>
+				{
+					PlayerIdentity.RemoveRelation(_data, Address, current.Index, current.TargetName, Name);
+					_nav.SetStatus(Build.T($"✓ {Name}: {current.TargetName} ikinci uyruğu silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed {current.TargetName}. Ctrl+Z undoes it."));
+					Fill();
+				};
+				DockPanel.SetDock(del, Dock.Right);
+				row.Children.Add(del);
+				row.Children.Add(Build.Text("🌍 " + current.TargetName, 12.5, Build.Res("Text"), FontWeights.SemiBold));
+				stack.Children.Add(row);
+			}
+			if (canWrite && _data.Nations.Count > 0)
+			{
+				var addRow = new DockPanel { Margin = new Thickness(0, 8, 0, 0) };
+				var picker = new ComboBox
+				{
+					Height = 26,
+					FontSize = 12,
+					IsEditable = true,
+					IsTextSearchEnabled = true,
+					ItemsSource = _data.Nations.OrderBy(n => n.Name).ToList(),
+					DisplayMemberPath = nameof(NationRow.Name),
+					SelectedValuePath = nameof(NationRow.Address),
+					Margin = new Thickness(0, 0, 6, 0)
+				};
+				var addBtn = new Button { Content = Build.T("+ Uyruk Ekle", "+ Add Nation"), Height = 26, Padding = new Thickness(10, 2, 10, 2), FontSize = 11.5 };
+				addBtn.Click += (_, _) =>
+				{
+					if (picker.SelectedItem is not NationRow nr) return;
+					try
+					{
+						PlayerIdentity.AddSecondNation(_data, Address, nr.Address, nr.Name, Name);
+						_nav.SetStatus(Build.T($"✓ {Name} için {nr.Name} ikinci uyruk eklendi. Ctrl+Z geri alır.", $"✓ Added {nr.Name} as second nationality for {Name}. Ctrl+Z undoes it."));
+						Fill();
+					}
+					catch (Exception ex) { _nav.SetStatus(ex.Message); }
+				};
+				DockPanel.SetDock(addBtn, Dock.Right);
+				addRow.Children.Add(addBtn);
+				addRow.Children.Add(picker);
+				stack.Children.Add(addRow);
+			}
+			host.Content = stack;
+		}
+		Fill();
+		return host;
+	}
+
+	private UIElement PlayerRelationsPanel()
+	{
+		var host = new ContentControl();
+		void Fill()
+		{
+			var stack = new StackPanel { Margin = new Thickness(12, 2, 12, 10) };
+			var rels = PlayerIdentity.ReadRelations(_data, Address).Where(r => !r.IsSecondNation).ToList();
+			if (rels.Count == 0)
+			{
+				stack.Children.Add(Build.Text(Build.T("Kayıtlı favori kulüp veya kişi yok.", "No favoured clubs or personnel recorded."), 12, Build.Res("Muted")));
+			}
+			bool canWrite = !AppSettings.Current.ReadOnlyMode;
+			foreach (PlayerRelation rel in rels)
+			{
+				PlayerRelation current = rel;
+				var row = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
+				var del = new Button { Content = "✕", Style = Build.StyleOf("GhostButton"), Padding = new Thickness(6, 1, 6, 1), FontSize = 11, Margin = new Thickness(6, 0, 0, 0), IsEnabled = canWrite };
+				del.Click += (_, _) =>
+				{
+					PlayerIdentity.RemoveRelation(_data, Address, current.Index, current.TargetName, Name);
+					_nav.SetStatus(Build.T($"✓ {Name}: {current.TargetName} ilişkisi silindi. Ctrl+Z geri alır.", $"✓ {Name}: removed relation with {current.TargetName}. Ctrl+Z undoes it."));
+					Fill();
+				};
+				var strBox = new TextBox { Text = current.Strength.ToString(), Width = 46, Height = 24, FontSize = 11.5, HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, IsReadOnly = !canWrite };
+				strBox.KeyDown += (_, e) =>
+				{
+					if (e.Key == System.Windows.Input.Key.Enter && byte.TryParse(strBox.Text.Trim(), out byte v))
+					{
+						PlayerIdentity.SetRelationStrength(_data, current, v, Name);
+						_nav.SetStatus(Build.T($"✓ {Name} · {current.TargetName} gücü {Math.Clamp(v, (byte)1, (byte)100)} yapıldı.", $"✓ {Name} · {current.TargetName} strength set to {Math.Clamp(v, (byte)1, (byte)100)}."));
+						Fill();
+					}
+				};
+				DockPanel.SetDock(del, Dock.Right);
+				DockPanel.SetDock(strBox, Dock.Right);
+				row.Children.Add(del);
+				row.Children.Add(strBox);
+				row.Children.Add(Build.Text($"{current.Badge} · {current.TargetName}", 12, Build.Res("Text")));
+				stack.Children.Add(row);
+			}
+			if (canWrite && _data.Clubs.Count > 0)
+			{
+				var addRow = new DockPanel { Margin = new Thickness(0, 8, 0, 0) };
+				var clubPick = new ComboBox
+				{
+					Height = 26,
+					FontSize = 11.5,
+					IsEditable = true,
+					IsTextSearchEnabled = true,
+					ItemsSource = _data.Clubs.Where(c => c.SquadSize > 0).OrderBy(c => c.Name).ToList(),
+					DisplayMemberPath = nameof(ClubRow.Name),
+					SelectedValuePath = nameof(ClubRow.Address),
+					Margin = new Thickness(0, 0, 6, 0)
+				};
+				var addBtn = new Button { Content = Build.T("+ Favori Kulüp", "+ Fav Club"), Height = 26, Padding = new Thickness(9, 2, 9, 2), FontSize = 11.5 };
+				addBtn.Click += (_, _) =>
+				{
+					if (clubPick.SelectedItem is not ClubRow cr) return;
+					try
+					{
+						PlayerIdentity.AddFavClub(_data, Address, cr.Address, cr.Name, 100, Name);
+						_nav.SetStatus(Build.T($"✓ {Name} için {cr.Name} favori kulüp eklendi. Ctrl+Z geri alır.", $"✓ Added {cr.Name} as favoured club for {Name}. Ctrl+Z undoes it."));
+						Fill();
+					}
+					catch (Exception ex) { _nav.SetStatus(ex.Message); }
+				};
+				DockPanel.SetDock(addBtn, Dock.Right);
+				addRow.Children.Add(addBtn);
+				addRow.Children.Add(clubPick);
+				stack.Children.Add(addRow);
+			}
+			host.Content = stack;
+		}
+		Fill();
+		return host;
 	}
 
 	private UIElement LanguagesPanel()

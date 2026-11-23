@@ -469,9 +469,12 @@ public sealed class ClubPage : UserControl, IPage
 		{
 			using (_data.Session.History.BeginBatch(Build.T($"{_club.Name}: Tesisleri fulle", $"{_club.Name}: Max facilities")))
 			{
-				foreach (EditField ef in _fields.Where(f => f.Def.GroupKey == "Facilities" && f.Def.IsWritable && f.Def.Max.HasValue))
+				foreach (EditField ef in _fields.Where(f => f.Def.GroupKey == "Facilities" && f.Def.IsWritable))
 				{
-					try { _data.Session.WriteField(_club.Address, ef.Def, ef.Def.Max.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
+					if (ef.Def.Max is double mv)
+					{
+						try { _data.Session.WriteField(_club.Address, ef.Def, mv.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
+					}
 				}
 				var pitch = _fields.FirstOrDefault(f => f.Key == "Pitch Condition" && f.Def.IsWritable);
 				if (pitch?.Def.Max is double pm)
