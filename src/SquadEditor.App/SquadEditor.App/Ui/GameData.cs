@@ -68,6 +68,21 @@ public sealed class StaffRow
 	public int Age { get; set; }
 	public int CA { get; set; }
 	public int PA { get; set; }
+	public int Attacking { get; init; }
+	public int Defending { get; init; }
+	public int Fitness { get; init; }
+	public int Goalkeeping { get; init; }
+	public int Tactical { get; init; }
+	public int Technical { get; init; }
+	public int SetPieces { get; init; }
+	public int WorkingWithYoungsters { get; init; }
+	public int Motivating { get; init; }
+	public int ManManagement { get; init; }
+	public int JudgingAbility { get; init; }
+	public int JudgingPotential { get; init; }
+	public int TacticalKnowledge { get; init; }
+	public int Physiotherapy { get; init; }
+	public int SportsScience { get; init; }
 	public int Growth => Math.Max(0, PA - CA);
 	public string BestRole { get; init; } = "";
 	public double BestRating { get; init; }
@@ -425,6 +440,22 @@ public sealed class GameData : IDisposable
 					Born = ParseDate(dob),
 					CA = ReadInt(a, def, "CA"),
 					PA = ReadInt(a, def, "PA"),
+					Attacking = ReadInt(a, def, "Attacking"),
+					Defending = ReadInt(a, def, "Defending"),
+					Fitness = ReadInt(a, def, "Fitness"),
+					Goalkeeping = ReadInt(a, def, "Goalkeeping"),
+					Tactical = ReadInt(a, def, "Tactical"),
+					Technical = ReadInt(a, def, "Technical"),
+					SetPieces = ReadInt(a, def, "Set Pieces"),
+					WorkingWithYoungsters = ReadInt(a, def, "Working with Youngsters"),
+					Determination = ReadInt(a, def, "Determination"),
+					Motivating = ReadInt(a, def, "Motivating"),
+					ManManagement = ReadInt(a, def, "Man Management"),
+					JudgingAbility = ReadInt(a, def, "Judging Player Ability"),
+					JudgingPotential = ReadInt(a, def, "Judging Player Potential"),
+					TacticalKnowledge = ReadInt(a, def, "Tactical Knowledge"),
+					Physiotherapy = ReadInt(a, def, "Physiotherapy"),
+					SportsScience = ReadInt(a, def, "Sports Science"),
 					Wage = ReadInt(a, def, "Wage"),
 					ContractEnd = Read(a, def, "Contract Expires"),
 					Search = Normalize($"{name} {clubName} {nation} {job}")

@@ -1091,6 +1091,8 @@ public sealed class HomePage : UserControl, IPage
 	private readonly ComboBox _staffJob;
 	private readonly TextBox _staffCaMin, _staffPaMin;
 	private readonly CheckBox _staffFreeOnly;
+	private readonly Button _staffAdvBtn;
+	private readonly StaffFilter _staffFilter = new StaffFilter();
 	private readonly TextBlock _matchCount;
 	private readonly TextBlock _staffMatchCount;
 	private readonly RadioButton _frozenTab;
@@ -1421,8 +1423,33 @@ public sealed class HomePage : UserControl, IPage
 		_staffFreeOnly = new CheckBox { Content = Build.T("Boşta (Kulüpsüz)", "Unemployed"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(10, 0, 0, 0) };
 		_staffFreeOnly.Checked += (_, _) => Apply();
 		_staffFreeOnly.Unchecked += (_, _) => Apply();
+		_staffAdvBtn = new Button
+		{
+			Content = Build.T("🔍 Gelişmiş (Özellikler)", "🔍 Advanced (Attributes)"),
+			Padding = new Thickness(10, 4, 10, 4),
+			FontSize = 12,
+			Margin = new Thickness(8, 0, 0, 0),
+			ToolTip = Build.T("Antrenörlük, Gözlemcilik, Medikal ve Zihinsel özelliklere göre personel filtrele", "Filter coaches, scouts and physios by 1–20 attributes")
+		};
+		_staffAdvBtn.Click += (_, _) =>
+		{
+			var win = new StaffFilterWindow(_staffFilter, _data.Staff.Select(s => s.Nation)) { Owner = Window.GetWindow(this) };
+			if (win.ShowDialog() == true)
+			{
+				_staffAdvBtn.Style = _staffFilter.IsActive ? Build.StyleOf("AccentButton") : (Style)Application.Current.FindResource(typeof(Button));
+				Apply();
+			}
+		};
 		var clearStaff = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(8, 0, 0, 0) };
-		clearStaff.Click += (_, _) => { _staffJob.SelectedValue = ""; _staffCaMin.Text = _staffPaMin.Text = ""; _staffFreeOnly.IsChecked = false; Apply(); };
+		clearStaff.Click += (_, _) =>
+		{
+			_staffJob.SelectedValue = "";
+			_staffCaMin.Text = _staffPaMin.Text = "";
+			_staffFreeOnly.IsChecked = false;
+			_staffFilter.Clear();
+			_staffAdvBtn.Style = (Style)Application.Current.FindResource(typeof(Button));
+			Apply();
+		};
 		_staffMatchCount = Build.Text("", 11.5, Build.Res("Faint"));
 
 		var staffDock = new DockPanel();
@@ -1438,6 +1465,7 @@ public sealed class HomePage : UserControl, IPage
 		staffFilters.Children.Add(Lbl("PA ≥"));
 		staffFilters.Children.Add(_staffPaMin);
 		staffFilters.Children.Add(_staffFreeOnly);
+		staffFilters.Children.Add(_staffAdvBtn);
 		staffFilters.Children.Add(clearStaff);
 		staffDock.Children.Add(staffFilters);
 		_staffFilterBar = new Border
@@ -1535,6 +1563,11 @@ public sealed class HomePage : UserControl, IPage
 			if (caMin.HasValue) sq = sq.Where(s => s.CA >= caMin.Value);
 			if (paMin.HasValue) sq = sq.Where(s => s.PA >= paMin.Value);
 			if (freeOnly) sq = sq.Where(s => s.ClubAddress == 0);
+			if (_staffFilter.IsActive)
+			{
+				long? maxStaffWage = _staffFilter.MaxWageDisplay.HasValue ? (long)Math.Round(Money.FromDisplay(_staffFilter.MaxWageDisplay.Value, true)) : null;
+				sq = sq.Where(s => _staffFilter.Matches(s, maxStaffWage));
+			}
 			List<StaffRow> list = sq.OrderByDescending(s => s.CA).ThenBy(s => s.Club.Length == 0).ToList();
 			_staffMatchCount.Text = $"{list.Count:N0} / {_data.Staff.Count:N0}";
 			_host.Content = ClubPage.StaffGrid(_data, list, _nav, showClub: true);
