@@ -47,7 +47,7 @@ public sealed class PlayerRow
 	public string ContractEnd { get; set; } = "";
 	public DateTime? ContractDate { get; set; }
 	public bool IsShortlisted { get; set; }
-	public bool IsRegen => Uid >= 2_000_000_000u;
+	public bool IsRegen => Uid >= 2_002_000_000u && Uid < 3_000_000_000u;
 	public string ShortlistStar => IsShortlisted ? "★" : "☆";
 	public string Search { get; set; } = "";
 }
