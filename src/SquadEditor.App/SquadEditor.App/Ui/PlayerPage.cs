@@ -51,6 +51,9 @@ public sealed class PlayerPage : UserControl, IPage
 	private readonly DockPanel _root = new DockPanel();
 	private Border? _header;
 	private bool _showGoalkeeping;
+	private string _highlightRole = "";
+	private ContentControl? _contentHost;
+	private bool _onOverview = true;
 
 	public PlayerPage(GameData data, ulong address, INavigator nav)
 	{
@@ -64,6 +67,11 @@ public sealed class PlayerPage : UserControl, IPage
 		Name = data.Read(address, data.PlayerDef, "Name");
 		Uid = (uint)_f["Unique ID"].Number;
 		_showGoalkeeping = _f["GK"].Number >= 15;
+		byte[] initRaw = new byte[69];
+		if (data.Memory.TryRead(address + 0x150, initRaw))
+		{
+			_highlightRole = ScoutRating.Evaluate(initRaw).Role;
+		}
 		EditField.Written += OnWritten;
 		Unloaded += (_, _) => EditField.Written -= OnWritten;
 		Loaded += (_, _) => { EditField.Written -= OnWritten; EditField.Written += OnWritten; FieldBox.EntityLabel = Name; };
@@ -82,9 +90,10 @@ public sealed class PlayerPage : UserControl, IPage
 		DockPanel.SetDock(ribbon, Dock.Top);
 		_root.Children.Add(ribbon);
 		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
-		Build.NavItem(menu, Build.T("Genel Bakış", "Overview"), () => content.Content = Overview(), isChecked: true);
-		Build.NavItem(menu, Build.T("Kişisel ve Sözleşme", "Personal & Contract"), () => content.Content = Personal());
-		Build.NavItem(menu, Build.T("Mevkiler", "Positions"), () => content.Content = Positions());
+		_contentHost = content;
+		Build.NavItem(menu, Build.T("Genel Bakış", "Overview"), () => { _onOverview = true; content.Content = Overview(); }, isChecked: true);
+		Build.NavItem(menu, Build.T("Kişisel ve Sözleşme", "Personal & Contract"), () => { _onOverview = false; content.Content = Personal(); });
+		Build.NavItem(menu, Build.T("Mevkiler", "Positions"), () => { _onOverview = false; content.Content = Positions(); });
 		_root.Children.Add(body);
 		Content = _root;
 		Background = Build.Res("Bg");
@@ -390,6 +399,38 @@ public sealed class PlayerPage : UserControl, IPage
 			panel.Children.Add(ExtendBtn(3));
 			panel.Children.Add(rename);
 			panel.Children.Add(move);
+
+			// Role highlight picker (FM-style key/secondary attribute highlighting)
+			var roleItems = new List<KeyValuePair<string, string>> { new("", Build.T("Rol vurgusu: Kapalı", "Role highlight: Off")) };
+			roleItems.AddRange(ScoutRating.AllRoles().Select(r => new KeyValuePair<string, string>(r.Code, r.Label)));
+			var rolePicker = new ComboBox
+			{
+				Width = 178,
+				Height = 26,
+				FontSize = 11.5,
+				Margin = new Thickness(4, 0, 6, 0),
+				ItemsSource = roleItems,
+				DisplayMemberPath = "Value",
+				SelectedValuePath = "Key",
+				SelectedValue = _highlightRole,
+				ToolTip = Build.T("Seçili rolün kritik (yeşil) ve ikincil (mavi) özelliklerini vurgular", "Highlights key (green) and secondary (blue) attributes for the chosen role")
+			};
+			rolePicker.SelectionChanged += (_, _) =>
+			{
+				_highlightRole = rolePicker.SelectedValue as string ?? "";
+				if (_onOverview && _contentHost != null) _contentHost.Content = Overview();
+			};
+			panel.Children.Add(rolePicker);
+
+			var compare = new Button
+			{
+				Content = Build.T("⚖ Karşılaştır", "⚖ Compare"),
+				ToolTip = Build.T("Başka bir oyuncuyla radar ve özellik farklarını yan yana kıyasla", "Compare radar & attribute deltas side-by-side with another player"),
+				Padding = new Thickness(9, 4, 9, 4),
+				Margin = new Thickness(0, 0, 6, 0)
+			};
+			compare.Click += (_, _) => OpenComparePicker();
+			panel.Children.Add(compare);
 			if (Transfers.Loan(_data.Memory, Address) is { } loan)
 			{
 				string from = _data.ClubsByAddress.TryGetValue(loan.FromClub, out ClubRow? f) ? f.Name : "?";
@@ -431,6 +472,51 @@ public sealed class PlayerPage : UserControl, IPage
 
 	private IEnumerable<EditField> Named(params string[] names) => names.Where(_f.ContainsKey).Select(n => _f[n]);
 
+	private void OpenComparePicker()
+	{
+		PlayerRow? self = _data.Players.FirstOrDefault(p => p.Address == Address);
+		if (self == null) return;
+		var dlg = new Window
+		{
+			Title = Build.T($"{Name} ile karşılaştırılacak oyuncuyu seç", $"Pick player to compare with {Name}"),
+			Width = 460,
+			Height = 460,
+			WindowStartupLocation = WindowStartupLocation.CenterOwner,
+			Owner = Window.GetWindow(this),
+			Background = Build.Res("Bg"),
+			Foreground = Build.Res("Text")
+		};
+		var dock = new DockPanel { Margin = new Thickness(14) };
+		var search = new TextBox { Height = 30, Margin = new Thickness(0, 0, 0, 8), ToolTip = Build.T("Oyuncu adı yaz…", "Type player name…") };
+		DockPanel.SetDock(search, Dock.Top);
+		var list = new ListBox { Background = Build.Res("Panel"), BorderBrush = Build.Res("StrokeSoft") };
+		void RefreshList()
+		{
+			string q = GameData.Normalize(search.Text.Trim());
+			list.ItemsSource = _data.Players
+				.Where(p => p.Address != Address && (q.Length == 0 || p.Search.Contains(q)))
+				.OrderByDescending(p => p.CA)
+				.Take(80)
+				.Select(p => new KeyValuePair<PlayerRow, string>(p, $"{p.Name}  ·  {p.Positions}  ·  CA {p.CA}  ({p.Club})"))
+				.ToList();
+			list.DisplayMemberPath = "Value";
+		}
+		search.TextChanged += (_, _) => RefreshList();
+		list.MouseDoubleClick += (_, _) =>
+		{
+			if (list.SelectedItem is KeyValuePair<PlayerRow, string> kv)
+			{
+				dlg.Close();
+				new PlayerCompareWindow(_data, self, kv.Key, _nav) { Owner = Window.GetWindow(this) }.ShowDialog();
+			}
+		};
+		RefreshList();
+		dock.Children.Add(search);
+		dock.Children.Add(list);
+		dlg.Content = dock;
+		dlg.ShowDialog();
+	}
+
 	private UIElement Overview()
 	{
 		var grid = new Grid();
@@ -438,30 +524,48 @@ public sealed class PlayerPage : UserControl, IPage
 		{
 			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 230 });
 		}
+		Func<string, int> hl = key => ScoutRating.HighlightLevel(_highlightRole, key);
 
 		// Technical / Goalkeeping toggle, like the game.
 		var host = new ContentControl();
 		var toggle = new StackPanel { Orientation = Orientation.Horizontal };
 		var tech = new RadioButton { Content = Build.T("Teknik", "Technical"), Style = Build.StyleOf("Segment"), GroupName = "tg" + Address, IsChecked = !_showGoalkeeping };
 		var gk = new RadioButton { Content = Build.T("Kalecilik", "Goalkeeping"), Style = Build.StyleOf("Segment"), GroupName = "tg" + Address, IsChecked = _showGoalkeeping };
-		tech.Checked += (_, _) => { _showGoalkeeping = false; host.Content = Build.Rows(Group("Technical")); };
-		gk.Checked += (_, _) => { _showGoalkeeping = true; host.Content = Build.Rows(Group("Goalkeeping")); };
+		tech.Checked += (_, _) => { _showGoalkeeping = false; host.Content = Build.Rows(Group("Technical"), hl); };
+		gk.Checked += (_, _) => { _showGoalkeeping = true; host.Content = Build.Rows(Group("Goalkeeping"), hl); };
 		toggle.Children.Add(tech);
 		toggle.Children.Add(gk);
-		host.Content = Build.Rows(Group(_showGoalkeeping ? "Goalkeeping" : "Technical"));
+		host.Content = Build.Rows(Group(_showGoalkeeping ? "Goalkeeping" : "Technical"), hl);
+
+		// Ability card with dual-layer CA/PA progress bar
+		var abilityStack = Build.Rows(Named("CA", "PA"));
+		abilityStack.Children.Add(PlayerVisuals.AbilityBar(_f["CA"].Number, _f["PA"].Number));
+
+		// 8-axis Attribute Radar Polygon
+		byte[] raw69 = new byte[69];
+		UIElement? radarCard = null;
+		if (_data.Memory.TryRead(Address + 0x150, raw69))
+		{
+			radarCard = Build.Card(Build.T("Özellik Radarı", "Attribute Radar"),
+				new Border { Padding = new Thickness(4, 0, 4, 6), Child = PlayerVisuals.RadarChart(214, PlayerVisuals.ComputeRadar8(raw69)) });
+		}
 
 		AddColumn(grid, 0, Build.Card(Build.T("Teknik", "Technical"), host, toggle),
 			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, RefreshValues, _nav));
-		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"))),
+		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"), hl)),
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))));
-		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"))),
+		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"), hl)),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))),
 			Build.Card(Build.T("Kişilik (1-20)", "Personality (1-20)"), Build.Rows(Group("Personality"))));
-		AddColumn(grid, 3,
-			Build.Card(Build.T("Yetenek", "Ability"), Build.Rows(Named("CA", "PA"))),
+		var col3 = new List<UIElement>
+		{
+			Build.Card(Build.T("Yetenek", "Ability"), abilityStack),
 			Build.Card(Build.T("Sağlık ve disiplin", "Fitness & discipline"), new ContentControl { Content = MedicalPanel() }),
 			Build.Card(Build.T("Durum", "Status"), Build.Rows(Named("Condition", "Match Sharpness", "Jadedness", "Morale", "Value", "Asking Price"))),
-			Build.Card(Build.T("Mevki", "Position"), MiniPitch(244)));
+			Build.Card(Build.T("Mevki", "Position"), MiniPitch(244))
+		};
+		if (radarCard != null) col3.Insert(1, radarCard);
+		AddColumn(grid, 3, col3.ToArray());
 		return Build.Scroll(grid);
 	}
 

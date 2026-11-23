@@ -46,6 +46,8 @@ public sealed class PlayerRow
 	public string Status { get; set; } = "";
 	public string ContractEnd { get; set; } = "";
 	public DateTime? ContractDate { get; set; }
+	public bool IsShortlisted { get; set; }
+	public string ShortlistStar => IsShortlisted ? "★" : "☆";
 	public string Search { get; set; } = "";
 }
 

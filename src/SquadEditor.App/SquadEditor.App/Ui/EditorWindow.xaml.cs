@@ -743,6 +743,7 @@ public partial class EditorWindow : Window, INavigator
 		Counts.Text = Build.T($"Oyuncu {_data.Players.Count:N0}  ·  Kulüp {_data.Clubs.Count:N0}  ·  Değişiklik {changes}" + (frozen > 0 ? $"  ·  Dondurulan {frozen}" : "") + $"  ·  Logo {ImageLookup.Graphics.ClubLogos:N0}  ·  Yüz {ImageLookup.Graphics.Faces:N0}",
 			$"Players {_data.Players.Count:N0}  ·  Clubs {_data.Clubs.Count:N0}  ·  Changes {changes}" + (frozen > 0 ? $"  ·  Frozen {frozen}" : "") + $"  ·  Logos {ImageLookup.Graphics.ClubLogos:N0}  ·  Faces {ImageLookup.Graphics.Faces:N0}");
 		UndoButton.IsEnabled = changes > 0;
+		UndoText.Text = changes > 0 ? Build.T($"Geri al ({changes})", $"Undo ({changes})") : Build.T("Geri al", "Undo");
 	}
 
 	public void SetStatus(string text) => Message.Text = text;
@@ -769,7 +770,7 @@ public partial class EditorWindow : Window, INavigator
 			Application.Current.Shutdown();
 			return;
 		}
-		Theme.ApplyLive(AppSettings.Current.UiTheme == "light", AppSettings.Current.Accent);
+		Theme.ApplyLive(AppSettings.Current.UiTheme, AppSettings.Current.Accent);
 		DarkTitleBar();
 		await ReloadGraphicsAsync();
 		// Pages are rebuilt so money, wages and images follow the new settings.

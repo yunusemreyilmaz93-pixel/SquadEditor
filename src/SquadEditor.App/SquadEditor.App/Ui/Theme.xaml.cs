@@ -6,25 +6,27 @@ namespace SquadEditor.App.Ui;
 
 public partial class Theme : ResourceDictionary
 {
-	public Theme(bool light = false)
+	public Theme(string themeName = "dark")
 	{
 		InitializeComponent();
-		ApplyTo(this, light, AppSettings.Current.Accent);
+		ApplyTo(this, themeName, AppSettings.Current.Accent);
 	}
 
-	/// <summary>Applies theme and accent colour immediately without restarting the application.</summary>
-	public static void ApplyLive(bool light, string? accent)
+	/// <summary>Applies theme ("dark", "oled", "charcoal", "light") and accent colour immediately without restarting.</summary>
+	public static void ApplyLive(string themeName, string? accent)
 	{
 		ResourceDictionary dict = Application.Current.Resources.MergedDictionaries.Count > 0
 			? Application.Current.Resources.MergedDictionaries[0]
 			: Application.Current.Resources;
-		ApplyTo(dict, light, accent);
+		ApplyTo(dict, themeName, accent);
 	}
 
-	private static void ApplyTo(ResourceDictionary target, bool light, string? accent)
+	private static void ApplyTo(ResourceDictionary target, string themeName, string? accent)
 	{
-		if (light)
+		bool light = themeName == "light";
+		switch (themeName)
 		{
+		case "light":
 			Set(target, "Bg", "#F2F4F8");
 			Set(target, "Chrome", "#FFFFFF");
 			Set(target, "Panel", "#FFFFFF");
@@ -39,9 +41,43 @@ public partial class Theme : ResourceDictionary
 			Set(target, "Accent", "#2F6FEB");
 			Set(target, "AccentSoft", "#D6E3FF");
 			Set(target, "Selection", "#DCE7FB");
-		}
-		else
-		{
+			SetHeader(target, "#1E448A", "#19356B", "#15284E");
+			break;
+		case "oled":
+			Set(target, "Bg", "#04060A");
+			Set(target, "Chrome", "#080B12");
+			Set(target, "Panel", "#0C1018");
+			Set(target, "Card", "#101520");
+			Set(target, "CardHover", "#182032");
+			Set(target, "Field", "#070A10");
+			Set(target, "Stroke", "#243049");
+			Set(target, "StrokeSoft", "#171F30");
+			Set(target, "Text", "#F0F4FA");
+			Set(target, "Muted", "#8E9BB3");
+			Set(target, "Faint", "#55607A");
+			Set(target, "Accent", "#4F8CFF");
+			Set(target, "AccentSoft", "#162B54");
+			Set(target, "Selection", "#1B2C4D");
+			SetHeader(target, "#102348", "#0A1429", "#05070C");
+			break;
+		case "charcoal":
+			Set(target, "Bg", "#111215");
+			Set(target, "Chrome", "#16181C");
+			Set(target, "Panel", "#1A1C21");
+			Set(target, "Card", "#1E2127");
+			Set(target, "CardHover", "#272B33");
+			Set(target, "Field", "#131519");
+			Set(target, "Stroke", "#323742");
+			Set(target, "StrokeSoft", "#252931");
+			Set(target, "Text", "#EFECE6");
+			Set(target, "Muted", "#9C9A94");
+			Set(target, "Faint", "#666561");
+			Set(target, "Accent", "#E0A82E");
+			Set(target, "AccentSoft", "#3D3117");
+			Set(target, "Selection", "#342C19");
+			SetHeader(target, "#3A2E14", "#241E12", "#16181C");
+			break;
+		default: // "dark" — FM Gece Laciverti
 			Set(target, "Bg", "#0D1119");
 			Set(target, "Chrome", "#111723");
 			Set(target, "Panel", "#141B28");
@@ -56,6 +92,8 @@ public partial class Theme : ResourceDictionary
 			Set(target, "Accent", "#4F8CFF");
 			Set(target, "AccentSoft", "#1F3A6E");
 			Set(target, "Selection", "#22345A");
+			SetHeader(target, "#1C3F86", "#16284F", "#121A2B");
+			break;
 		}
 		if (accent is { Length: 7 } hex && hex.StartsWith('#'))
 		{
@@ -75,6 +113,16 @@ public partial class Theme : ResourceDictionary
 			}
 		}
 		Colors.UseLight(light);
+	}
+
+	private static void SetHeader(ResourceDictionary target, string c0, string c1, string c2)
+	{
+		var grad = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 1) };
+		grad.GradientStops.Add(new GradientStop((Color)ColorConverter.ConvertFromString(c0), 0));
+		grad.GradientStops.Add(new GradientStop((Color)ColorConverter.ConvertFromString(c1), 0.55));
+		grad.GradientStops.Add(new GradientStop((Color)ColorConverter.ConvertFromString(c2), 1));
+		grad.Freeze();
+		target["HeaderBrush"] = grad;
 	}
 
 	private static void Set(ResourceDictionary target, string key, string color)

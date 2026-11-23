@@ -11,7 +11,7 @@ public partial class App : Application
 		DispatcherUnhandledException += OnUnhandledException;
 		base.OnStartup(e);
 		// The editor uses its own theme; the resources of the old window are not needed.
-		Resources = new Ui.Theme(AppSettings.Current.UiTheme == "light");
+		Resources = new Ui.Theme(AppSettings.Current.UiTheme);
 		new Ui.EditorWindow().Show();
 	}
 

@@ -206,6 +206,7 @@
     <Setter Property="SelectionBrush" Value="{DynamicResource Accent}"/>
     <Setter Property="Padding" Value="6,3"/>
     <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="TextBox">
@@ -306,6 +307,7 @@
     <Setter Property="SelectionMode" Value="Extended"/>
     <Setter Property="RowHeight" Value="34"/>
     <Setter Property="FontSize" Value="13"/>
+    <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
     <Setter Property="EnableRowVirtualization" Value="True"/>
     <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
     <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>

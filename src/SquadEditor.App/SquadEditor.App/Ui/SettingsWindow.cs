@@ -45,7 +45,13 @@ public sealed class SettingsWindow : Window
 		Foreground = Build.Res("Text");
 		FontFamily = (FontFamily)Application.Current.Resources["UiFont"];
 
-		Fill(_theme, new[] { ("dark", Build.T("Koyu", "Dark")), ("light", Build.T("Açık", "Light")) }, _s.UiTheme);
+		Fill(_theme, new[]
+		{
+			("dark", Build.T("FM Gece Laciverti", "FM Night Navy")),
+			("oled", Build.T("OLED Saf Siyah", "OLED Pure Black")),
+			("charcoal", Build.T("WTCS Kömür & Altın", "WTCS Charcoal & Gold")),
+			("light", Build.T("Açık Editorial", "Light Editorial"))
+		}, _s.UiTheme);
 		Fill(_language, new[] { ("tr", "Türkçe"), ("en", "English") }, _s.EffectiveLanguage);
 		Fill(_accent, Accents.Select(a => (a.Hex, "●  " + Build.T(a.Tr, a.En))).ToArray(), _s.Accent);
 		string origTheme = _s.UiTheme, origAccent = _s.Accent;
@@ -53,7 +59,7 @@ public sealed class SettingsWindow : Window
 		{
 			if (_theme.SelectedValue is string t && _accent.SelectedValue is string a)
 			{
-				Theme.ApplyLive(t == "light", a);
+				Theme.ApplyLive(t, a);
 				Background = Build.Res("Bg");
 				Foreground = Build.Res("Text");
 			}
@@ -64,7 +70,7 @@ public sealed class SettingsWindow : Window
 		{
 			if (DialogResult != true)
 			{
-				Theme.ApplyLive(origTheme == "light", origAccent);
+				Theme.ApplyLive(origTheme, origAccent);
 			}
 		};
 		Fill(_scale, new[] { 0.9, 1.0, 1.1, 1.2, 1.3 }.Select(v => (v.ToString(CultureInfo.InvariantCulture), $"%{v * 100:0}")).ToArray(), _s.UiScale.ToString(CultureInfo.InvariantCulture));

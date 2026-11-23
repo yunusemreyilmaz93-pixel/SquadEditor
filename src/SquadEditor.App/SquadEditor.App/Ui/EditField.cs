@@ -268,6 +268,7 @@ public static class FieldBox
 		box.GotKeyboardFocus -= OnFocus;
 		box.LostKeyboardFocus -= OnBlur;
 		box.PreviewKeyDown -= OnKey;
+		box.PreviewMouseWheel -= OnWheel;
 		if (e.NewValue is not EditField field)
 		{
 			return;
@@ -296,6 +297,23 @@ public static class FieldBox
 		box.GotKeyboardFocus += OnFocus;
 		box.LostKeyboardFocus += OnBlur;
 		box.PreviewKeyDown += OnKey;
+		box.PreviewMouseWheel += OnWheel;
+	}
+
+	private static void FlashSuccess(TextBox box)
+	{
+		if (Application.Current?.Resources["Positive"] is not Brush pos) return;
+		box.BorderBrush = pos;
+		var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
+		timer.Tick += (_, _) =>
+		{
+			timer.Stop();
+			if (GetField(box) is not { HasError: true })
+			{
+				box.ClearValue(Control.BorderBrushProperty);
+			}
+		};
+		timer.Start();
 	}
 
 	private static void OnFocus(object sender, KeyboardFocusChangedEventArgs e)
@@ -320,9 +338,40 @@ public static class FieldBox
 
 	private static void Commit(TextBox box, EditField f)
 	{
+		string before = f.Value;
 		if (!f.Commit(box.Text, EntityLabel))
 		{
 			box.Text = f.EditText;
+		}
+		else if (f.Value != before)
+		{
+			FlashSuccess(box);
+		}
+	}
+
+	private static void OnWheel(object sender, MouseWheelEventArgs e)
+	{
+		var box = (TextBox)sender;
+		if (GetField(box) is not { } f || f.IsReadOnly || !f.IsNumeric || f.IsMoney)
+		{
+			return;
+		}
+		if (!box.IsKeyboardFocused && !Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+		{
+			return;
+		}
+		string raw = box.IsKeyboardFocused ? box.Text : f.EditText;
+		if (double.TryParse(raw.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double v))
+		{
+			double step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 5 : 1;
+			double next = v + (e.Delta > 0 ? step : -step);
+			string before = f.Value;
+			if (f.Commit(next.ToString(CultureInfo.InvariantCulture), EntityLabel))
+			{
+				box.Text = box.IsKeyboardFocused ? f.EditText : f.Display;
+				if (f.Value != before) FlashSuccess(box);
+			}
+			e.Handled = true;
 		}
 	}
 
@@ -352,9 +401,11 @@ public static class FieldBox
 			{
 				double step = f.IsAttribute ? 1 : (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1);
 				Commit(box, f);
+				string before = f.Value;
 				if (f.Commit((v + (e.Key == Key.Up ? step : -step)).ToString(CultureInfo.InvariantCulture), EntityLabel))
 				{
 					box.Text = f.Value;
+					if (f.Value != before) FlashSuccess(box);
 				}
 				box.SelectAll();
 				e.Handled = true;

@@ -39,25 +39,50 @@ public static class Build
 			DockPanel.SetDock(extra, Dock.Right);
 			if (extra is FrameworkElement fe)
 			{
-				fe.Margin = new Thickness(0, 6, 10, 0);
+				fe.Margin = new Thickness(0, 5, 10, 4);
 			}
 			head.Children.Add(extra);
 		}
-		head.Children.Add(new TextBlock { Text = title.ToUpper(System.Globalization.CultureInfo.CurrentCulture), Style = StyleOf("CardTitle") });
+		var titleRow = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 8, 12, 6) };
+		titleRow.Children.Add(new Border
+		{
+			Width = 3,
+			Height = 11,
+			CornerRadius = new CornerRadius(1.5),
+			Background = Res("Accent"),
+			Margin = new Thickness(0, 0, 7, 0),
+			VerticalAlignment = VerticalAlignment.Center
+		});
+		var titleTxt = new TextBlock { Text = title.ToUpper(System.Globalization.CultureInfo.CurrentCulture), Style = StyleOf("CardTitle"), Margin = new Thickness(0) };
+		titleRow.Children.Add(titleTxt);
+		head.Children.Add(titleRow);
+		var headBorder = new Border
+		{
+			BorderBrush = Res("StrokeSoft"),
+			BorderThickness = new Thickness(0, 0, 0, 1),
+			Margin = new Thickness(0, 0, 0, 4),
+			Child = head
+		};
 		var panel = new DockPanel();
-		DockPanel.SetDock(head, Dock.Top);
-		panel.Children.Add(head);
+		DockPanel.SetDock(headBorder, Dock.Top);
+		panel.Children.Add(headBorder);
 		panel.Children.Add(content);
 		return new Border { Style = StyleOf("CardBorder"), Child = panel };
 	}
 
-	/// <summary>Label on the left, editable value on the right. Attributes get a compact coloured box.</summary>
-	public static FrameworkElement Row(EditField field)
+	/// <summary>Label on the left, editable value on the right. Optional role highlight: 2 = key (green), 1 = secondary (accent).</summary>
+	public static FrameworkElement Row(EditField field, int highlightLevel = 0)
 	{
-		var grid = new Grid { Margin = new Thickness(6, 0, 6, 0), Height = AppSettings.Current.Compact ? 25 : 30, Background = Brushes.Transparent };
+		Brush baseBg = highlightLevel switch
+		{
+			2 => new SolidColorBrush(Color.FromArgb(0x26, 0x3D, 0xD6, 0x8C)),
+			1 => new SolidColorBrush(Color.FromArgb(0x20, 0x4F, 0x8C, 0xFF)),
+			_ => Brushes.Transparent
+		};
+		var grid = new Grid { Height = AppSettings.Current.Compact ? 25 : 30, Background = Brushes.Transparent };
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-		var label = Text(field.Label, 13, Res("Muted"));
+		var label = Text(field.Label, 13, highlightLevel > 0 ? Res("Text") : Res("Muted"), highlightLevel == 2 ? FontWeights.SemiBold : FontWeights.Normal);
 		label.Margin = new Thickness(8, 0, 8, 0);
 		grid.Children.Add(label);
 		if (field.Def.Options.Count > 0 && !field.IsReadOnly)
@@ -81,7 +106,7 @@ public static class Build
 			};
 			Grid.SetColumn(combo, 1);
 			grid.Children.Add(combo);
-			return grid;
+			return new Border { Margin = new Thickness(6, 0, 6, 0), Child = grid };
 		}
 		double boxWidth = field.IsAttribute ? 44
 			: (field.IsMoney || field.IsDate ? 132
@@ -102,9 +127,18 @@ public static class Build
 		FieldBox.SetField(box, field);
 		Grid.SetColumn(box, 1);
 		grid.Children.Add(box);
-		grid.MouseEnter += (_, _) => grid.Background = Res("CardHover");
-		grid.MouseLeave += (_, _) => grid.Background = Brushes.Transparent;
-		return grid;
+		var wrap = new Border
+		{
+			Margin = new Thickness(6, 0, 6, 0),
+			CornerRadius = new CornerRadius(3),
+			Background = baseBg,
+			BorderBrush = highlightLevel == 2 ? Res("Positive") : (highlightLevel == 1 ? Res("Accent") : Brushes.Transparent),
+			BorderThickness = highlightLevel > 0 ? new Thickness(2, 0, 0, 0) : new Thickness(0),
+			Child = grid
+		};
+		wrap.MouseEnter += (_, _) => wrap.Background = Res("CardHover");
+		wrap.MouseLeave += (_, _) => wrap.Background = baseBg;
+		return wrap;
 	}
 
 	/// <summary>Option labels come from the layout's translations.</summary>
@@ -112,12 +146,12 @@ public static class Build
 
 	private static string Translate(EditField field, string text) => Translator(text);
 
-	public static StackPanel Rows(IEnumerable<EditField> fields)
+	public static StackPanel Rows(IEnumerable<EditField> fields, Func<string, int>? highlight = null)
 	{
 		var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
 		foreach (EditField f in fields)
 		{
-			panel.Children.Add(Row(f));
+			panel.Children.Add(Row(f, highlight?.Invoke(f.Key) ?? 0));
 		}
 		return panel;
 	}

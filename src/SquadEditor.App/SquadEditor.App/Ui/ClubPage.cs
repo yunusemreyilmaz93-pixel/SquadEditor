@@ -438,8 +438,51 @@ public sealed class ClubPage : UserControl, IPage
 	/// <summary>Sortable player table shared by squads and the player browser. Multi-select + right-click applies presets.</summary>
 	public static DataGrid PlayerGrid(GameData data, IEnumerable<PlayerRow> players, INavigator nav, bool showClub, bool showTeam = false)
 	{
-		var grid = new DataGrid { ItemsSource = players.ToList(), RowHeight = AppSettings.Current.Compact ? 27 : 34 };
-		grid.Columns.Add(Build.TemplateColumn(Build.T("Oyuncu", "Player"), "PlayerNameCell", "Name", 250));
+		var shortlist = new HashSet<uint>(AppSettings.Current.GetShortlist(data.SaveKey));
+		var list = players.ToList();
+		foreach (PlayerRow p in list) p.IsShortlisted = shortlist.Contains(p.Uid);
+		var grid = new DataGrid { ItemsSource = list, RowHeight = AppSettings.Current.Compact ? 27 : 34 };
+
+		// One-click ☆/★ shortlist star column
+		var starCol = new DataGridTemplateColumn { Header = "★", Width = 32, SortMemberPath = "IsShortlisted" };
+		var starFactory = new FrameworkElementFactory(typeof(Button));
+		starFactory.SetValue(Control.BackgroundProperty, Brushes.Transparent);
+		starFactory.SetValue(Control.BorderThicknessProperty, new Thickness(0));
+		starFactory.SetValue(Control.PaddingProperty, new Thickness(0));
+		starFactory.SetValue(Control.FontSizeProperty, 14.0);
+		starFactory.SetValue(FrameworkElement.CursorProperty, System.Windows.Input.Cursors.Hand);
+		starFactory.SetBinding(ContentControl.ContentProperty, new Binding(nameof(PlayerRow.ShortlistStar)));
+		starFactory.SetBinding(Control.ForegroundProperty, new Binding(nameof(PlayerRow.IsShortlisted))
+		{
+			Converter = new ShortlistStarBrushConverter()
+		});
+		starFactory.AddHandler(Button.ClickEvent, new RoutedEventHandler((s, ev) =>
+		{
+			if (s is Button b && b.DataContext is PlayerRow row)
+			{
+				var cur = new HashSet<uint>(AppSettings.Current.GetShortlist(data.SaveKey));
+				if (cur.Contains(row.Uid))
+				{
+					cur.Remove(row.Uid);
+					row.IsShortlisted = false;
+					nav.SetStatus(Build.T($"{row.Name} kısa listeden çıkarıldı.", $"{row.Name} removed from shortlist."));
+				}
+				else
+				{
+					cur.Add(row.Uid);
+					row.IsShortlisted = true;
+					nav.SetStatus(Build.T($"★ {row.Name} kısa listeye eklendi.", $"★ {row.Name} added to shortlist."));
+				}
+				AppSettings.Current.SetShortlist(data.SaveKey, cur.ToList());
+				AppSettings.Current.Save();
+				grid.Items.Refresh();
+				ev.Handled = true;
+			}
+		}));
+		starCol.CellTemplate = new DataTemplate { VisualTree = starFactory };
+		grid.Columns.Add(starCol);
+
+		grid.Columns.Add(Build.TemplateColumn(Build.T("Oyuncu", "Player"), "PlayerNameCell", "Name", 240));
 		var posCol = Build.TextColumn(Build.T("Mevki", "Position"), "Positions", 105);
 		posCol.SortMemberPath = "PositionOrder";
 		grid.Columns.Add(posCol);
@@ -562,6 +605,20 @@ public sealed class ClubPage : UserControl, IPage
 			dlg.ShowDialog();
 		};
 		grid.ContextMenu.Items.Add(massEdit);
+		var compareTwo = new MenuItem { Header = Build.T("⚖ Seçilen 2 oyuncuyu karşılaştır", "⚖ Compare 2 selected players") };
+		compareTwo.Click += (_, _) =>
+		{
+			var sel = grid.SelectedItems.OfType<PlayerRow>().Take(2).ToList();
+			if (sel.Count == 2)
+			{
+				new PlayerCompareWindow(data, sel[0], sel[1], nav) { Owner = Window.GetWindow(grid) }.ShowDialog();
+			}
+			else
+			{
+				nav.SetStatus(Build.T("Karşılaştırmak için Ctrl ile 2 oyuncu seç.", "Hold Ctrl and select 2 players to compare."));
+			}
+		};
+		grid.ContextMenu.Items.Add(compareTwo);
 		var cloneSel = new MenuItem { Header = Build.T("⧉ Özellikleri klonla (ilk seçilenden diğerlerine)", "⧉ Clone attributes (first selected to others)"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
 		cloneSel.Click += (_, _) =>
 		{
@@ -970,7 +1027,7 @@ public sealed class HomePage : UserControl, IPage
 	private readonly Border _staffFilterBar;
 	private readonly ComboBox _pos;
 	private readonly ComboBox _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
-	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly;
+	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly, _previewToggle;
 	private readonly Button _advFilterBtn;
 	private readonly ScoutFilter _scoutFilter = new ScoutFilter();
 	private readonly ComboBox _staffJob;
@@ -980,6 +1037,8 @@ public sealed class HomePage : UserControl, IPage
 	private readonly TextBlock _staffMatchCount;
 	private readonly RadioButton _frozenTab;
 	private readonly ContentControl _host = new ContentControl();
+	private readonly Border _previewCard = new Border { Width = 282, Margin = new Thickness(10, 0, 0, 12), Visibility = Visibility.Collapsed };
+	private readonly ContentControl _previewContent = new ContentControl();
 	private readonly System.Windows.Threading.DispatcherTimer _debounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
 	private List<PlayerRow> _lastPlayers = new List<PlayerRow>();
 	private string _mode = "players";
@@ -1099,6 +1158,9 @@ public sealed class HomePage : UserControl, IPage
 		_injuredOnly = new CheckBox { Content = Build.T("Sakat/Cezalı", "Inj/Ban"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
 		_wonderkid = new CheckBox { Content = Build.T("Wonderkid", "Wonderkid"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Yaş ≤ 21 ve PA ≥ 150", "Age ≤ 21 and PA ≥ 150") };
 		_shortlistOnly = new CheckBox { Content = Build.T("★ Kısa Liste", "★ Shortlist"), Style = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0), ToolTip = Build.T("Oyuncu profilinde ☆ Kısa Listeye Ekle veya listede sağ tıkla yıldızladığın oyuncular", "Players starred from their profile or via right-click") };
+		_previewToggle = new CheckBox { Content = Build.T("◧ Önizleme", "◧ Preview"), Style = Build.StyleOf("FilterChip"), IsChecked = true, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Seçili oyuncunun sağda hızlı özet kartını göster/gizle", "Show/hide quick player preview drawer on the right") };
+		_previewToggle.Checked += (_, _) => UpdatePreviewVisibility();
+		_previewToggle.Unchecked += (_, _) => UpdatePreviewVisibility();
 		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _shortlistOnly })
 		{
 			cb.Checked += (_, _) => Apply();
@@ -1189,9 +1251,11 @@ public sealed class HomePage : UserControl, IPage
 
 		var row2 = new DockPanel();
 		DockPanel.SetDock(_matchCount, Dock.Right);
+		DockPanel.SetDock(_previewToggle, Dock.Right);
 		DockPanel.SetDock(exportCsv, Dock.Right);
 		DockPanel.SetDock(colBtn, Dock.Right);
 		row2.Children.Add(_matchCount);
+		row2.Children.Add(_previewToggle);
 		row2.Children.Add(exportCsv);
 		row2.Children.Add(colBtn);
 		var chips = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
@@ -1264,7 +1328,18 @@ public sealed class HomePage : UserControl, IPage
 		DockPanel.SetDock(_staffFilterBar, Dock.Top);
 		root.Children.Add(_staffFilterBar);
 
-		root.Children.Add(new Border { Style = Build.StyleOf("CardBorder"), Margin = new Thickness(0, 0, 0, 12), Padding = new Thickness(3), Child = _host });
+		_previewCard.Style = Build.StyleOf("CardBorder");
+		_previewCard.Margin = new Thickness(10, 0, 0, 12);
+		_previewCard.Child = _previewContent;
+		var split = new Grid();
+		split.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+		split.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+		var tableBorder = new Border { Style = Build.StyleOf("CardBorder"), Margin = new Thickness(0, 0, 0, 12), Padding = new Thickness(3), Child = _host };
+		Grid.SetColumn(tableBorder, 0);
+		Grid.SetColumn(_previewCard, 1);
+		split.Children.Add(tableBorder);
+		split.Children.Add(_previewCard);
+		root.Children.Add(split);
 		Content = root;
 		Background = Build.Res("Bg");
 		_data.Session.Freezer.Changed += OnFreezerChanged;
@@ -1373,10 +1448,102 @@ public sealed class HomePage : UserControl, IPage
 			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp));
 			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
 			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
-			_host.Content = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
+			var pg = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
+			pg.SelectionChanged += (_, _) =>
+			{
+				if (pg.SelectedItem is PlayerRow sel) ShowPreview(sel, pg);
+			};
+			_host.Content = pg;
+			UpdatePreviewVisibility();
+			if (_lastPlayers.Count > 0) ShowPreview(_lastPlayers[0], pg);
 			break;
 		}
 		}
+		UpdatePreviewVisibility();
+	}
+
+	private void UpdatePreviewVisibility()
+	{
+		_previewCard.Visibility = _mode == "players" && _previewToggle.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+	}
+
+	private void ShowPreview(PlayerRow p, DataGrid grid)
+	{
+		var stack = new StackPanel { Margin = new Thickness(12, 12, 12, 12) };
+		var head = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+		var av = Build.Avatar(ImageLookup.Graphics.Person(p.Uid), p.Name, 52, round: true);
+		av.Margin = new Thickness(0, 0, 10, 0);
+		head.Children.Add(av);
+		var hText = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+		hText.Children.Add(Build.Text(p.Name, 14.5, Build.Res("Text"), FontWeights.Bold));
+		hText.Children.Add(Build.Text($"{p.Positions} · {p.Age} {Build.T("yaş", "yo")}", 12, Build.Res("Muted")));
+		if (p.Club.Length > 0) hText.Children.Add(Build.Text(p.Club, 11.5, Build.Res("Accent"), FontWeights.SemiBold));
+		head.Children.Add(hText);
+		stack.Children.Add(head);
+
+		stack.Children.Add(PlayerVisuals.AbilityBar(p.CA, p.PA));
+
+		byte[] raw69 = new byte[69];
+		if (_data.Memory.TryRead(p.Address + 0x150, raw69))
+		{
+			stack.Children.Add(PlayerVisuals.RadarChart(204, PlayerVisuals.ComputeRadar8(raw69)));
+			var top3 = ScoutRating.EvaluateTop3(raw69);
+			if (top3.Count > 0)
+			{
+				var roles = Build.Text(string.Join("  ·  ", top3.Select(r => $"{r.Role} {r.Rating:0.0}%")), 11.5, Build.Res("Muted"), FontWeights.SemiBold);
+				roles.HorizontalAlignment = HorizontalAlignment.Center;
+				roles.Margin = new Thickness(0, 4, 0, 8);
+				stack.Children.Add(roles);
+			}
+		}
+
+		void InfoLine(string k, string v)
+		{
+			var d = new DockPanel { Margin = new Thickness(0, 2, 0, 2) };
+			var vt = Build.Text(v, 12, Build.Res("Text"), FontWeights.SemiBold);
+			DockPanel.SetDock(vt, Dock.Right);
+			d.Children.Add(vt);
+			d.Children.Add(Build.Text(k, 11.5, Build.Res("Muted")));
+			stack.Children.Add(d);
+		}
+		InfoLine(Build.T("Değer", "Value"), Money.Format(p.Value, false));
+		InfoLine(Build.T("Maaş", "Wage"), Money.Format(p.Wage, true));
+		InfoLine(Build.T("Sözleşme", "Contract"), p.ContractEnd.Length > 0 ? p.ContractEnd : "—");
+		InfoLine(Build.T("Profesyonellik / İstikrar", "Pro / Consistency"), $"{p.Professionalism} / {p.Consistency}");
+
+		var btns = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
+		var openBtn = new Button { Content = Build.T("Profili Aç", "Open Profile"), Style = Build.StyleOf("AccentButton"), Margin = new Thickness(0, 0, 0, 6) };
+		openBtn.Click += (_, _) => _nav.OpenPlayer(p.Address);
+		btns.Children.Add(openBtn);
+		var subBtns = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
+		var starBtn = new Button
+		{
+			Content = p.IsShortlisted ? Build.T("★ Listede", "★ Listed") : Build.T("☆ Kısa Liste", "☆ Shortlist"),
+			Margin = new Thickness(0, 0, 3, 0),
+			FontSize = 11.5
+		};
+		starBtn.Click += (_, _) =>
+		{
+			var cur = new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey));
+			if (cur.Contains(p.Uid)) { cur.Remove(p.Uid); p.IsShortlisted = false; }
+			else { cur.Add(p.Uid); p.IsShortlisted = true; }
+			AppSettings.Current.SetShortlist(_data.SaveKey, cur.ToList());
+			AppSettings.Current.Save();
+			grid.Items.Refresh();
+			ShowPreview(p, grid);
+		};
+		var cmpBtn = new Button { Content = Build.T("⚖ Karşılaştır", "⚖ Compare"), Margin = new Thickness(3, 0, 0, 0), FontSize = 11.5 };
+		cmpBtn.Click += (_, _) =>
+		{
+			var other = _lastPlayers.FirstOrDefault(x => x.Address != p.Address);
+			if (other != null) new PlayerCompareWindow(_data, p, other, _nav) { Owner = Window.GetWindow(this) }.ShowDialog();
+		};
+		subBtns.Children.Add(starBtn);
+		subBtns.Children.Add(cmpBtn);
+		btns.Children.Add(subBtns);
+		stack.Children.Add(btns);
+
+		_previewContent.Content = Build.Scroll(stack);
 	}
 
 	private void ExportPlayersCsv()
