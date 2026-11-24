@@ -219,6 +219,16 @@ public sealed class ClubPage : UserControl, IPage
 			_nav.SetStatus(Build.F("✓ {0} oyuncu maça hazırlandı ({1} sakatlık, {2} ceza, kondisyon/moral/mutluluk fullendi · {3} alan). Ctrl+Z geri alır.", "✓ {0} players prepared ({1} healed, {2} bans lifted, fitness/morale/happiness maxed · {3} fields). Ctrl+Z undoes it.", rows.Count, healed, lifted, boosted));
 		};
 		quickBar.Children.Add(prepare);
+		var snapBtn = new Button
+		{
+			Content = Build.T("📸 Gelişim", "📸 Progress"),
+			ToolTip = Build.T("Kadro fotoğrafı çek ve sezon boyunca oyuncuların CA, değer ve özellik gelişimini takip et", "Take a squad snapshot and track CA, value & attribute progression across the season"),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12
+		};
+		snapBtn.Click += (_, _) => SquadSnapshot.OpenTracker(_data, _club, _nav);
+		quickBar.Children.Add(snapBtn);
 		var contractsBtn = new Button
 		{
 			Content = Build.T("📝 Toplu Sözleşme ▾", "📝 Bulk Contracts ▾"),
@@ -560,6 +570,12 @@ public sealed class ClubPage : UserControl, IPage
 			col.SortMemberPath = "BestRating";
 			grid.Columns.Add(col);
 		}
+		if (extras.Contains("PR") || extras.Contains("Role"))
+		{
+			var col = Build.TextColumn("PR %", "PotentialDisplay", 58);
+			col.SortMemberPath = "PotentialRating";
+			grid.Columns.Add(col);
+		}
 		if (extras.Contains("Pro")) grid.Columns.Add(Build.TextColumn(Build.T("Prof.", "Pro"), "Professionalism", 48));
 		if (extras.Contains("Cons")) grid.Columns.Add(Build.TextColumn(Build.T("İstik.", "Cons"), "Consistency", 48));
 		if (extras.Contains("Imp")) grid.Columns.Add(Build.TextColumn(Build.T("Ön.Maç", "Imp.M"), "ImportantMatches", 56));
@@ -726,6 +742,7 @@ public sealed class ClubPage : UserControl, IPage
 		grid.Columns.Add(Build.TextColumn(Build.T("Uyruk", "Nation"), "Nation", 120));
 		grid.Columns.Add(Build.TemplateColumn("CA", "CACell", "CA", 52));
 		grid.Columns.Add(Build.TemplateColumn("PA", "PACell", "PA", 52));
+		grid.Columns.Add(Build.TextColumn(Build.T("★ Yıldız", "★ Stars"), "BestStarsText", 68));
 		grid.Columns.Add(MoneyColumn(Build.T("Maaş", "Wage"), "Wage", true, 125));
 		grid.Columns.Add(Build.TextColumn(Build.T("Sözleşme", "Contract"), "ContractEnd", 95));
 		grid.MouseDoubleClick += (_, _) =>
@@ -986,6 +1003,7 @@ public sealed class StaffPage : UserControl, IPage
 		c1.Children.Add(Build.Card(Build.T("Bilgi seviyesi", "Knowledge"), Build.Rows(Group("Knowledge"))));
 		c1.Children.Add(Build.Card(Build.T("Kişilik", "Personality"), Build.Rows(Group("Personality"))));
 		var c2 = new StackPanel();
+		c2.Children.Add(StaffStars.BuildCard(Row));
 		c2.Children.Add(Build.Card(Build.T("Yetenek ve itibar", "Ability & reputation"), Build.Rows(Named("CA", "PA", "Home Reputation", "Current Reputation", "World Reputation"))));
 		c2.Children.Add(Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "Job", "Wage", "Contract Expires"))));
 		c2.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(Named("First Name", "Last Name", "Common Name", "Unique ID", "Date of Birth", "Nation", "City of Birth"))));
@@ -1285,6 +1303,7 @@ public sealed class HomePage : UserControl, IPage
 			{
 				("Growth", Build.T("PA − CA (Gelişim Payı)", "PA − CA (Growth)")),
 				("Role", Build.T("En İyi Rol (%)", "Best Role (%)")),
+				("PR", Build.T("Potansiyel Reyting (PR %)", "Potential Rating (PR %)")),
 				("Pro", Build.T("Profesyonellik", "Professionalism")),
 				("Cons", Build.T("İstikrar", "Consistency")),
 				("Imp", Build.T("Önemli Maçlar", "Important Matches")),
@@ -1343,6 +1362,7 @@ public sealed class HomePage : UserControl, IPage
 				mi.Click += (_, _) => { ResetAllFilters(); setup(); Apply(); };
 				menu.Items.Add(mi);
 			}
+			AddPreset("💎 Moneyball Cevher (Yaş ≤ 24 · ≤ 10M · PR ≥ 78% · Prof ≥ 12)", "💎 Moneyball Gems (Age ≤ 24 · ≤ 10M · PR ≥ 78% · Pro ≥ 12)", () => { _ageMax.Text = "24"; _maxValM.Text = "10"; _scoutFilter.MinPotentialRating = 78; _scoutFilter.MinPro = 12; _scoutFilter.MaxInj = 10; _advFilterBtn.Style = Build.StyleOf("AccentButton"); });
 			AddPreset("⭐ Ucuz Wonderkidler (Yaş ≤ 20 · PA ≥ 155 · ≤ 15M)", "⭐ Bargain Wonderkids (Age ≤ 20 · PA ≥ 155 · ≤ 15M)", () => { _ageMax.Text = "20"; _paMin.Text = "155"; _maxValM.Text = "15"; });
 			AddPreset("⭐ Sözleşmesi Biten Yıldızlar (CA ≥ 145 · Sözl. ≤ 1y)", "⭐ Expiring Stars (CA ≥ 145 · Exp ≤ 1y)", () => { _caMin.Text = "145"; _expiringOnly.IsChecked = true; });
 			AddPreset("⭐ Yerli Genç Yetenekler (Türkiye · Yaş ≤ 21 · PA ≥ 135)", "⭐ Turkish Wonderkids (Türkiye · Age ≤ 21 · PA ≥ 135)", () => { _search.Text = "Türkiye"; _ageMax.Text = "21"; _paMin.Text = "135"; });
@@ -1613,6 +1633,7 @@ public sealed class HomePage : UserControl, IPage
 			bool shortlistOnly = _shortlistOnly.IsChecked == true;
 			HashSet<uint>? shortlist = shortlistOnly ? new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey)) : null;
 			long? maxWageGbp = _scoutFilter.MaxWageDisplay.HasValue ? (long)Math.Round(Money.FromDisplay(_scoutFilter.MaxWageDisplay.Value, true)) : null;
+			long? maxAskingGbp = _scoutFilter.MaxAskingPriceM.HasValue ? (long)Math.Round(Money.FromDisplay(_scoutFilter.MaxAskingPriceM.Value * 1_000_000.0, false)) : null;
 			DateTime expireCutoff = _data.GameDate.AddYears(1);
 			IEnumerable<PlayerRow> query = _data.Players;
 			if (q.Length > 0) query = query.Where(p => p.Search.Contains(q));
@@ -1635,7 +1656,7 @@ public sealed class HomePage : UserControl, IPage
 			if (wonderkid) query = query.Where(p => p.Age > 0 && p.Age <= 21 && p.PA >= 150);
 			if (regenOnly) query = query.Where(p => p.IsRegen);
 			if (shortlist != null) query = query.Where(p => shortlist.Contains(p.Uid));
-			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp));
+			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp, maxAskingGbp));
 			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
 			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
 			RebuildActiveChips(pos, region, nation, ageMin, ageMax, caMin, caMax, paMin, maxValM, freeOnly, expiringOnly, injuredOnly, wonderkid, regenOnly, shortlistOnly);

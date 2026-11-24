@@ -27,7 +27,13 @@ public sealed class PlayerRow
 	public int Growth => Math.Max(0, PA - CA);
 	public string BestRole { get; init; } = "";
 	public double BestRating { get; init; }
+	public double PotentialRating { get; init; }
 	public string RoleDisplay => BestRole.Length > 0 ? $"{BestRole} {BestRating:0.0}%" : "";
+	public string PotentialDisplay => PotentialRating > 0 ? $"{PotentialRating:0.0}%" : "";
+	public int LeftFoot { get; init; }
+	public int RightFoot { get; init; }
+	public bool BothFeet => LeftFoot >= 15 && RightFoot >= 15;
+	public long AskingPrice { get; init; }
 	public int Consistency { get; init; }
 	public int ImportantMatches { get; init; }
 	public int InjuryProneness { get; init; }
@@ -85,10 +91,18 @@ public sealed class StaffRow
 	public int TacticalKnowledge { get; init; }
 	public int Physiotherapy { get; init; }
 	public int SportsScience { get; init; }
+	public double BestStars => StaffStars.Best(this).BestStars;
+	public string BestStarsText => StaffStars.Best(this).BestShort;
 	public int Growth => Math.Max(0, PA - CA);
 	public string BestRole { get; init; } = "";
 	public double BestRating { get; init; }
+	public double PotentialRating { get; init; }
 	public string RoleDisplay => BestRole.Length > 0 ? $"{BestRole} {BestRating:0.0}%" : "";
+	public string PotentialDisplay => PotentialRating > 0 ? $"{PotentialRating:0.0}%" : "";
+	public int LeftFoot { get; init; }
+	public int RightFoot { get; init; }
+	public bool BothFeet => LeftFoot >= 15 && RightFoot >= 15;
+	public long AskingPrice { get; init; }
 	public int Consistency { get; init; }
 	public int ImportantMatches { get; init; }
 	public int InjuryProneness { get; init; }
@@ -341,6 +355,9 @@ public sealed class GameData : IDisposable
 					}
 				}
 				static int Scaled(byte b) => Math.Clamp((int)Math.Round(b / 5.0), 1, 20);
+				int ca = ReadInt(a, PlayerDef, "CA");
+				int pa = ReadInt(a, PlayerDef, "PA");
+				double potentialRating = hasRaw ? ScoutRating.EvaluatePotential(raw69, ca, pa).Rating : 0;
 				players[i] = new PlayerRow
 				{
 					Address = a,
@@ -355,13 +372,17 @@ public sealed class GameData : IDisposable
 					DateOfBirth = dob,
 					Born = ParseDate(dob),
 					Value = ReadInt(a, PlayerDef, "Value"),
+					AskingPrice = ReadInt(a, PlayerDef, "Asking Price"),
 					Morale = ReadInt(a, PlayerDef, "Morale"),
 					TeamAddress = ulong.TryParse(Read(a, PlayerDef, "Team Ref"), out ulong t) ? t : 0,
 					BirthYear = ReadInt(a, PlayerDef, "Birth Year"),
-					CA = ReadInt(a, PlayerDef, "CA"),
-					PA = ReadInt(a, PlayerDef, "PA"),
+					CA = ca,
+					PA = pa,
 					BestRole = bestRole,
 					BestRating = bestRating,
+					PotentialRating = potentialRating,
+					LeftFoot = ReadInt(a, PlayerDef, "Left Foot"),
+					RightFoot = ReadInt(a, PlayerDef, "Right Foot"),
 					Consistency = Scaled(raw69[15 + 44]),
 					ImportantMatches = Scaled(raw69[15 + 47]),
 					InjuryProneness = Scaled(raw69[15 + 48]),

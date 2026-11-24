@@ -104,4 +104,46 @@ public static class ScoutRating
 		var top = EvaluateTop3(raw69);
 		return top.Count > 0 ? top[0] : ("", 0);
 	}
+
+	/// <summary>
+	/// Projects a player's 54 attributes (0..100 raw scale) to their peak Potential Ability (PA).
+	/// Strictly pure / read-only calculation — never mutates memory.
+	/// </summary>
+	public static byte[] ProjectAttributes(ReadOnlySpan<byte> raw69, int ca, int pa)
+	{
+		byte[] projected = raw69.ToArray();
+		if (projected.Length < 69) return projected;
+		int gap = Math.Max(0, pa - ca);
+		if (gap == 0) return projected;
+		// Each +10 CA headroom adds ~4.2 raw points (~0.84 on 1-20 scale) across trainable attributes
+		double baseGain = gap * 0.42;
+		for (int i = 0; i < 54; i++)
+		{
+			int cur = projected[15 + i];
+			// Flair(26), Aggression(45), Bravery(43), Determination(51) grow slower in FM
+			double factor = i is 26 or 43 or 45 or 51 ? 0.35 : 1.0;
+			int next = (int)Math.Round(cur + baseGain * factor);
+			projected[15 + i] = (byte)Math.Clamp(next, cur, 100);
+		}
+		return projected;
+	}
+
+	/// <summary>Computes Genie Scout-style Potential Rating (PR %) at peak PA.</summary>
+	public static (string Role, double Rating) EvaluatePotential(ReadOnlySpan<byte> raw69, int ca, int pa)
+	{
+		if (raw69.Length < 69) return ("", 0);
+		if (pa <= ca) return Evaluate(raw69);
+		byte[] projected = ProjectAttributes(raw69, ca, pa);
+		return Evaluate(projected);
+	}
+
+	/// <summary>Projects a single 1–20 attribute value to peak PA (read-only preview helper).</summary>
+	public static int ProjectAttribute1to20(int current, int ca, int pa, string fieldName)
+	{
+		int gap = Math.Max(0, pa - ca);
+		if (gap <= 0) return current;
+		double factor = fieldName is "Flair" or "Aggression" or "Bravery" or "Determination" or "Natural Fitness" ? 0.35 : 1.0;
+		int gain = (int)Math.Round((gap * 0.084) * factor);
+		return Math.Clamp(current + gain, current, 20);
+	}
 }

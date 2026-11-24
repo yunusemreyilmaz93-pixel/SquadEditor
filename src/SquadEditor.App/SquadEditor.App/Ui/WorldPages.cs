@@ -69,6 +69,18 @@ public sealed class NationPage : UserControl, IPage
 		});
 		right.Children.Add(Build.Card(Build.T("Hızlı İşlemler", "Quick Actions"), quick));
 
+		var nationClubs = _data.Clubs
+			.Where(c => c.SquadSize > 0 && c.Nation == _row.Name)
+			.OrderByDescending(c => c.AverageCA)
+			.Take(25)
+			.ToList();
+		if (nationClubs.Count > 0)
+		{
+			var clubGrid = ClubPage.ClubGrid(nationClubs, _nav);
+			clubGrid.MaxHeight = 440;
+			right.Children.Add(Build.Card(Build.F("Ülkedeki En İyi Kulüpler ({0})", "Top Clubs in Nation ({0})", nationClubs.Count), clubGrid));
+		}
+
 		System.Windows.Controls.Grid.SetColumn(right, 1);
 		grid.Children.Add(left);
 		grid.Children.Add(right);
@@ -191,7 +203,40 @@ public sealed class CompPage : UserControl, IPage
 			}
 			_nav.SetStatus(Build.F("✓ {0} itibarı → {1} / {2}", "✓ {0} reputation → {1} / {2}", _row.Name, next, next10k));
 		});
+		QBtn(Build.T("🌟 Lig Altın Çağı (İtibar 200 + Tüm Tesisler 20)", "🌟 League Golden Age (Rep 200 + All Facilities 20)"), () =>
+		{
+			var leagueClubs = _data.Clubs.Where(c => c.SquadSize > 0 && (c.League == _row.Name || (_row.ShortName.Length > 0 && c.League == _row.ShortName))).ToList();
+			string[] facFields = { "Training Facilities", "Youth Facilities", "Youth Coaching", "Youth Recruitment", "Corporate Facilities" };
+			using (_data.Session.History.BeginBatch($"{_row.Name}: Golden Age"))
+			{
+				_data.Session.WriteField(_row.Address, F("Reputation").Def, "200", _row.Name);
+				_data.Session.WriteField(_row.Address, F("Reputation (10000)").Def, "10000", _row.Name);
+				foreach (ClubRow c in leagueClubs)
+				{
+					foreach (string fn in facFields)
+					{
+						var fd = _data.ClubDef.Fields.FirstOrDefault(x => x.Name == fn);
+						if (fd != null)
+						{
+							try { _data.Session.WriteField(c.Address, fd, "20", c.Name); } catch { }
+						}
+					}
+				}
+			}
+			_nav.SetStatus(Build.F("✓ {0}: İtibar 200 ve {1} kulübün tüm tesisleri 20 yapıldı. Ctrl+Z geri alır.", "✓ {0}: Rep 200 and all facilities maxed for {1} clubs. Ctrl+Z undoes it.", _row.Name, leagueClubs.Count));
+		});
 		right.Children.Add(Build.Card(Build.T("Hızlı İşlemler", "Quick Actions"), quick));
+
+		var clubsInLeague = _data.Clubs
+			.Where(c => c.SquadSize > 0 && (c.League == _row.Name || (_row.ShortName.Length > 0 && c.League == _row.ShortName)))
+			.OrderByDescending(c => c.AverageCA)
+			.ToList();
+		if (clubsInLeague.Count > 0)
+		{
+			var clubGrid = ClubPage.ClubGrid(clubsInLeague, _nav);
+			clubGrid.MaxHeight = 440;
+			right.Children.Add(Build.Card(Build.F("Ligdeki Kulüpler ({0})", "Clubs in League ({0})", clubsInLeague.Count), clubGrid));
+		}
 
 		System.Windows.Controls.Grid.SetColumn(right, 1);
 		grid.Children.Add(left);

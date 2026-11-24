@@ -302,16 +302,20 @@ public static class ClubBestXi
 				canvas.Children.Add(badge);
 			}
 
-			// Right side: Depth & Gap Analysis
+			// Right side: Depth & Gap Analysis + Smart Transfer Finder per slot
+			long clubBudget = long.TryParse(data.Read(club.Address, data.ClubDef, "Transfer Budget"), out long cbVal) ? cbVal : 0;
 			var depthStack = new StackPanel { Margin = new Thickness(12, 4, 12, 10) };
 			depthStack.Children.Add(Build.Text(Build.F("İlk 11 Ortalama CA: {0:0.0}  ·  Kırmızı satırlar zayıf veya yedeksiz mevkiler", "Best XI Avg CA: {0:0.0}  ·  Red rows mark weak or uncovered slots", avgCa), 11.5, Build.Res("Muted")));
 			foreach (var (slot, p, bk) in starters)
 			{
+				Slot curSlot = slot;
+				PlayerRow? curStarter = p;
 				bool weak = p == null || p.CA < avgCa - 14 || bk == null;
 				var g = new Grid { Height = 30, Margin = new Thickness(0, 2, 0, 2) };
 				g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
 				g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 				g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+				g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 				g.Children.Add(Build.Text(slot.Label, 12, weak ? Build.Res("Danger") : Build.Res("Accent"), FontWeights.Bold));
 				var pBtn = new Button
 				{
@@ -326,12 +330,25 @@ public static class ClubBestXi
 				var bkTxt = Build.Text(bk != null ? $"{bk.Name} ({bk.CA})" : Build.T("Yedek yok", "No backup"), 11.5, bk == null ? Build.Res("Danger") : Build.Res("Muted"));
 				Grid.SetColumn(bkTxt, 2);
 				g.Children.Add(bkTxt);
+				var findBtn = new Button
+				{
+					Content = "🔍",
+					ToolTip = Build.F("{0} mevkisi için akıllı transfer hedeflerini öner", "Suggest smart transfer targets for {0}", curSlot.Label),
+					Style = weak ? Build.StyleOf("AccentButton") : Build.StyleOf("GhostButton"),
+					Padding = new Thickness(6, 2, 6, 2),
+					FontSize = 11.5,
+					Margin = new Thickness(4, 0, 0, 0),
+					VerticalAlignment = VerticalAlignment.Center
+				};
+				findBtn.Click += (_, _) => OpenTransferFinder(data, club, curSlot, curStarter, clubBudget, nav);
+				Grid.SetColumn(findBtn, 3);
+				g.Children.Add(findBtn);
 				depthStack.Children.Add(g);
 			}
 
 			var split = new Grid { VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Left };
 			split.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-			split.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(460) });
+			split.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(500) });
 			var pitchCard = Build.Card(Build.F("En İyi 11 ({0})", "Best XI ({0})", formName), new Border { Padding = new Thickness(12, 4, 12, 12), Child = canvas });
 			var depthCard = Build.Card(Build.T("Kadro Derinliği & Eksik Analizi", "Squad Depth & Gap Analysis"), depthStack);
 			Grid.SetColumn(pitchCard, 0);
@@ -355,6 +372,87 @@ public static class ClubBestXi
 		dock.Children.Add(bar);
 		dock.Children.Add(host);
 		return dock;
+	}
+
+	private static void OpenTransferFinder(GameData data, ClubRow club, Slot slot, PlayerRow? currentStarter, long clubBudget, INavigator nav)
+	{
+		var dlg = new Window
+		{
+			Title = Build.F("🔍 {0} Transfer Önerileri — {1}", "🔍 {0} Transfer Targets — {1}", slot.Label, club.Name),
+			Width = 940,
+			Height = 560,
+			WindowStartupLocation = WindowStartupLocation.CenterOwner,
+			Owner = Application.Current.MainWindow,
+			Background = Build.Res("Bg"),
+			Foreground = Build.Res("Text"),
+			FontFamily = (FontFamily)Application.Current.Resources["UiFont"]
+		};
+
+		var root = new DockPanel { Margin = new Thickness(14) };
+		var top = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 10) };
+
+		string starterText = currentStarter != null ? $"{currentStarter.Name} (CA {currentStarter.CA})" : Build.T("Eksik", "Missing");
+		var info = Build.Text(Build.F("Mevcut: {0}  ·  Transfer Bütçesi: {1}", "Current: {0}  ·  Transfer Budget: {1}", starterText, Money.Format(Math.Max(0, clubBudget), false)), 12.5, Build.Res("Muted"));
+		info.Margin = new Thickness(0, 0, 14, 0);
+		top.Children.Add(info);
+
+		var withinBudget = new CheckBox
+		{
+			Content = Build.T("Bütçe İçi", "Within Budget"),
+			Style = Build.StyleOf("FilterChip"),
+			IsChecked = clubBudget > 0,
+			Margin = new Thickness(0, 0, 6, 0)
+		};
+		var wonderkids = new CheckBox
+		{
+			Content = Build.T("Genç (Yaş ≤ 23)", "Young (Age ≤ 23)"),
+			Style = Build.StyleOf("FilterChip"),
+			Margin = new Thickness(0, 0, 6, 0)
+		};
+		var upgradeOnly = new CheckBox
+		{
+			Content = Build.T("Mevcuttan İyi (CA ≥)", "Upgrade Only"),
+			Style = Build.StyleOf("FilterChip"),
+			Margin = new Thickness(0, 0, 6, 0)
+		};
+		top.Children.Add(withinBudget);
+		top.Children.Add(wonderkids);
+		top.Children.Add(upgradeOnly);
+		DockPanel.SetDock(top, Dock.Top);
+		root.Children.Add(top);
+
+		var gridHost = new ContentControl();
+		void RefreshTargets()
+		{
+			bool fitBudget = withinBudget.IsChecked == true && clubBudget > 0;
+			bool youngOnly = wonderkids.IsChecked == true;
+			bool onlyUpgrade = upgradeOnly.IsChecked == true && currentStarter != null;
+			long maxCost = (long)(clubBudget * 1.15);
+
+			var targets = data.Players
+				.Where(p => p.ClubAddress != club.Address
+					&& p.Positions.Split(' ', '/', ',').Any(tok => slot.Codes.Contains(tok))
+					&& (!fitBudget || (p.AskingPrice > 0 ? p.AskingPrice <= maxCost : p.Value <= maxCost))
+					&& (!youngOnly || (p.Age > 0 && p.Age <= 23))
+					&& (!onlyUpgrade || p.CA >= currentStarter!.CA))
+				.OrderByDescending(p => p.BestRating * 0.55 + p.PotentialRating * 0.45)
+				.Take(40)
+				.ToList();
+
+			var pg = ClubPage.PlayerGrid(data, targets, nav, showClub: true);
+			pg.MouseDoubleClick += (_, _) => { if (pg.SelectedItem is PlayerRow) dlg.Close(); };
+			gridHost.Content = new Border { Style = Build.StyleOf("CardBorder"), Padding = new Thickness(4), Child = pg };
+		}
+
+		foreach (var cb in new[] { withinBudget, wonderkids, upgradeOnly })
+		{
+			cb.Checked += (_, _) => RefreshTargets();
+			cb.Unchecked += (_, _) => RefreshTargets();
+		}
+		RefreshTargets();
+		root.Children.Add(gridHost);
+		dlg.Content = root;
+		dlg.ShowDialog();
 	}
 }
 

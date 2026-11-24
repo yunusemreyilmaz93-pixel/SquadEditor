@@ -52,6 +52,7 @@ public sealed class PlayerPage : UserControl, IPage
 	private Border? _header;
 	private bool _showGoalkeeping;
 	private string _highlightRole = "";
+	private bool _paPreview;
 	private ContentControl? _contentHost;
 	private bool _onOverview = true;
 
@@ -175,7 +176,11 @@ public sealed class PlayerPage : UserControl, IPage
 			var (role, rating) = ScoutRating.Evaluate(raw69);
 			if (role.Length > 0)
 			{
-				pills.Add(Build.Pill($"{role} {rating:0.0}%", Build.T("En İyi Rol", "Best Role"), Colors.Attribute((int)Math.Round(rating / 5.0))));
+				var (_, pr) = ScoutRating.EvaluatePotential(raw69, ca, pa);
+				string roleText = pa > ca + 2 && pr > rating + 0.4
+					? $"{role} {rating:0.0}% → {pr:0.0}%"
+					: $"{role} {rating:0.0}%";
+				pills.Add(Build.Pill(roleText, pa > ca + 2 ? Build.T("Rol / PR %", "Role / PR %") : Build.T("En İyi Rol", "Best Role"), Colors.Attribute((int)Math.Round(rating / 5.0))));
 			}
 		}
 		if (_f["Value"].Number > 0)
@@ -431,6 +436,26 @@ public sealed class PlayerPage : UserControl, IPage
 			compare.Click += (_, _) => OpenComparePicker();
 			panel.Children.Add(compare);
 
+			int curCa = _f["CA"].Number, curPa = _f["PA"].Number;
+			if (curPa > curCa)
+			{
+				var paPrevBtn = new Button
+				{
+					Content = _paPreview ? Build.T("🔮 PA Önizleme: AÇIK", "🔮 PA Preview: ON") : Build.T("🔮 PA Önizleme", "🔮 PA Preview"),
+					ToolTip = Build.T("Oyuncunun PA zirvesine ulaştığında özelliklerinin nasıl görüneceğini salt okunur önizle (belleğe yazmaz)", "Read-only preview of projected 1–20 attributes at peak PA (never writes to memory)"),
+					Padding = new Thickness(9, 4, 9, 4),
+					Margin = new Thickness(0, 0, 6, 0)
+				};
+				if (_paPreview) paPrevBtn.Style = Build.StyleOf("AccentButton");
+				paPrevBtn.Click += (_, _) =>
+				{
+					_paPreview = !_paPreview;
+					Fill();
+					if (_onOverview && _contentHost != null) _contentHost.Content = Overview();
+				};
+				panel.Children.Add(paPrevBtn);
+			}
+
 			var pngBtn = new Button
 			{
 				Content = Build.T("📸 Kart PNG", "📸 Card PNG"),
@@ -534,36 +559,91 @@ public sealed class PlayerPage : UserControl, IPage
 			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 230 });
 		}
 		Func<string, int> hl = key => ScoutRating.HighlightLevel(_highlightRole, key);
+		int ca = _f["CA"].Number, pa = _f["PA"].Number;
+		bool showProj = _paPreview && pa > ca;
+
+		StackPanel AttrRows(IEnumerable<EditField> fields)
+		{
+			if (!showProj) return Build.Rows(fields, hl);
+			var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
+			foreach (EditField f in fields)
+			{
+				int cur = f.Number;
+				int proj = ScoutRating.ProjectAttribute1to20(cur, ca, pa, f.Key);
+				int diff = proj - cur;
+				int h = hl(f.Key);
+				var row = new Grid { Height = AppSettings.Current.Compact ? 24 : 28 };
+				row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+				row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+				var lbl = Build.Text(f.Label, 12.5, h == 2 ? Build.Res("Positive") : (h == 1 ? Build.Res("Accent") : Build.Res("Muted")), h > 0 ? FontWeights.SemiBold : FontWeights.Normal);
+				lbl.Margin = new Thickness(8, 0, 8, 0);
+				row.Children.Add(lbl);
+				var valPanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+				if (diff > 0)
+				{
+					valPanel.Children.Add(Build.Text($"{cur} → ", 11, Build.Res("Faint")));
+					valPanel.Children.Add(Build.Text(proj.ToString(), 13, Colors.Attribute(proj), FontWeights.Bold));
+					var d = Build.Text($" (+{diff})", 11, Build.Res("Positive"), FontWeights.SemiBold);
+					valPanel.Children.Add(d);
+				}
+				else
+				{
+					valPanel.Children.Add(Build.Text(cur.ToString(), 13, Colors.Attribute(cur), FontWeights.Bold));
+				}
+				Grid.SetColumn(valPanel, 1);
+				row.Children.Add(valPanel);
+				panel.Children.Add(new Border
+				{
+					Margin = new Thickness(6, 0, 6, 0),
+					CornerRadius = new CornerRadius(3),
+					BorderBrush = h == 2 ? Build.Res("Positive") : (h == 1 ? Build.Res("Accent") : Brushes.Transparent),
+					BorderThickness = h > 0 ? new Thickness(2, 0, 0, 0) : new Thickness(0),
+					Child = row
+				});
+			}
+			return panel;
+		}
 
 		// Technical / Goalkeeping toggle, like the game.
 		var host = new ContentControl();
 		var toggle = new StackPanel { Orientation = Orientation.Horizontal };
 		var tech = new RadioButton { Content = Build.T("Teknik", "Technical"), Style = Build.StyleOf("Segment"), GroupName = "tg" + Address, IsChecked = !_showGoalkeeping };
 		var gk = new RadioButton { Content = Build.T("Kalecilik", "Goalkeeping"), Style = Build.StyleOf("Segment"), GroupName = "tg" + Address, IsChecked = _showGoalkeeping };
-		tech.Checked += (_, _) => { _showGoalkeeping = false; host.Content = Build.Rows(Group("Technical"), hl); };
-		gk.Checked += (_, _) => { _showGoalkeeping = true; host.Content = Build.Rows(Group("Goalkeeping"), hl); };
+		tech.Checked += (_, _) => { _showGoalkeeping = false; host.Content = AttrRows(Group("Technical")); };
+		gk.Checked += (_, _) => { _showGoalkeeping = true; host.Content = AttrRows(Group("Goalkeeping")); };
 		toggle.Children.Add(tech);
 		toggle.Children.Add(gk);
-		host.Content = Build.Rows(Group(_showGoalkeeping ? "Goalkeeping" : "Technical"), hl);
+		host.Content = AttrRows(Group(_showGoalkeeping ? "Goalkeeping" : "Technical"));
 
 		// Ability card with dual-layer CA/PA progress bar
 		var abilityStack = Build.Rows(Named("CA", "PA"));
-		abilityStack.Children.Add(PlayerVisuals.AbilityBar(_f["CA"].Number, _f["PA"].Number));
+		abilityStack.Children.Add(PlayerVisuals.AbilityBar(ca, pa));
 
-		// 8-axis Attribute Radar Polygon
+		// 8-axis Attribute Radar Polygon (with emerald Peak PA ghost overlay when PA > CA + 3)
 		byte[] raw69 = new byte[69];
 		UIElement? radarCard = null;
 		if (_data.Memory.TryRead(Address + 0x150, raw69))
 		{
-			radarCard = Build.Card(Build.T("Özellik Radarı", "Attribute Radar"),
-				new Border { Padding = new Thickness(4, 2, 4, 8), Child = PlayerVisuals.RadarChart(214, PlayerVisuals.ComputeRadar8(raw69)) });
+			double[] curRad = PlayerVisuals.ComputeRadar8(raw69);
+			double[]? peakRad = pa > ca + 3 ? PlayerVisuals.ComputeRadar8(ScoutRating.ProjectAttributes(raw69, ca, pa)) : null;
+			var radarBody = new StackPanel { Margin = new Thickness(4, 2, 4, 8) };
+			radarBody.Children.Add(PlayerVisuals.RadarChart(214, curRad, peakRad));
+			if (peakRad != null)
+			{
+				var leg = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 2, 0, 0) };
+				leg.Children.Add(Build.Text("● " + Build.T("Mevcut", "Current"), 10.5, Build.Res("Accent"), FontWeights.SemiBold));
+				var pLeg = Build.Text("   ● " + Build.F("PA Zirve ({0})", "Peak PA ({0})", pa), 10.5, Build.Res("Positive"), FontWeights.SemiBold);
+				leg.Children.Add(pLeg);
+				radarBody.Children.Add(leg);
+			}
+			radarCard = Build.Card(Build.T("Özellik Radarı", "Attribute Radar"), radarBody);
 		}
 
 		AddColumn(grid, 0, Build.Card(Build.T("Teknik", "Technical"), host, toggle),
 			Build.PresetsCard(_data, "Player", () => new[] { new SquadEditor.Core.Editing.BulkTarget(Address, Name) }, () => { RefreshValues(); RebuildHeader(); if (_onOverview && _contentHost != null) _contentHost.Content = Overview(); }, _nav));
-		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"), hl)),
+		AddColumn(grid, 1, Build.Card(Build.T("Zihinsel", "Mental"), AttrRows(Group("Mental"))),
 			Build.Card(Build.T("Gizli", "Hidden"), Build.Rows(Group("Hidden"))));
-		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), Build.Rows(Group("Physical"), hl)),
+		AddColumn(grid, 2, Build.Card(Build.T("Fiziksel", "Physical"), AttrRows(Group("Physical"))),
 			Build.Card(Build.T("Ayaklar", "Feet"), Build.Rows(Group("Feet"))),
 			Build.Card(Build.T("Kişilik (1-20)", "Personality (1-20)"), Build.Rows(Group("Personality"))));
 		var col3 = new List<UIElement>
@@ -574,6 +654,24 @@ public sealed class PlayerPage : UserControl, IPage
 		};
 		if (radarCard != null) col3.Add(radarCard);
 		AddColumn(grid, 3, col3.ToArray());
+
+		if (showProj)
+		{
+			var wrap = new StackPanel();
+			var banner = new Border
+			{
+				Background = new SolidColorBrush(Color.FromArgb(0x22, 0x3D, 0xD6, 0x8C)),
+				BorderBrush = Build.Res("Positive"),
+				BorderThickness = new Thickness(1),
+				CornerRadius = new CornerRadius(6),
+				Padding = new Thickness(12, 7, 12, 7),
+				Margin = new Thickness(6, 0, 6, 8),
+				Child = Build.Text(Build.F("🔮 PA Önizleme (Salt Okunur) — {0} CA → {1} PA zirvesindeki tahmini 1–20 özellikleri gösteriliyor. Gerçek belleğe yazılmaz.", "🔮 PA Preview (Read-Only) — Showing projected 1–20 attributes at peak {1} PA (from {0} CA). Never writes to memory.", ca, pa), 12, Build.Res("Positive"), FontWeights.SemiBold)
+			};
+			wrap.Children.Add(banner);
+			wrap.Children.Add(grid);
+			return Build.Scroll(wrap);
+		}
 		return Build.Scroll(grid);
 	}
 

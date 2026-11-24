@@ -606,7 +606,12 @@ public partial class EditorWindow : Window, INavigator
 				Open = () => OpenNation(nation.Address)
 			});
 		}
-		foreach (CompRow comp in _data.Competitions.Where(c => c.Search.Contains(q)).OrderByDescending(c => c.Search.StartsWith(q)).ThenByDescending(c => c.Reputation).Take(3))
+		foreach (CompRow comp in _data.Competitions
+			.Where(c => c.Search.Contains(q))
+			.OrderByDescending(c => GameData.Normalize(c.ShortName) == q || GameData.Normalize(c.Name) == q)
+			.ThenByDescending(c => GameData.Normalize(c.ShortName).StartsWith(q) || GameData.Normalize(c.Name).StartsWith(q))
+			.ThenByDescending(c => c.Reputation)
+			.Take(6))
 		{
 			CompRow league = comp;
 			hits.Add(new SearchHit

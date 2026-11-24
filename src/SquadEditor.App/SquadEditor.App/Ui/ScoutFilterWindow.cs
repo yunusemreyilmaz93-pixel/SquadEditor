@@ -16,7 +16,10 @@ public sealed class ScoutFilter
 	public string? BestRole { get; set; }
 	public int? MinGrowth { get; set; }
 	public double? MinRating { get; set; }
+	public double? MinPotentialRating { get; set; }
 	public double? MaxWageDisplay { get; set; }
+	public double? MaxAskingPriceM { get; set; }
+	public bool BothFeetOnly { get; set; }
 	public int? MinPro { get; set; }
 	public int? MinCons { get; set; }
 	public int? MinImp { get; set; }
@@ -27,7 +30,8 @@ public sealed class ScoutFilter
 	public int? MinPas { get; set; }
 
 	public bool IsActive => !string.IsNullOrEmpty(Nation) || !string.IsNullOrEmpty(BestRole)
-		|| MinGrowth.HasValue || MinRating.HasValue || MaxWageDisplay.HasValue
+		|| MinGrowth.HasValue || MinRating.HasValue || MinPotentialRating.HasValue
+		|| MaxWageDisplay.HasValue || MaxAskingPriceM.HasValue || BothFeetOnly
 		|| MinPro.HasValue || MinCons.HasValue || MinImp.HasValue || MaxInj.HasValue
 		|| MinDet.HasValue || MinPace.HasValue || MinFin.HasValue || MinPas.HasValue;
 
@@ -35,16 +39,20 @@ public sealed class ScoutFilter
 	{
 		Nation = BestRole = null;
 		MinGrowth = MinPro = MinCons = MinImp = MaxInj = MinDet = MinPace = MinFin = MinPas = null;
-		MinRating = MaxWageDisplay = null;
+		MinRating = MinPotentialRating = MaxWageDisplay = MaxAskingPriceM = null;
+		BothFeetOnly = false;
 	}
 
-	public bool Matches(PlayerRow p, long? maxWageGbp)
+	public bool Matches(PlayerRow p, long? maxWageGbp, long? maxAskingGbp = null)
 	{
 		if (!string.IsNullOrEmpty(Nation) && !GameData.Normalize(p.Nation).Contains(GameData.Normalize(Nation))) return false;
 		if (!string.IsNullOrEmpty(BestRole) && p.BestRole != BestRole) return false;
 		if (MinGrowth.HasValue && p.Growth < MinGrowth.Value) return false;
 		if (MinRating.HasValue && p.BestRating < MinRating.Value) return false;
+		if (MinPotentialRating.HasValue && p.PotentialRating < MinPotentialRating.Value) return false;
 		if (maxWageGbp.HasValue && p.Wage > maxWageGbp.Value) return false;
+		if (maxAskingGbp.HasValue && p.AskingPrice > 0 && p.AskingPrice > maxAskingGbp.Value) return false;
+		if (BothFeetOnly && !p.BothFeet) return false;
 		if (MinPro.HasValue && p.Professionalism < MinPro.Value) return false;
 		if (MinCons.HasValue && p.Consistency < MinCons.Value) return false;
 		if (MinImp.HasValue && p.ImportantMatches < MinImp.Value) return false;
@@ -131,7 +139,9 @@ public sealed class ScoutFilterWindow : Window
 
 		TextBox bGrowth = AddRow(Build.T("Gelişim payı (PA − CA) ≥", "Potential gap (PA − CA) ≥"), filter.MinGrowth?.ToString() ?? "");
 		TextBox bRating = AddRow(Build.T("En iyi rol reytingi (%) ≥", "Best role rating (%) ≥"), filter.MinRating?.ToString(CultureInfo.InvariantCulture) ?? "");
+		TextBox bPR = AddRow(Build.T("Potansiyel Reyting (PR %) ≥", "Potential Rating (PR %) ≥"), filter.MinPotentialRating?.ToString(CultureInfo.InvariantCulture) ?? "");
 		TextBox bWage = AddRow(Build.F("Maks. maaş ({0}{1}) ≤", "Max wage ({0}{1}) ≤", Money.Current.Code, Money.WageSuffix), filter.MaxWageDisplay?.ToString(CultureInfo.InvariantCulture) ?? "");
+		TextBox bAsking = AddRow(Build.F("Maks. istenen bonservis (mn {0}) ≤", "Max asking price (M {0}) ≤", Money.Current.Symbol), filter.MaxAskingPriceM?.ToString(CultureInfo.InvariantCulture) ?? "");
 		TextBox bPro = AddRow(Build.T("Profesyonellik ≥", "Professionalism ≥"), filter.MinPro?.ToString() ?? "");
 		TextBox bCons = AddRow(Build.T("İstikrar ≥", "Consistency ≥"), filter.MinCons?.ToString() ?? "");
 		TextBox bImp = AddRow(Build.T("Önemli Maçlar ≥", "Important Matches ≥"), filter.MinImp?.ToString() ?? "");
@@ -140,6 +150,19 @@ public sealed class ScoutFilterWindow : Window
 		TextBox bPace = AddRow(Build.T("Hız ≥", "Pace ≥"), filter.MinPace?.ToString() ?? "");
 		TextBox bFin = AddRow(Build.T("Bitiricilik ≥", "Finishing ≥"), filter.MinFin?.ToString() ?? "");
 		TextBox bPas = AddRow(Build.T("Pas ≥", "Passing ≥"), filter.MinPas?.ToString() ?? "");
+		grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
+		var chkBothFeet = new CheckBox
+		{
+			Content = Build.T("Çift Ayaklı (Sol ≥ 15 ve Sağ ≥ 15)", "Both Feet (Left ≥ 15 & Right ≥ 15)"),
+			IsChecked = filter.BothFeetOnly,
+			FontSize = 12,
+			Foreground = Build.Res("Text"),
+			VerticalAlignment = VerticalAlignment.Center
+		};
+		Grid.SetRow(chkBothFeet, row);
+		Grid.SetColumnSpan(chkBothFeet, 2);
+		grid.Children.Add(chkBothFeet);
+		row++;
 		stack.Children.Add(grid);
 
 		var buttons = new DockPanel { Margin = new Thickness(0, 14, 0, 0) };
@@ -163,7 +186,10 @@ public sealed class ScoutFilterWindow : Window
 			filter.BestRole = roleCode.Length > 0 ? roleCode : null;
 			filter.MinGrowth = PInt(bGrowth);
 			filter.MinRating = PDbl(bRating);
+			filter.MinPotentialRating = PDbl(bPR);
 			filter.MaxWageDisplay = PDbl(bWage);
+			filter.MaxAskingPriceM = PDbl(bAsking);
+			filter.BothFeetOnly = chkBothFeet.IsChecked == true;
 			filter.MinPro = PInt(bPro);
 			filter.MinCons = PInt(bCons);
 			filter.MinImp = PInt(bImp);

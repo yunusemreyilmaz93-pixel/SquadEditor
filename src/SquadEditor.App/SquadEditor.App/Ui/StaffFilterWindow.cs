@@ -17,6 +17,7 @@ public sealed class StaffFilter
 	public bool ExcludeManagers { get; set; }
 	public int? MinCA { get; set; }
 	public int? MinPA { get; set; }
+	public double? MinStars { get; set; }
 	public int? MaxAge { get; set; }
 	public double? MaxWageDisplay { get; set; }
 	public int? MinAtt { get; set; }
@@ -37,7 +38,7 @@ public sealed class StaffFilter
 	public int? MinSci { get; set; }
 
 	public bool IsActive => !string.IsNullOrEmpty(Nation) || !string.IsNullOrEmpty(JobCategory) || ExcludeManagers
-		|| MinCA.HasValue || MinPA.HasValue || MaxAge.HasValue || MaxWageDisplay.HasValue
+		|| MinCA.HasValue || MinPA.HasValue || MinStars.HasValue || MaxAge.HasValue || MaxWageDisplay.HasValue
 		|| MinAtt.HasValue || MinDef.HasValue || MinFit.HasValue || MinGk.HasValue
 		|| MinTac.HasValue || MinTec.HasValue || MinSet.HasValue || MinWwy.HasValue
 		|| MinDet.HasValue || MinMot.HasValue || MinMan.HasValue || MinJpa.HasValue
@@ -48,6 +49,7 @@ public sealed class StaffFilter
 		Nation = JobCategory = null;
 		ExcludeManagers = false;
 		MinCA = MinPA = MaxAge = null;
+		MinStars = null;
 		MinAtt = MinDef = MinFit = MinGk = MinTac = MinTec = MinSet = MinWwy = null;
 		MinDet = MinMot = MinMan = MinJpa = MinJpp = MinTk = MinPhy = MinSci = null;
 		MaxWageDisplay = null;
@@ -60,6 +62,7 @@ public sealed class StaffFilter
 		if (!string.IsNullOrEmpty(Nation) && !GameData.Normalize(s.Nation).Contains(GameData.Normalize(Nation))) return false;
 		if (MinCA.HasValue && s.CA < MinCA.Value) return false;
 		if (MinPA.HasValue && s.PA < MinPA.Value) return false;
+		if (MinStars.HasValue && s.BestStars < MinStars.Value) return false;
 		if (MaxAge.HasValue && (s.Age <= 0 || s.Age > MaxAge.Value)) return false;
 		if (maxWageGbp.HasValue && s.Wage > maxWageGbp.Value) return false;
 		if (MinAtt.HasValue && s.Attacking < MinAtt.Value) return false;
@@ -180,14 +183,16 @@ public sealed class StaffFilterWindow : Window
 		topGrid1.Children.Add(pWage);
 		stack.Children.Add(topGrid1);
 
-		// Top row 2: Min CA + Min PA + Exclude Managers toggle
+		// Top row 2: Min CA + Min PA + Min Stars + Exclude Managers toggle
 		var topGrid2 = new Grid { Margin = new Thickness(0, 0, 0, 8) };
-		topGrid2.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.8, GridUnitType.Star) });
-		topGrid2.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.8, GridUnitType.Star) });
-		topGrid2.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.6, GridUnitType.Star) });
+		topGrid2.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.75, GridUnitType.Star) });
+		topGrid2.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.75, GridUnitType.Star) });
+		topGrid2.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.75, GridUnitType.Star) });
+		topGrid2.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.2, GridUnitType.Star) });
 
 		var bCa = new TextBox { Text = filter.MinCA?.ToString() ?? "", Height = 26, FontSize = 12, HorizontalContentAlignment = HorizontalAlignment.Center };
 		var bPa = new TextBox { Text = filter.MinPA?.ToString() ?? "", Height = 26, FontSize = 12, HorizontalContentAlignment = HorizontalAlignment.Center };
+		var bStars = new TextBox { Text = filter.MinStars?.ToString(CultureInfo.InvariantCulture) ?? "", Height = 26, FontSize = 12, HorizontalContentAlignment = HorizontalAlignment.Center };
 		var cbNoMgr = new CheckBox
 		{
 			Content = Build.T("Menajerleri Gizle (Teknik Direktörler Hariç)", "Hide Managers (Exclude Head Coaches)"),
@@ -200,10 +205,13 @@ public sealed class StaffFilterWindow : Window
 		};
 		var pCa = Labeled(Build.T("Min. CA", "Min CA"), bCa);
 		var pPa = Labeled(Build.T("Min. PA", "Min PA"), bPa);
+		var pStars = Labeled(Build.T("Min. ★ (0.5-5)", "Min ★ (0.5-5)"), bStars);
 		Grid.SetColumn(pPa, 1);
-		Grid.SetColumn(cbNoMgr, 2);
+		Grid.SetColumn(pStars, 2);
+		Grid.SetColumn(cbNoMgr, 3);
 		topGrid2.Children.Add(pCa);
 		topGrid2.Children.Add(pPa);
+		topGrid2.Children.Add(pStars);
 		topGrid2.Children.Add(cbNoMgr);
 		stack.Children.Add(topGrid2);
 
@@ -289,6 +297,7 @@ public sealed class StaffFilterWindow : Window
 			filter.ExcludeManagers = cbNoMgr.IsChecked == true;
 			filter.MinCA = PInt(bCa);
 			filter.MinPA = PInt(bPa);
+			filter.MinStars = PDbl(bStars);
 			filter.MaxAge = PInt(bAge);
 			filter.MaxWageDisplay = PDbl(bWage);
 			filter.MinAtt = PInt(bAtt); filter.MinDef = PInt(bDef); filter.MinFit = PInt(bFit); filter.MinGk = PInt(bGk);
