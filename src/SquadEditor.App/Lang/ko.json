@@ -1058,5 +1058,22 @@
   "Wage Usage": "주급 예산 사용률",
   "{0} ({1}) Transfer Targets — {2}": "{0} ({1}) 영입 후보 — {2}",
   "{0} active": "활성 {0}건",
-  "{0} active deals": "활성 계약 {0}건"
+  "{0} active deals": "활성 계약 {0}건",
+  "Big Game": "중요 경기",
+  "Close active tab": "현재 탭 닫기",
+  "Developed by: ": "개발자: ",
+  "Fast Finisher": "빠른 골잡이",
+  "Free, open-source real-time editor & scout for Football Manager 27. Not affiliated with Sports Interactive or SEGA.": "Football Manager 27용 무료 오픈소스 실시간 에디터 & 스카우트 도구. Sports Interactive 및 SEGA와 무관합니다.",
+  "Hidden & Key Attributes (1-20)": "히든 & 주요 능력치 (1-20)",
+  "High Growth": "높은 성장폭",
+  "Increment/decrement number by ±1 (±10 with Shift)": "숫자 ±1 변경 (Shift로 ±10)",
+  "Keyboard Shortcuts": "단축키",
+  "Moneyball": "머니볼",
+  "Open Command Palette": "명령 팔레트 열기",
+  "Playmaker": "플레이메이커",
+  "Potential & Economy": "잠재력 & 재정",
+  "Reload save data": "세이브 데이터 새로고침",
+  "Search players, clubs, leagues or nations": "선수, 구단, 리그, 국가 검색",
+  "Undo last change or batch edit": "마지막 변경 실행 취소",
+  "Website": "웹사이트"
 }

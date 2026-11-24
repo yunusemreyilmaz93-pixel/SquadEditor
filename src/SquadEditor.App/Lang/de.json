@@ -1058,5 +1058,22 @@
   "Wage Usage": "Gehaltsauslastung",
   "{0} ({1}) Transfer Targets — {2}": "Transferziele {0} ({1}) — {2}",
   "{0} active": "{0} aktiv",
-  "{0} active deals": "{0} aktive Verträge"
+  "{0} active deals": "{0} aktive Verträge",
+  "Big Game": "Große Spiele",
+  "Close active tab": "Aktiven Tab schließen",
+  "Developed by: ": "Entwickelt von: ",
+  "Fast Finisher": "Schneller Torjäger",
+  "Free, open-source real-time editor & scout for Football Manager 27. Not affiliated with Sports Interactive or SEGA.": "Kostenloser Open-Source-Echtzeiteditor & Scout für Football Manager 27. Keine Verbindung zu Sports Interactive oder SEGA.",
+  "Hidden & Key Attributes (1-20)": "Versteckte & Schlüsselattribute (1-20)",
+  "High Growth": "Hohes Potenzial",
+  "Increment/decrement number by ±1 (±10 with Shift)": "Wert um ±1 (±10 mit Shift) ändern",
+  "Keyboard Shortcuts": "Tastenkürzel",
+  "Moneyball": "Moneyball",
+  "Open Command Palette": "Befehlspalette öffnen",
+  "Playmaker": "Spielmacher",
+  "Potential & Economy": "Potenzial & Finanzen",
+  "Reload save data": "Spielstand neu laden",
+  "Search players, clubs, leagues or nations": "Spieler, Vereine, Ligen oder Länder suchen",
+  "Undo last change or batch edit": "Letzte Änderung rückgängig machen",
+  "Website": "Webseite"
 }

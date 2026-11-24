@@ -256,22 +256,73 @@ public sealed class SettingsWindow : Window
 
 	private UIElement About()
 	{
-		StackPanel stack = Section("SquadEditor", Build.T(
-			"Football Manager 27 için ücretsiz ve açık kaynak gerçek zamanlı editör. Sports Interactive veya SEGA ile bağlantılı değildir. Düzenlemeden önce kaydını yedekle.",
-			"Free and open-source real-time editor for Football Manager 27. Not affiliated with Sports Interactive or SEGA. Back up your save before editing."));
-		string version = typeof(SettingsWindow).Assembly.GetName().Version?.ToString(3) ?? "";
-		var v = Build.Text(Build.T("Sürüm ", "Version ") + version, 13, Build.Res("Muted"));
-		v.Margin = new Thickness(0, 12, 0, 0);
-		stack.Children.Add(v);
-		var link = new Button { Content = RepositoryUrl, Style = Build.StyleOf("LinkButton"), Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Left, Foreground = Build.Res("Accent") };
-		link.Click += (_, _) => Process.Start(new ProcessStartInfo(RepositoryUrl) { UseShellExecute = true });
-		stack.Children.Add(link);
-		var keys = Build.Text(Build.T(
-			"Kısayollar: Ctrl+F ara · Enter yaz · Esc vazgeç · ↑/↓ ±1 (Shift ile ±10) · Ctrl+Z geri al · Ctrl+W sekmeyi kapat · orta tık sekmeyi kapat",
-			"Shortcuts: Ctrl+F search · Enter write · Esc cancel · ↑/↓ ±1 (Shift ±10) · Ctrl+Z undo · Ctrl+W close tab · middle-click close tab"), 12, Build.Res("Muted"));
-		keys.TextWrapping = TextWrapping.Wrap;
-		keys.Margin = new Thickness(0, 18, 0, 0);
-		stack.Children.Add(keys);
+		var stack = new StackPanel();
+
+		// Brand & version header card
+		var head = new StackPanel { Margin = new Thickness(14, 6, 14, 12) };
+		var titleRow = new DockPanel();
+		var verText = Build.Text("v1.4.0 · MIT", 12, Build.Res("Muted"), FontWeights.SemiBold);
+		verText.VerticalAlignment = VerticalAlignment.Center;
+		DockPanel.SetDock(verText, Dock.Right);
+		titleRow.Children.Add(verText);
+		titleRow.Children.Add(Build.Text("SquadEditor", 20, Build.Res("Text"), FontWeights.Bold));
+		head.Children.Add(titleRow);
+
+		var desc = Build.Text(Build.T(
+			"Football Manager 27 için ücretsiz ve açık kaynaklı gerçek zamanlı editör & gözlemci aracı. Sports Interactive veya SEGA ile resmi bağlantısı yoktur.",
+			"Free, open-source real-time editor & scout for Football Manager 27. Not affiliated with Sports Interactive or SEGA."), 12.5, Build.Res("Muted"));
+		desc.TextWrapping = TextWrapping.Wrap;
+		desc.Margin = new Thickness(0, 6, 0, 10);
+		head.Children.Add(desc);
+
+		var devRow = new StackPanel { Orientation = Orientation.Horizontal };
+		devRow.Children.Add(Build.Text(Build.T("Geliştiren: ", "Developed by: "), 12.5, Build.Res("Faint")));
+		devRow.Children.Add(Build.Text("Yunus Emre Yılmaz (@basitbioyun)", 12.5, Build.Res("Text"), FontWeights.SemiBold));
+		head.Children.Add(devRow);
+
+		// Links row
+		var links = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 12, 0, 0) };
+		void LinkBtn(string label, string url, bool primary = false)
+		{
+			var b = new Button
+			{
+				Content = label,
+				Padding = new Thickness(11, 5, 11, 5),
+				Margin = new Thickness(0, 0, 6, 6),
+				FontSize = 12
+			};
+			if (primary) b.Style = Build.StyleOf("AccentButton");
+			b.Click += (_, _) => Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+			links.Children.Add(b);
+		}
+		LinkBtn(Build.T("Web Sitesi", "Website"), "https://squadeditor.pages.dev", primary: true);
+		LinkBtn("GitHub", RepositoryUrl);
+		LinkBtn("X (@basitbioyun)", "https://x.com/basitbioyun");
+		LinkBtn("YouTube", "https://youtube.com/@basitbioyun");
+		LinkBtn("Instagram", "https://instagram.com/basitbioyun");
+		head.Children.Add(links);
+		stack.Children.Add(Build.Card(Build.T("Hakkında", "About"), head));
+
+		// Keyboard shortcuts card
+		var scPanel = new StackPanel { Margin = new Thickness(14, 4, 14, 12) };
+		void Shortcut(string key, string descText)
+		{
+			var d = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
+			var k = Build.Text(key, 12, Build.Res("Accent"), FontWeights.SemiBold);
+			k.Width = 130;
+			DockPanel.SetDock(k, Dock.Left);
+			d.Children.Add(k);
+			d.Children.Add(Build.Text(descText, 12, Build.Res("Muted")));
+			scPanel.Children.Add(d);
+		}
+		Shortcut("Ctrl + F", Build.T("Oyuncu, kulüp, lig veya ülke ara", "Search players, clubs, leagues or nations"));
+		Shortcut("Ctrl + K", Build.T("Komut paletini aç", "Open Command Palette"));
+		Shortcut("Ctrl + Z", Build.T("Son değişikliği veya toplu işlemi geri al", "Undo last change or batch edit"));
+		Shortcut("↑ / ↓ (+ Shift)", Build.T("Sayısal alanı ±1 (Shift ile ±10) değiştir", "Increment/decrement number by ±1 (±10 with Shift)"));
+		Shortcut("Ctrl + W / Orta Tık", Build.T("Aktif sekmeyi kapat", "Close active tab"));
+		Shortcut("F5", Build.T("Kayıt verisini yeniden oku", "Reload save data"));
+		stack.Children.Add(Build.Card(Build.T("Klavye Kısayolları", "Keyboard Shortcuts"), scPanel));
+
 		return stack;
 	}
 

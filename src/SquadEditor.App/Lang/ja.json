@@ -1058,5 +1058,22 @@
   "Wage Usage": "給与予算消化率",
   "{0} ({1}) Transfer Targets — {2}": "{0} ({1}) 補強候補 — {2}",
   "{0} active": "有効 {0}件",
-  "{0} active deals": "有効な契約 {0}件"
+  "{0} active deals": "有効な契約 {0}件",
+  "Big Game": "大舞台に強い",
+  "Close active tab": "現在のタブを閉じる",
+  "Developed by: ": "開発者: ",
+  "Fast Finisher": "快速フィニッシャー",
+  "Free, open-source real-time editor & scout for Football Manager 27. Not affiliated with Sports Interactive or SEGA.": "Football Manager 27向けの無料オープンソース・リアルタイムエディタ＆スカウトツール。Sports InteractiveおよびSEGAとは無関係です。",
+  "Hidden & Key Attributes (1-20)": "隠し能力・主要能力 (1-20)",
+  "High Growth": "伸びしろ大",
+  "Increment/decrement number by ±1 (±10 with Shift)": "数値を±1変更 (Shiftで±10)",
+  "Keyboard Shortcuts": "キーボードショートカット",
+  "Moneyball": "マネーボール",
+  "Open Command Palette": "コマンドパレットを開く",
+  "Playmaker": "プレイメーカー",
+  "Potential & Economy": "潜在能力・移籍条件",
+  "Reload save data": "セーブデータを再読み込み",
+  "Search players, clubs, leagues or nations": "選手・クラブ・リーグ・国を検索",
+  "Undo last change or batch edit": "直前の変更を元に戻す",
+  "Website": "Webサイト"
 }

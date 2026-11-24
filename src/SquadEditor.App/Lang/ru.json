@@ -1058,5 +1058,22 @@
   "Wage Usage": "Расход на зарплаты",
   "{0} ({1}) Transfer Targets — {2}": "Трансферы {0} ({1}) — {2}",
   "{0} active": "{0} актив.",
-  "{0} active deals": "{0} активных контрактов"
+  "{0} active deals": "{0} активных контрактов",
+  "Big Game": "Важные матчи",
+  "Close active tab": "Закрыть активную вкладку",
+  "Developed by: ": "Разработчик: ",
+  "Fast Finisher": "Быстрый бомбардир",
+  "Free, open-source real-time editor & scout for Football Manager 27. Not affiliated with Sports Interactive or SEGA.": "Бесплатный редактор реального времени и скаут с открытым исходным кодом для Football Manager 27. Не связан со Sports Interactive и SEGA.",
+  "Hidden & Key Attributes (1-20)": "Скрытые и ключевые атрибуты (1-20)",
+  "High Growth": "Высокий рост",
+  "Increment/decrement number by ±1 (±10 with Shift)": "Изменить число на ±1 (±10 с Shift)",
+  "Keyboard Shortcuts": "Горячие клавиши",
+  "Moneyball": "Moneyball",
+  "Open Command Palette": "Открыть палитру команд",
+  "Playmaker": "Плеймейкер",
+  "Potential & Economy": "Потенциал и Финансы",
+  "Reload save data": "Перезагрузить данные сохранения",
+  "Search players, clubs, leagues or nations": "Поиск игроков, клубов, лиг и стран",
+  "Undo last change or batch edit": "Отменить последнее изменение",
+  "Website": "Веб-сайт"
 }

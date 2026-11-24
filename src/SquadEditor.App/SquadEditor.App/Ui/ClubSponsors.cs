@@ -155,19 +155,12 @@ public static class ClubSponsors
 			var stack = new StackPanel { Margin = new Thickness(12, 4, 12, 10) };
 
 			long totalAnnual = deals.Where(d => !d.IsExpired(data.GameDate)).Sum(d => d.PerSeasonGbp);
-			var summaryBar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
 			var activeCount = deals.Count(d => !d.IsExpired(data.GameDate));
-			var badge = new Border
-			{
-				Background = new SolidColorBrush(Color.FromArgb(0x22, 0x3D, 0xD6, 0x8C)),
-				BorderBrush = Build.Res("Positive"),
-				BorderThickness = new Thickness(1),
-				CornerRadius = new CornerRadius(10),
-				Padding = new Thickness(8, 2, 8, 2),
-				Child = Build.Text(Build.F("{0} aktif", "{0} active", activeCount), 11, Build.Res("Positive"), FontWeights.SemiBold)
-			};
-			DockPanel.SetDock(badge, Dock.Right);
-			summaryBar.Children.Add(badge);
+			var summaryBar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+			var countTxt = Build.Text(Build.F("{0} aktif anlaşma", "{0} active deals", activeCount), 12, Build.Res("Muted"));
+			countTxt.VerticalAlignment = VerticalAlignment.Center;
+			DockPanel.SetDock(countTxt, Dock.Right);
+			summaryBar.Children.Add(countTxt);
 			summaryBar.Children.Add(Build.Text(
 				Build.F("Yıllık Sponsor Geliri: {0}", "Annual Sponsorship Income: {0}", Money.Format(totalAnnual, false)),
 				13, Build.Res("Text"), FontWeights.SemiBold));

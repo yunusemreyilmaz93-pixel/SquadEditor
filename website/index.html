@@ -783,7 +783,7 @@
           </div>
           <p class="hero-note" data-i18n="hero.note">Kurulum gerektirmez, tek dosya olarak çalışır.</p>
           <div class="hero-trust">
-            <span id="releaseInfo">v1.3.0 · Açık Kaynak (MIT)</span>
+            <span id="releaseInfo">v1.4.0 · Açık Kaynak (MIT)</span>
             <a id="sourceLink" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" data-i18n="trust.source">Kaynak Kodu (GitHub)</a>
             <a href="#faq" data-i18n="trust.smartscreen">İlk açılışta SmartScreen uyarısı normaldir</a>
           </div>
@@ -1027,6 +1027,13 @@
             </summary>
             <p data-i18n="q4.a">Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. Bellek adresleri kod içine gömülü değildir; harici JSON düzeni ve dinamik tarama kullanıldığı için yeni FM27 yamalarında hızlıca güncellenir.</p>
           </details>
+          <details class="faq">
+            <summary>
+              <span data-i18n="q5.q">Genie Scout ve FMRTE'nin yerini tek başına tutuyor mu?</span>
+              <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </summary>
+            <p data-i18n="q5.a">Evet. Potansiyel Reyting (PR %), salt okunur PA Zirve Önizleme, çift katmanlı radar, gerçek 5★ antrenörlük yıldız hesabı, gizli özellik filtreleri ve Moneyball şablonlarıyla tam bir scout aracıdır; aynı zamanda canlı düzenleme, sponsorluk, takım uyumu/taktik %100 ve En İyi 11 akıllı transfer önericiyle tek 2.3 MB uygulamada ikisini birleştirir.</p>
+          </details>
         </div>
       </div>
     </section>
@@ -1038,7 +1045,7 @@
           <div>
             <h2 data-i18n="cta.h">Hemen indir.</h2>
             <p data-i18n="cta.p">Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.</p>
-            <p class="dl-meta" id="dlMeta">Sürüm v1.3.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)</p>
+            <p class="dl-meta" id="dlMeta">Sürüm v1.4.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)</p>
           </div>
           <a id="bottomDl" href="#download" class="btn btn-primary btn-lg">
             <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1074,7 +1081,7 @@
     // TEK NOKTA AYAR BLOĞU — Yayınlarken doğrudan .exe/.zip linkini buraya koy
     // =========================================================================
     const SITE_CONFIG = {
-      version: "v1.3.0",
+      version: "v1.4.0",
       downloadUrl: "https://github.com/yunusemreyilmaz93-pixel/SquadEditor/releases/latest/download/SquadEditor.exe",
       repoUrl: "https://github.com/yunusemreyilmaz93-pixel/SquadEditor",
       socials: [
@@ -1128,9 +1135,9 @@
         "nav.features": "Özellikler", "nav.howto": "Nasıl Kullanılır?", "nav.languages": "Diller", "nav.about": "Hakkında", "nav.faq": "SSS", "nav.dl": "İndir",
         "hero.kicker": "Football Manager 27 · Ücretsiz Masaüstü Aracı",
         "hero.title": "FM27 için hızlı ve ücretsiz gerçek zamanlı editör ve scout.",
-        "hero.lead": "Oyun açıkken oyuncuları, personelleri, kulüpleri ve finansı anında düzenleyebilir; gerçek regenleri ve 5 yıldızlı antrenörleri zahmetsizce bulabilirsiniz.",
+        "hero.lead": "Oyun açıkken oyuncuları, personelleri, kulüpleri, sponsorları ve takım uyumunu anında düzenleyin; PR %, PA Zirve Önizleme, gerçek regen ve 5★ antrenör taramasıyla iki aracı tek 2.3 MB uygulamada kullanın.",
         "hero.dl": "Windows için Ücretsiz İndir", "hero.explore": "Tüm Özelliklere Bak",
-        "hero.note": "Kurulum gerektirmez, tek dosya olarak çalışır.",
+        "hero.note": "Kurulum gerektirmez, sadece ~2.3 MB tek dosya.",
         "trust.source": "Kaynak Kodu (GitHub)", "trust.smartscreen": "İlk açılışta SmartScreen uyarısı normaldir",
         "zoom.hint": "Büyüt",
         "feat.h": "Bir editörden ve scout aracından beklediğiniz her şey.",
@@ -1169,9 +1176,10 @@
         "q2.q": "Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?", "q2.a": "Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. \"Ek bilgi → Yine de çalıştır\" adımıyla güvenle açabilir, dilerseniz GitHub üzerinden tüm kaynak kodunu inceleyebilirsiniz.",
         "q3.q": "Kariyer kaydıma zarar verir mi? Dondurma (Freeze) nasıl çalışır?", "q3.a": "Oyuna herhangi bir DLL enjeksiyonu yapılmaz; tüm okumalar/yazmalar doğrulamalı bellek erişimiyle çalışır, Dondurma özelliği periyodik kontrolle değerleri korur ve tüm işlemler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce Yedek butonuyla kaydınızı yedeklemeniz önerilir.",
         "q4.q": "Hangi sürümle uyumlu? FM27'ye yeni yama gelirse ne olur?", "q4.a": "Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. Bellek adresleri kod içine gömülü değildir; harici JSON düzeni ve dinamik tarama kullanıldığı için yeni FM27 yamalarında hızlıca güncellenir.",
-        "cta.h": "Hemen indir.", "cta.p": "Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.", "cta.btn": "Squadeditor İndir (Windows)",
-        "dl.meta": "Sürüm v1.3.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)",
-        "release.info": "v1.3.0 · Açık Kaynak (MIT)",
+        "q5.q": "Genie Scout ve FMRTE'nin yerini tek başına tutuyor mu?", "q5.a": "Evet. Potansiyel Reyting (PR %), salt okunur PA Zirve Önizleme, çift katmanlı radar, gerçek 5★ antrenörlük yıldız hesabı, gizli özellik filtreleri ve Moneyball şablonlarıyla tam bir scout aracıdır; aynı zamanda canlı düzenleme, sponsorluk, takım uyumu/taktik %100 ve En İyi 11 akıllı transfer önericiyle tek 2.3 MB uygulamada ikisini birleştirir.",
+        "cta.h": "Hemen indir.", "cta.p": "Windows için sadece ~2.3 MB tek dosya, kurulum gerektirmez ve tamamen ücretsiz.", "cta.btn": "Squadeditor İndir (Windows)",
+        "dl.meta": "Sürüm v1.4.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)",
+        "release.info": "v1.4.0 · Açık Kaynak (MIT)",
         "foot.legal": "Squadeditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
       },
       en: {
@@ -1181,9 +1189,9 @@
         "nav.features": "Features", "nav.howto": "How It Works", "nav.languages": "Languages", "nav.about": "About", "nav.faq": "FAQ", "nav.dl": "Download",
         "hero.kicker": "Football Manager 27 · Free Desktop Tool",
         "hero.title": "A fast, free real-time editor and scout for FM27.",
-        "hero.lead": "Edit players, staff, clubs and finances live while Football Manager 27 runs. Discover true regens and 5-star coaches effortlessly, with safe undo for every change.",
+        "hero.lead": "Edit players, staff, clubs, sponsors and team cohesion live while FM27 runs — and scout with PR %, Peak PA Preview, true newgens and a real 5★ coach calculator, all in a single 2.3 MB app.",
         "hero.dl": "Download Free for Windows", "hero.explore": "Explore All Features",
-        "hero.note": "No installer required, runs as a single file.",
+        "hero.note": "No installer needed, just a ~2.3 MB single file.",
         "trust.source": "Source Code (GitHub)", "trust.smartscreen": "SmartScreen notice on first run is normal",
         "zoom.hint": "Zoom",
         "feat.h": "Everything you expect from a real-time editor and scout.",
@@ -1222,9 +1230,10 @@
         "q2.q": "Why does Windows SmartScreen show a notice?", "q2.a": "Independent open-source Windows apps without a paid code-signing certificate trigger SmartScreen on first launch. Click \"More info → Run anyway\" to open safely, or audit the full source on GitHub.",
         "q3.q": "Will it harm my save? How does Freezing work?", "q3.a": "No DLL injection is used — all reads and writes are validated memory operations, Freezing works via lightweight polling, and every edit is undoable with Ctrl+Z. Backing up your save with the built-in Backup button before major changes is still recommended.",
         "q4.q": "Which version is supported? What about FM27 patches?", "q4.a": "Verified on Windows 10/11 (64-bit) with Steam Football Manager 27 (27.0.1). Offsets live in an external JSON layout with dynamic RTTI scanning, so new FM27 patches can be supported quickly without rewriting the app.",
-        "cta.h": "Download now.", "cta.p": "Single file for Windows, no installer needed, completely free.", "cta.btn": "Download Squadeditor (Windows)",
-        "dl.meta": "Version v1.3.0 · Windows 10/11 (64-bit) · Open Source (MIT)",
-        "release.info": "v1.3.0 · Open Source (MIT)",
+        "q5.q": "Does it replace both Genie Scout and FMRTE?", "q5.a": "Yes. With Potential Rating (PR %), read-only Peak PA Preview, dual-layer radar, a real 5★ coaching star calculator, hidden attribute filters and Moneyball presets, it covers deep scouting — while adding live editing, sponsorships, 100% cohesion/tactics and a Best XI smart transfer finder in one 2.3 MB file.",
+        "cta.h": "Download now.", "cta.p": "Just a ~2.3 MB single file for Windows, no installer needed, completely free.", "cta.btn": "Download Squadeditor (Windows)",
+        "dl.meta": "Version v1.4.0 · Windows 10/11 (64-bit) · Open Source (MIT)",
+        "release.info": "v1.4.0 · Open Source (MIT)",
         "foot.legal": "Squadeditor is an independent, free community tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
       }
     };

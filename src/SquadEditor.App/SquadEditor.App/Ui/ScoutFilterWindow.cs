@@ -70,7 +70,7 @@ public sealed class ScoutFilterWindow : Window
 	public ScoutFilterWindow(ScoutFilter filter, IEnumerable<string>? nations = null)
 	{
 		Title = Build.T("Gelişmiş Gözlemci Filtresi (Genie Scout)", "Advanced Scout Filter (Genie Scout)");
-		Width = 460;
+		Width = 680;
 		SizeToContent = SizeToContent.Height;
 		ResizeMode = ResizeMode.NoResize;
 		WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -79,91 +79,149 @@ public sealed class ScoutFilterWindow : Window
 		FontFamily = (System.Windows.Media.FontFamily)Application.Current.Resources["UiFont"];
 		SourceInitialized += (_, _) => ApplyTitleBar();
 
-		var stack = new StackPanel { Margin = new Thickness(18) };
-		stack.Children.Add(Build.Text(Build.T("Boş bırakılan alanlar filtrelenmez. Özellik değerleri 1–20 ölçeğindedir.", "Leave any field blank to ignore it. Attribute values use the 1–20 scale."), 12, Build.Res("Muted")));
+		var root = new StackPanel { Margin = new Thickness(18) };
+		root.Children.Add(Build.Text(Build.T("Boş bırakılan alanlar filtrelenmez. Özellik değerleri 1–20 ölçeğindedir.", "Leave any field blank to ignore it. Attribute values use the 1–20 scale."), 12, Build.Res("Muted")));
 
-		var grid = new Grid { Margin = new Thickness(0, 12, 0, 0) };
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
-		int row = 0;
-
-		ComboBox AddCombo(string label, IEnumerable<KeyValuePair<string, string>> items, string? current, bool editable)
-		{
-			grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(32) });
-			var lbl = Build.Text(label, 12.5, Build.Res("Text"));
-			Grid.SetRow(lbl, row);
-			grid.Children.Add(lbl);
-			var cb = new ComboBox
-			{
-				Height = 26,
-				FontSize = 12,
-				IsEditable = editable,
-				IsTextSearchEnabled = true,
-				ItemsSource = items.ToList(),
-				DisplayMemberPath = "Value",
-				SelectedValuePath = "Key",
-				SelectedValue = current ?? ""
-			};
-			if (editable && !string.IsNullOrEmpty(current)) cb.Text = current;
-			Grid.SetRow(cb, row);
-			Grid.SetColumn(cb, 1);
-			grid.Children.Add(cb);
-			row++;
-			return cb;
-		}
-
-		TextBox AddRow(string label, string current)
-		{
-			grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
-			var lbl = Build.Text(label, 12.5, Build.Res("Text"));
-			Grid.SetRow(lbl, row);
-			grid.Children.Add(lbl);
-			var box = new TextBox { Text = current, Width = 100, HorizontalAlignment = HorizontalAlignment.Right, Height = 25, FontSize = 12.5, HorizontalContentAlignment = HorizontalAlignment.Center };
-			Grid.SetRow(box, row);
-			Grid.SetColumn(box, 1);
-			grid.Children.Add(box);
-			row++;
-			return box;
-		}
+		// Top bar: Nationality + Best Role + Both Feet toggle in a clean horizontal row
+		var topGrid = new Grid { Margin = new Thickness(0, 12, 0, 10) };
+		topGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+		topGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
+		topGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
 		var nationItems = new List<KeyValuePair<string, string>> { new("", Build.T("Tüm Ülkeler", "All Nations")) };
 		if (nations != null)
 		{
 			nationItems.AddRange(nations.Where(n => n.Length > 0).Distinct().OrderBy(n => n).Select(n => new KeyValuePair<string, string>(n, n)));
 		}
-		ComboBox cNation = AddCombo(Build.T("Uyruk (Ülke)", "Nationality"), nationItems, filter.Nation, editable: true);
-
 		var roleItems = new List<KeyValuePair<string, string>> { new("", Build.T("Tüm Roller", "All Roles")) };
 		roleItems.AddRange(ScoutRating.AllRoles().Select(r => new KeyValuePair<string, string>(r.Code, r.Label)));
-		ComboBox cRole = AddCombo(Build.T("En İyi Rol", "Best Role"), roleItems, filter.BestRole, editable: false);
 
-		TextBox bGrowth = AddRow(Build.T("Gelişim payı (PA − CA) ≥", "Potential gap (PA − CA) ≥"), filter.MinGrowth?.ToString() ?? "");
-		TextBox bRating = AddRow(Build.T("En iyi rol reytingi (%) ≥", "Best role rating (%) ≥"), filter.MinRating?.ToString(CultureInfo.InvariantCulture) ?? "");
-		TextBox bPR = AddRow(Build.T("Potansiyel Reyting (PR %) ≥", "Potential Rating (PR %) ≥"), filter.MinPotentialRating?.ToString(CultureInfo.InvariantCulture) ?? "");
-		TextBox bWage = AddRow(Build.F("Maks. maaş ({0}{1}) ≤", "Max wage ({0}{1}) ≤", Money.Current.Code, Money.WageSuffix), filter.MaxWageDisplay?.ToString(CultureInfo.InvariantCulture) ?? "");
-		TextBox bAsking = AddRow(Build.F("Maks. istenen bonservis (mn {0}) ≤", "Max asking price (M {0}) ≤", Money.Current.Symbol), filter.MaxAskingPriceM?.ToString(CultureInfo.InvariantCulture) ?? "");
-		TextBox bPro = AddRow(Build.T("Profesyonellik ≥", "Professionalism ≥"), filter.MinPro?.ToString() ?? "");
-		TextBox bCons = AddRow(Build.T("İstikrar ≥", "Consistency ≥"), filter.MinCons?.ToString() ?? "");
-		TextBox bImp = AddRow(Build.T("Önemli Maçlar ≥", "Important Matches ≥"), filter.MinImp?.ToString() ?? "");
-		TextBox bInj = AddRow(Build.T("Sakatlık Eğilimi ≤", "Injury Proneness ≤"), filter.MaxInj?.ToString() ?? "");
-		TextBox bDet = AddRow(Build.T("Kararlılık ≥", "Determination ≥"), filter.MinDet?.ToString() ?? "");
-		TextBox bPace = AddRow(Build.T("Hız ≥", "Pace ≥"), filter.MinPace?.ToString() ?? "");
-		TextBox bFin = AddRow(Build.T("Bitiricilik ≥", "Finishing ≥"), filter.MinFin?.ToString() ?? "");
-		TextBox bPas = AddRow(Build.T("Pas ≥", "Passing ≥"), filter.MinPas?.ToString() ?? "");
-		grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
-		var chkBothFeet = new CheckBox
+		StackPanel LabeledCombo(string label, List<KeyValuePair<string, string>> items, string? current, bool editable, out ComboBox cb)
+		{
+			var sp = new StackPanel();
+			var l = Build.Text(label, 11.5, Build.Res("Muted"), FontWeights.SemiBold);
+			l.Margin = new Thickness(0, 0, 0, 4);
+			sp.Children.Add(l);
+			cb = new ComboBox
+			{
+				Height = 28,
+				FontSize = 12,
+				IsEditable = editable,
+				IsTextSearchEnabled = true,
+				ItemsSource = items,
+				DisplayMemberPath = "Value",
+				SelectedValuePath = "Key",
+				SelectedValue = current ?? ""
+			};
+			if (editable && !string.IsNullOrEmpty(current)) cb.Text = current;
+			sp.Children.Add(cb);
+			return sp;
+		}
+
+		var natCol = LabeledCombo(Build.T("Uyruk (Ülke)", "Nationality"), nationItems, filter.Nation, true, out ComboBox cNation);
+		var roleCol = LabeledCombo(Build.T("En İyi Rol", "Best Role"), roleItems, filter.BestRole, false, out ComboBox cRole);
+		Grid.SetColumn(roleCol, 2);
+		topGrid.Children.Add(natCol);
+		topGrid.Children.Add(roleCol);
+		root.Children.Add(topGrid);
+
+		// Quick preset strip (single clean row)
+		var presetRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 12) };
+		TextBox bGrowth = null!, bRating = null!, bPR = null!, bWage = null!, bAsking = null!;
+		TextBox bPro = null!, bCons = null!, bImp = null!, bInj = null!, bDet = null!, bPace = null!, bFin = null!, bPas = null!;
+		CheckBox chkBothFeet = null!;
+
+		void ClearBoxes()
+		{
+			cNation.SelectedValue = "";
+			cRole.SelectedValue = "";
+			foreach (var tb in new[] { bGrowth, bRating, bPR, bWage, bAsking, bPro, bCons, bImp, bInj, bDet, bPace, bFin, bPas })
+				tb.Text = "";
+			chkBothFeet.IsChecked = false;
+		}
+
+		void AddPresetChip(string label, Action fill)
+		{
+			var btn = new Button
+			{
+				Content = label,
+				Padding = new Thickness(9, 4, 9, 4),
+				Margin = new Thickness(0, 0, 6, 0),
+				FontSize = 11.5
+			};
+			btn.Click += (_, _) => { ClearBoxes(); fill(); };
+			presetRow.Children.Add(btn);
+		}
+		AddPresetChip(Build.T("Moneyball", "Moneyball"), () => { bPR.Text = "78"; bPro.Text = "12"; bInj.Text = "10"; });
+		AddPresetChip(Build.T("Gelişime Açık", "High Growth"), () => { bGrowth.Text = "25"; bPro.Text = "13"; bDet.Text = "13"; });
+		AddPresetChip(Build.T("Büyük Maç Oyuncusu", "Big Game"), () => { bCons.Text = "14"; bImp.Text = "14"; bInj.Text = "10"; });
+		AddPresetChip(Build.T("Hızlı Bitirici", "Fast Finisher"), () => { bPace.Text = "15"; bFin.Text = "14"; });
+		AddPresetChip(Build.T("Oyun Kurucu", "Playmaker"), () => { bPas.Text = "15"; bRating.Text = "74"; });
+		root.Children.Add(presetRow);
+
+		// 2 side-by-side cards: Left = Rating & Economy, Right = Hidden & Key Attributes
+		var cols = new Grid();
+		cols.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+		cols.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
+		cols.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+		TextBox AddFieldRow(StackPanel parent, string label, string current)
+		{
+			var g = new Grid { Height = 30, Margin = new Thickness(12, 1, 12, 1) };
+			g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+			g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(82) });
+			g.Children.Add(Build.Text(label, 12, Build.Res("Muted")));
+			var box = new TextBox
+			{
+				Text = current,
+				Width = 76,
+				Height = 24,
+				FontSize = 12,
+				HorizontalAlignment = HorizontalAlignment.Right,
+				HorizontalContentAlignment = HorizontalAlignment.Center,
+				VerticalContentAlignment = VerticalAlignment.Center
+			};
+			Grid.SetColumn(box, 1);
+			g.Children.Add(box);
+			parent.Children.Add(g);
+			return box;
+		}
+
+		var leftBody = new StackPanel { Margin = new Thickness(0, 2, 0, 8) };
+		bGrowth = AddFieldRow(leftBody, Build.T("Gelişim payı (PA − CA) ≥", "Potential gap (PA − CA) ≥"), filter.MinGrowth?.ToString() ?? "");
+		bRating = AddFieldRow(leftBody, Build.T("En iyi rol reytingi (%) ≥", "Best role rating (%) ≥"), filter.MinRating?.ToString(CultureInfo.InvariantCulture) ?? "");
+		bPR = AddFieldRow(leftBody, Build.T("Potansiyel Reyting (PR %) ≥", "Potential Rating (PR %) ≥"), filter.MinPotentialRating?.ToString(CultureInfo.InvariantCulture) ?? "");
+		bWage = AddFieldRow(leftBody, Build.F("Maks. maaş ({0}{1}) ≤", "Max wage ({0}{1}) ≤", Money.Current.Code, Money.WageSuffix), filter.MaxWageDisplay?.ToString(CultureInfo.InvariantCulture) ?? "");
+		bAsking = AddFieldRow(leftBody, Build.F("Maks. istenen bonservis (mn {0}) ≤", "Max asking price (M {0}) ≤", Money.Current.Symbol), filter.MaxAskingPriceM?.ToString(CultureInfo.InvariantCulture) ?? "");
+
+		chkBothFeet = new CheckBox
 		{
 			Content = Build.T("Çift Ayaklı (Sol ≥ 15 ve Sağ ≥ 15)", "Both Feet (Left ≥ 15 & Right ≥ 15)"),
 			IsChecked = filter.BothFeetOnly,
 			FontSize = 12,
 			Foreground = Build.Res("Text"),
-			VerticalAlignment = VerticalAlignment.Center
+			Margin = new Thickness(12, 8, 12, 4)
 		};
-		Grid.SetRow(chkBothFeet, row);
-		Grid.SetColumnSpan(chkBothFeet, 2);
-		grid.Children.Add(chkBothFeet);
-		row++;
-		stack.Children.Add(grid);
+		leftBody.Children.Add(chkBothFeet);
+
+		var rightBody = new StackPanel { Margin = new Thickness(0, 2, 0, 8) };
+		bPro = AddFieldRow(rightBody, Build.T("Profesyonellik ≥", "Professionalism ≥"), filter.MinPro?.ToString() ?? "");
+		bCons = AddFieldRow(rightBody, Build.T("İstikrar ≥", "Consistency ≥"), filter.MinCons?.ToString() ?? "");
+		bImp = AddFieldRow(rightBody, Build.T("Önemli Maçlar ≥", "Important Matches ≥"), filter.MinImp?.ToString() ?? "");
+		bInj = AddFieldRow(rightBody, Build.T("Sakatlık Eğilimi ≤", "Injury Proneness ≤"), filter.MaxInj?.ToString() ?? "");
+		bDet = AddFieldRow(rightBody, Build.T("Kararlılık ≥", "Determination ≥"), filter.MinDet?.ToString() ?? "");
+		bPace = AddFieldRow(rightBody, Build.T("Hız ≥", "Pace ≥"), filter.MinPace?.ToString() ?? "");
+		bFin = AddFieldRow(rightBody, Build.T("Bitiricilik ≥", "Finishing ≥"), filter.MinFin?.ToString() ?? "");
+		bPas = AddFieldRow(rightBody, Build.T("Pas ≥", "Passing ≥"), filter.MinPas?.ToString() ?? "");
+
+		var leftCard = Build.Card(Build.T("Potansiyel & Ekonomi", "Potential & Economy"), leftBody);
+		var rightCard = Build.Card(Build.T("Gizli & Saha Özellikleri (1-20)", "Hidden & Key Attributes (1-20)"), rightBody);
+		leftCard.Margin = new Thickness(0);
+		rightCard.Margin = new Thickness(0);
+		Grid.SetColumn(rightCard, 2);
+		cols.Children.Add(leftCard);
+		cols.Children.Add(rightCard);
+		root.Children.Add(cols);
 
 		var buttons = new DockPanel { Margin = new Thickness(0, 14, 0, 0) };
 		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton") };
@@ -172,7 +230,7 @@ public sealed class ScoutFilterWindow : Window
 			filter.Clear();
 			DialogResult = true;
 		};
-		var right = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+		var rightBtns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
 		var cancel = new Button { Content = Build.T("Vazgeç", "Cancel"), IsCancel = true, Margin = new Thickness(0, 0, 8, 0) };
 		var apply = new Button { Content = Build.T("Filtrele", "Apply"), Style = Build.StyleOf("AccentButton"), IsDefault = true };
 		apply.Click += (_, _) =>
@@ -200,14 +258,14 @@ public sealed class ScoutFilterWindow : Window
 			filter.MinPas = PInt(bPas);
 			DialogResult = true;
 		};
-		right.Children.Add(cancel);
-		right.Children.Add(apply);
+		rightBtns.Children.Add(cancel);
+		rightBtns.Children.Add(apply);
 		DockPanel.SetDock(clear, Dock.Left);
 		buttons.Children.Add(clear);
-		buttons.Children.Add(right);
-		stack.Children.Add(buttons);
+		buttons.Children.Add(rightBtns);
+		root.Children.Add(buttons);
 
-		Content = stack;
+		Content = root;
 	}
 
 	private void ApplyTitleBar()
