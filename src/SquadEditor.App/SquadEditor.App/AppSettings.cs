@@ -84,6 +84,9 @@ public sealed class AppSettings
 	/// <summary>Save-scoped shortlisted player UIDs.</summary>
 	public Dictionary<string, List<uint>> ShortlistBySave { get; set; } = new Dictionary<string, List<uint>>();
 
+	/// <summary>User-saved custom scout filter presets.</summary>
+	public List<SavedScoutPreset> CustomScoutPresets { get; set; } = new List<SavedScoutPreset>();
+
 	public List<string> GetFrozen(string saveKey) => FrozenBySave.TryGetValue(saveKey, out var list) ? list : FrozenUids;
 
 	public void SetFrozen(string saveKey, List<string> list)
@@ -147,4 +150,40 @@ public sealed class AppSettings
 			return new AppSettings();
 		}
 	}
+}
+
+public sealed class SavedScoutPreset
+{
+	public string Name { get; set; } = "";
+	public string Pos { get; set; } = "";
+	public string Region { get; set; } = "";
+	public string Nation { get; set; } = "";
+	public string AgeMin { get; set; } = "";
+	public string AgeMax { get; set; } = "";
+	public string CaMin { get; set; } = "";
+	public string CaMax { get; set; } = "";
+	public string PaMin { get; set; } = "";
+	public string MaxValM { get; set; } = "";
+	public string Query { get; set; } = "";
+	public bool FreeOnly { get; set; }
+	public bool ExpiringOnly { get; set; }
+	public bool InjuredOnly { get; set; }
+	public bool Wonderkid { get; set; }
+	public bool RegenOnly { get; set; }
+	public string? FilterNation { get; set; }
+	public string? BestRole { get; set; }
+	public int? MinGrowth { get; set; }
+	public double? MinRating { get; set; }
+	public double? MinPotentialRating { get; set; }
+	public double? MaxWageDisplay { get; set; }
+	public double? MaxAskingPriceM { get; set; }
+	public bool BothFeetOnly { get; set; }
+	public int? MinPro { get; set; }
+	public int? MinCons { get; set; }
+	public int? MinImp { get; set; }
+	public int? MaxInj { get; set; }
+	public int? MinDet { get; set; }
+	public int? MinPace { get; set; }
+	public int? MinFin { get; set; }
+	public int? MinPas { get; set; }
 }

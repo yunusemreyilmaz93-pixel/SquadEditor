@@ -225,6 +225,47 @@ public sealed class CompPage : UserControl, IPage
 			}
 			_nav.SetStatus(Build.F("✓ {0}: İtibar 200 ve {1} kulübün tüm tesisleri 20 yapıldı. Ctrl+Z geri alır.", "✓ {0}: Rep 200 and all facilities maxed for {1} clubs. Ctrl+Z undoes it.", _row.Name, leagueClubs.Count));
 		});
+		QBtn(Build.T("Ligdeki Tüm Sakatlıkları İyileştir", "Heal All Injuries in League"), () =>
+		{
+			var leagueClubs = _data.Clubs
+				.Where(c => c.SquadSize > 0 && (c.League == _row.Name || (_row.ShortName.Length > 0 && c.League == _row.ShortName)))
+				.Select(c => c.Address)
+				.ToHashSet();
+			var leaguePlayers = _data.Players.Where(p => leagueClubs.Contains(p.ClubAddress)).ToList();
+			int healed = 0;
+			using (_data.Session.History.BeginBatch($"{_row.Name}: Heal League"))
+			{
+				foreach (PlayerRow p in leaguePlayers)
+				{
+					try { if (Medical.Heal(_data, p.Address, p.Name)) healed++; } catch { }
+				}
+			}
+			_nav.SetStatus(healed == 0
+				? Build.T("Bu ligde sakat oyuncu bulunamadı.", "No injured players found in this league.")
+				: Build.F("✓ {0}: {1} sakat oyuncu iyileştirildi. Ctrl+Z geri alır.", "✓ {0}: Healed {1} injured players. Ctrl+Z undoes it.", _row.Name, healed));
+		});
+		QBtn(Build.T("Ligdeki Kulüpleri Toplu Düzenle…", "Mass Edit League Clubs…"), () =>
+		{
+			var targets = _data.Clubs
+				.Where(c => c.SquadSize > 0 && (c.League == _row.Name || (_row.ShortName.Length > 0 && c.League == _row.ShortName)))
+				.Select(c => new SquadEditor.Core.Editing.BulkTarget(c.Address, c.Name))
+				.ToList();
+			if (targets.Count == 0) return;
+			new MassEditWindow(_data, _data.ClubDef, targets, _nav) { Owner = Window.GetWindow(this) }.ShowDialog();
+		});
+		QBtn(Build.T("Ligdeki Oyuncuları Toplu Düzenle…", "Mass Edit League Players…"), () =>
+		{
+			var leagueClubs = _data.Clubs
+				.Where(c => c.SquadSize > 0 && (c.League == _row.Name || (_row.ShortName.Length > 0 && c.League == _row.ShortName)))
+				.Select(c => c.Address)
+				.ToHashSet();
+			var targets = _data.Players
+				.Where(p => leagueClubs.Contains(p.ClubAddress))
+				.Select(p => new SquadEditor.Core.Editing.BulkTarget(p.Address, p.Name))
+				.ToList();
+			if (targets.Count == 0) return;
+			new MassEditWindow(_data, _data.PlayerDef, targets, _nav) { Owner = Window.GetWindow(this) }.ShowDialog();
+		});
 		right.Children.Add(Build.Card(Build.T("Hızlı İşlemler", "Quick Actions"), quick));
 
 		var clubsInLeague = _data.Clubs

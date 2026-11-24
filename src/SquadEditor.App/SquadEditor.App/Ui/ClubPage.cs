@@ -826,6 +826,44 @@ public sealed class ClubPage : UserControl, IPage
 			dlg.ShowDialog();
 		};
 		grid.ContextMenu.Items.Add(massEdit);
+		var healSel = new MenuItem { Header = Build.T("Sakatlıkları iyileştir", "Heal injuries"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		healSel.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			if (rows.Count == 0) return;
+			int healed = 0;
+			using (data.Session.History.BeginBatch(Build.T("Seçili sakatlıkları iyileştir", "Heal selected injuries")))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					try { if (Medical.Heal(data, r.Address, r.Name)) healed++; } catch { }
+				}
+			}
+			nav.SetStatus(Build.F("✓ {0} oyuncunun sakatlığı iyileştirildi. Ctrl+Z geri alır.", "✓ Healed injuries for {0} players. Ctrl+Z undoes it.", healed));
+		};
+		grid.ContextMenu.Items.Add(healSel);
+		var cohSel = new MenuItem { Header = Build.T("Takım uyumunu %100 yap", "Max team cohesion"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		cohSel.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			if (rows.Count == 0) return;
+			int done = 0;
+			using (data.Session.History.BeginBatch(Build.T("Seçili takım uyumu %100", "Max selected team cohesion")))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					try
+					{
+						bool ok = r.ClubAddress != 0 && TeamCohesion.MaxPlayerCohesion(data, r.Address, r.ClubAddress, r.Name);
+						int tac = TeamCohesion.MaxPlayerTacticalFamiliarity(data, r.Address, r.Name);
+						if (ok || tac > 0) done++;
+					}
+					catch { }
+				}
+			}
+			nav.SetStatus(Build.F("✓ {0} oyuncunun uyumu %100 yapıldı. Ctrl+Z geri alır.", "✓ Maxed cohesion for {0} players. Ctrl+Z undoes it.", done));
+		};
+		grid.ContextMenu.Items.Add(cohSel);
 		var compareTwo = new MenuItem { Header = Build.T("⚖ Seçilen 2 oyuncuyu karşılaştır", "⚖ Compare 2 selected players") };
 		compareTwo.Click += (_, _) =>
 		{
@@ -1523,14 +1561,59 @@ public sealed class HomePage : UserControl, IPage
 			AddPreset("⭐ Genç Kaleciler (GK · Yaş ≤ 23 · PA ≥ 150)", "⭐ Young Goalkeepers (GK · Age ≤ 23 · PA ≥ 150)", () => { _pos.SelectedValue = "GK"; _ageMax.Text = "23"; _paMin.Text = "150"; });
 			AddPreset("⭐ Boştaki Yıldızlar (Serbest · CA ≥ 125)", "⭐ Best Free Agents (Free · CA ≥ 125)", () => { _freeOnly.IsChecked = true; _caMin.Text = "125"; });
 			AddPreset("🧬 En İyi Regenler (Newgen · PA ≥ 150)", "🧬 Best Newgens (Regen · PA ≥ 150)", () => { _regenOnly.IsChecked = true; _paMin.Text = "150"; });
+			var customList = AppSettings.Current.CustomScoutPresets;
+			if (customList.Count > 0)
+			{
+				menu.Items.Add(new Separator());
+				foreach (SavedScoutPreset sp in customList.ToList())
+				{
+					var mi = new MenuItem { Header = "★ " + sp.Name };
+					mi.Click += (_, _) => { ResetAllFilters(); ApplySavedPreset(sp); Apply(); };
+					menu.Items.Add(mi);
+				}
+				var delMenu = new MenuItem { Header = Build.T("Kayıtlı filtre sil…", "Delete saved filter…") };
+				foreach (SavedScoutPreset sp in customList.ToList())
+				{
+					var dmi = new MenuItem { Header = sp.Name };
+					dmi.Click += (_, _) =>
+					{
+						AppSettings.Current.CustomScoutPresets.Remove(sp);
+						AppSettings.Current.Save();
+						_nav.SetStatus(Build.F("Filtre silindi: {0}", "Deleted preset: {0}", sp.Name));
+					};
+					delMenu.Items.Add(dmi);
+				}
+				menu.Items.Add(delMenu);
+			}
+			menu.Items.Add(new Separator());
+			var savePresetMi = new MenuItem { Header = Build.T("Mevcut filtreyi kaydet…", "Save current filter…") };
+			savePresetMi.Click += (_, _) => SaveCurrentPreset();
+			menu.Items.Add(savePresetMi);
 			menu.PlacementTarget = presetsBtn;
 			menu.IsOpen = true;
 		};
 
 		var clear = new Button { Content = Build.T("Temizle", "Clear"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(2, 0, 0, 0) };
 		clear.Click += (_, _) => { ResetAllFilters(); Apply(); };
-		var exportCsv = new Button { Content = Build.T("CSV", "CSV"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered list to CSV") };
-		exportCsv.Click += (_, _) => ExportPlayersCsv();
+		var massActionsBtn = new Button { Content = Build.T("Toplu İşlem ▾", "Mass Actions ▾"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0), IsEnabled = !AppSettings.Current.ReadOnlyMode, ToolTip = Build.T("Filtrelenmiş tüm oyunculara toplu işlem uygula", "Apply bulk actions to all filtered players") };
+		massActionsBtn.Click += (_, _) => OpenFilteredMassMenu(massActionsBtn);
+		var exportCsv = new Button { Content = Build.T("Dışa / İçe Aktar ▾", "Export / Import ▾"), Style = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0), ToolTip = Build.T("CSV dışa aktar veya Kısa Liste (.json) dışa/içe aktar", "Export CSV or export/import Shortlist (.json)") };
+		exportCsv.Click += (_, _) =>
+		{
+			var em = new ContextMenu();
+			var mCsv = new MenuItem { Header = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered players to CSV") };
+			mCsv.Click += (_, _) => ExportPlayersCsv();
+			em.Items.Add(mCsv);
+			em.Items.Add(new Separator());
+			var mExpSl = new MenuItem { Header = Build.T("Kısa listeyi dışa aktar (.json)", "Export shortlist (.json)") };
+			mExpSl.Click += (_, _) => ExportShortlistJson();
+			em.Items.Add(mExpSl);
+			var mImpSl = new MenuItem { Header = Build.T("Kısa listeyi içe aktar (.json)", "Import shortlist (.json)") };
+			mImpSl.Click += (_, _) => ImportShortlistJson();
+			em.Items.Add(mImpSl);
+			em.PlacementTarget = exportCsv;
+			em.IsOpen = true;
+		};
 
 		_matchCount = Build.Text("", 12, Build.Res("Muted"));
 		_matchCount.Margin = new Thickness(10, 0, 4, 0);
@@ -1561,10 +1644,12 @@ public sealed class HomePage : UserControl, IPage
 		DockPanel.SetDock(_matchCount, Dock.Right);
 		DockPanel.SetDock(_previewToggle, Dock.Right);
 		DockPanel.SetDock(exportCsv, Dock.Right);
+		DockPanel.SetDock(massActionsBtn, Dock.Right);
 		DockPanel.SetDock(colBtn, Dock.Right);
 		row2.Children.Add(_matchCount);
 		row2.Children.Add(_previewToggle);
 		row2.Children.Add(exportCsv);
+		row2.Children.Add(massActionsBtn);
 		row2.Children.Add(colBtn);
 		var chips = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 		chips.Children.Add(presetsBtn);
@@ -2029,6 +2114,258 @@ public sealed class HomePage : UserControl, IPage
 		}
 		System.IO.File.WriteAllLines(dlg.FileName, lines, System.Text.Encoding.UTF8);
 		_nav.SetStatus(Build.F("✓ {0:N0} oyuncu dışa aktarıldı: {1}", "✓ Exported {0:N0} players to {1}", _lastPlayers.Count, System.IO.Path.GetFileName(dlg.FileName)));
+	}
+
+	private void SaveCurrentPreset()
+	{
+		var dlg = new Window
+		{
+			Title = Build.T("Özel Filtre Kaydet", "Save Custom Filter"),
+			Width = 360,
+			SizeToContent = SizeToContent.Height,
+			ResizeMode = ResizeMode.NoResize,
+			WindowStartupLocation = WindowStartupLocation.CenterOwner,
+			Owner = Window.GetWindow(this),
+			Background = Build.Res("Bg"),
+			Foreground = Build.Res("Text"),
+			FontFamily = (FontFamily)Application.Current.Resources["UiFont"]
+		};
+		var sp = new StackPanel { Margin = new Thickness(16) };
+		sp.Children.Add(Build.Text(Build.T("Filtre adı", "Filter name"), 12.5, Build.Res("Muted")));
+		var box = new TextBox { Height = 30, Margin = new Thickness(0, 6, 0, 12) };
+		sp.Children.Add(box);
+		var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+		var cancel = new Button { Content = Build.T("Vazgeç", "Cancel"), IsCancel = true, Margin = new Thickness(0, 0, 8, 0) };
+		var ok = new Button { Content = Build.T("Kaydet", "Save"), Style = Build.StyleOf("AccentButton"), IsDefault = true };
+		ok.Click += (_, _) =>
+		{
+			string name = box.Text.Trim();
+			if (name.Length == 0) return;
+			AppSettings.Current.CustomScoutPresets.RemoveAll(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+			AppSettings.Current.CustomScoutPresets.Add(new SavedScoutPreset
+			{
+				Name = name,
+				Pos = _pos.SelectedValue as string ?? "",
+				Region = _region.SelectedValue as string ?? "",
+				Nation = _nation.SelectedValue as string ?? "",
+				AgeMin = _ageMin.Text,
+				AgeMax = _ageMax.Text,
+				CaMin = _caMin.Text,
+				CaMax = _caMax.Text,
+				PaMin = _paMin.Text,
+				MaxValM = _maxValM.Text,
+				Query = _search.Text,
+				FreeOnly = _freeOnly.IsChecked == true,
+				ExpiringOnly = _expiringOnly.IsChecked == true,
+				InjuredOnly = _injuredOnly.IsChecked == true,
+				Wonderkid = _wonderkid.IsChecked == true,
+				RegenOnly = _regenOnly.IsChecked == true,
+				FilterNation = _scoutFilter.Nation,
+				BestRole = _scoutFilter.BestRole,
+				MinGrowth = _scoutFilter.MinGrowth,
+				MinRating = _scoutFilter.MinRating,
+				MinPotentialRating = _scoutFilter.MinPotentialRating,
+				MaxWageDisplay = _scoutFilter.MaxWageDisplay,
+				MaxAskingPriceM = _scoutFilter.MaxAskingPriceM,
+				BothFeetOnly = _scoutFilter.BothFeetOnly,
+				MinPro = _scoutFilter.MinPro,
+				MinCons = _scoutFilter.MinCons,
+				MinImp = _scoutFilter.MinImp,
+				MaxInj = _scoutFilter.MaxInj,
+				MinDet = _scoutFilter.MinDet,
+				MinPace = _scoutFilter.MinPace,
+				MinFin = _scoutFilter.MinFin,
+				MinPas = _scoutFilter.MinPas
+			});
+			AppSettings.Current.Save();
+			_nav.SetStatus(Build.F("✓ Özel filtre kaydedildi: {0}", "✓ Saved custom filter: {0}", name));
+			dlg.DialogResult = true;
+		};
+		btns.Children.Add(cancel);
+		btns.Children.Add(ok);
+		sp.Children.Add(btns);
+		dlg.Content = sp;
+		dlg.Loaded += (_, _) => box.Focus();
+		dlg.ShowDialog();
+	}
+
+	private void ApplySavedPreset(SavedScoutPreset sp)
+	{
+		if (!string.IsNullOrEmpty(sp.Pos)) _pos.SelectedValue = sp.Pos;
+		if (!string.IsNullOrEmpty(sp.Region)) _region.SelectedValue = sp.Region;
+		if (!string.IsNullOrEmpty(sp.Nation)) _nation.SelectedValue = sp.Nation;
+		_ageMin.Text = sp.AgeMin ?? "";
+		_ageMax.Text = sp.AgeMax ?? "";
+		_caMin.Text = sp.CaMin ?? "";
+		_caMax.Text = sp.CaMax ?? "";
+		_paMin.Text = sp.PaMin ?? "";
+		_maxValM.Text = sp.MaxValM ?? "";
+		_search.Text = sp.Query ?? "";
+		_freeOnly.IsChecked = sp.FreeOnly;
+		_expiringOnly.IsChecked = sp.ExpiringOnly;
+		_injuredOnly.IsChecked = sp.InjuredOnly;
+		_wonderkid.IsChecked = sp.Wonderkid;
+		_regenOnly.IsChecked = sp.RegenOnly;
+		_scoutFilter.Nation = sp.FilterNation;
+		_scoutFilter.BestRole = sp.BestRole;
+		_scoutFilter.MinGrowth = sp.MinGrowth;
+		_scoutFilter.MinRating = sp.MinRating;
+		_scoutFilter.MinPotentialRating = sp.MinPotentialRating;
+		_scoutFilter.MaxWageDisplay = sp.MaxWageDisplay;
+		_scoutFilter.MaxAskingPriceM = sp.MaxAskingPriceM;
+		_scoutFilter.BothFeetOnly = sp.BothFeetOnly;
+		_scoutFilter.MinPro = sp.MinPro;
+		_scoutFilter.MinCons = sp.MinCons;
+		_scoutFilter.MinImp = sp.MinImp;
+		_scoutFilter.MaxInj = sp.MaxInj;
+		_scoutFilter.MinDet = sp.MinDet;
+		_scoutFilter.MinPace = sp.MinPace;
+		_scoutFilter.MinFin = sp.MinFin;
+		_scoutFilter.MinPas = sp.MinPas;
+		_advFilterBtn.Style = _scoutFilter.IsActive ? Build.StyleOf("AccentButton") : (Style)Application.Current.FindResource(typeof(Button));
+	}
+
+	private void OpenFilteredMassMenu(Button anchor)
+	{
+		if (_lastPlayers.Count == 0)
+		{
+			_nav.SetStatus(Build.T("Önce en az 1 oyuncu filtrele.", "Filter at least 1 player first."));
+			return;
+		}
+		var list = _lastPlayers.Take(5000).ToList();
+		var m = new ContextMenu();
+		void Item(string tr, string en, Action act)
+		{
+			var mi = new MenuItem { Header = Build.T(tr, en) };
+			mi.Click += (_, _) => act();
+			m.Items.Add(mi);
+		}
+		Item($"Tüm sakatlıkları iyileştir ({list.Count:N0} oyuncu)", $"Heal all injuries ({list.Count:N0} players)", () =>
+		{
+			int healed = 0;
+			using (_data.Session.History.BeginBatch(Build.T("Filtreli sakatlıkları iyileştir", "Heal filtered injuries")))
+			{
+				foreach (PlayerRow p in list)
+				{
+					try { if (Medical.Heal(_data, p.Address, p.Name)) healed++; } catch { }
+				}
+			}
+			_nav.SetStatus(Build.F("✓ {0:N0} sakat oyuncu iyileştirildi. Ctrl+Z geri alır.", "✓ Healed {0:N0} injured players. Ctrl+Z undoes it.", healed));
+		});
+		Item($"Kondisyon, moral ve mutluluk %100 ({list.Count:N0} oyuncu)", $"Max fitness, morale & happiness ({list.Count:N0} players)", () =>
+		{
+			if (AppSettings.Current.ConfirmBulkEdits && list.Count > 50 && MessageBox.Show(
+				Build.F("{0:N0} oyuncunun kondisyon, moral ve mutluluğu %100 yapılsın mı? Ctrl+Z geri alır.", "Max fitness, morale & happiness for {0:N0} players? Ctrl+Z undoes it.", list.Count),
+				"SquadEditor", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+			var targets = list.Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			var cond = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Condition");
+			var sharp = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Match Sharpness");
+			var morale = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Morale");
+			var happy = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Happiness");
+			using (_data.Session.History.BeginBatch(Build.T("Filtreli kondisyon/moral %100", "Filtered max fitness/morale")))
+			{
+				foreach (SquadEditor.Core.Layout.FieldDef? fd in new[] { cond, sharp, morale, happy })
+				{
+					if (fd == null || !fd.Max.HasValue) continue;
+					foreach (BulkTarget t in targets)
+					{
+						try { _data.Session.WriteField(t.Address, fd, fd.Max.Value.ToString(System.Globalization.CultureInfo.InvariantCulture), t.Label); } catch { }
+					}
+				}
+			}
+			_nav.SetStatus(Build.F("✓ {0:N0} oyuncunun kondisyon, moral ve mutluluğu %100 yapıldı. Ctrl+Z geri alır.", "✓ Maxed fitness, morale & happiness for {0:N0} players. Ctrl+Z undoes it.", list.Count));
+		});
+		Item($"Takım uyumunu %100 yap ({list.Count:N0} oyuncu)", $"Max team cohesion ({list.Count:N0} players)", () =>
+		{
+			int done = 0;
+			using (_data.Session.History.BeginBatch(Build.T("Filtreli takım uyumu %100", "Filtered max cohesion")))
+			{
+				foreach (PlayerRow p in list)
+				{
+					try
+					{
+						bool ok = p.ClubAddress != 0 && TeamCohesion.MaxPlayerCohesion(_data, p.Address, p.ClubAddress, p.Name);
+						int tac = TeamCohesion.MaxPlayerTacticalFamiliarity(_data, p.Address, p.Name);
+						if (ok || tac > 0) done++;
+					}
+					catch { }
+				}
+			}
+			_nav.SetStatus(Build.F("✓ {0:N0} oyuncunun takım uyumu %100 yapıldı. Ctrl+Z geri alır.", "✓ Maxed team cohesion for {0:N0} players. Ctrl+Z undoes it.", done));
+		});
+		m.Items.Add(new Separator());
+		Item($"Özel alanı toplu düzenle… ({list.Count:N0} oyuncu)", $"Mass edit custom field… ({list.Count:N0} players)", () =>
+		{
+			var targets = list.Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			new MassEditWindow(_data, _data.PlayerDef, targets, _nav) { Owner = Window.GetWindow(this) }.ShowDialog();
+		});
+		Item($"Tümünü kısa listeye ekle ({list.Count:N0} oyuncu)", $"Add all to shortlist ({list.Count:N0} players)", () =>
+		{
+			var set = new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey));
+			int added = 0;
+			foreach (PlayerRow p in list)
+			{
+				if (p.Uid > 0 && set.Add(p.Uid)) { p.IsShortlisted = true; added++; }
+			}
+			AppSettings.Current.SetShortlist(_data.SaveKey, set.ToList());
+			AppSettings.Current.Save();
+			_nav.SetStatus(Build.F("★ {0:N0} oyuncu kısa listeye eklendi (toplam {1:N0}).", "★ Added {0:N0} players to shortlist ({1:N0} total).", added, set.Count));
+		});
+		m.PlacementTarget = anchor;
+		m.IsOpen = true;
+	}
+
+	private void ExportShortlistJson()
+	{
+		var uids = AppSettings.Current.GetShortlist(_data.SaveKey);
+		if (uids.Count == 0)
+		{
+			_nav.SetStatus(Build.T("Kısa liste boş.", "Shortlist is empty."));
+			return;
+		}
+		var dlg = new Microsoft.Win32.SaveFileDialog
+		{
+			Filter = "JSON (*.json)|*.json",
+			FileName = $"squadeditor_shortlist_{_data.GameDate:yyyyMMdd}.json"
+		};
+		if (dlg.ShowDialog() != true) return;
+		var payload = new { format = "squadeditor-shortlist-v1", exported = DateTime.UtcNow.ToString("O"), uids };
+		System.IO.File.WriteAllText(dlg.FileName, System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }), System.Text.Encoding.UTF8);
+		_nav.SetStatus(Build.F("✓ {0:N0} oyunculuk kısa liste dışa aktarıldı.", "✓ Exported shortlist ({0:N0} players).", uids.Count));
+	}
+
+	private void ImportShortlistJson()
+	{
+		var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "JSON (*.json)|*.json" };
+		if (dlg.ShowDialog() != true) return;
+		try
+		{
+			using var doc = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(dlg.FileName));
+			var set = new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey));
+			int added = 0;
+			if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object && doc.RootElement.TryGetProperty("uids", out var arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+			{
+				foreach (var el in arr.EnumerateArray())
+				{
+					if (el.TryGetUInt32(out uint u) && u > 0 && set.Add(u)) added++;
+				}
+			}
+			else if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+			{
+				foreach (var el in doc.RootElement.EnumerateArray())
+				{
+					if (el.TryGetUInt32(out uint u) && u > 0 && set.Add(u)) added++;
+				}
+			}
+			AppSettings.Current.SetShortlist(_data.SaveKey, set.ToList());
+			AppSettings.Current.Save();
+			Apply();
+			_nav.SetStatus(Build.F("✓ Kısa listeye {0:N0} oyuncu içe aktarıldı (toplam {1:N0}).", "✓ Imported {0:N0} players into shortlist ({1:N0} total).", added, set.Count));
+		}
+		catch (Exception ex)
+		{
+			_nav.SetStatus(Build.F("Kısa liste okunamadı: {0}", "Failed to read shortlist: {0}", ex.Message));
+		}
 	}
 
 	private UIElement FrozenView(string q)
