@@ -784,7 +784,7 @@
           <p class="hero-note" data-i18n="hero.note">Kurulum gerektirmez, tek dosya olarak çalışır.</p>
           <div class="hero-trust">
             <span id="releaseInfo">v1.4.0 · Açık Kaynak (MIT)</span>
-            <a id="sourceLink" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" data-i18n="trust.source">Kaynak Kodu (GitHub)</a>
+            <a id="sourceLink" href="https://github.com/yunusemreyilmaz93-pixel/SquadEditor" target="_blank" rel="noopener" data-i18n="trust.source">Kaynak Kodu (GitHub)</a>
             <a href="#faq" data-i18n="trust.smartscreen">İlk açılışta SmartScreen uyarısı normaldir</a>
           </div>
         </div>
@@ -799,7 +799,7 @@
           <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
           <div class="showcase-foot">
             <div class="slide-meta">
-              <span class="slide-count" id="slideCount">1 / 8</span>
+              <span class="slide-count" id="slideCount">1 / 9</span>
               <span id="slideCaption"></span>
             </div>
             <div class="slide-controls">
@@ -991,7 +991,7 @@
           </p>
           <div class="about-sign">
             <span><span data-i18n="about.by">Geliştiren</span> <strong>Yunus Emre Yılmaz</strong></span>
-            <a id="aboutGh" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+            <a id="aboutGh" href="https://github.com/yunusemreyilmaz93-pixel/SquadEditor" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
               <svg class="ic" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
               <span data-i18n="about.repo">GitHub Deposu</span>
             </a>
@@ -1114,17 +1114,17 @@
       { flag: "kr", name: "한국어" }
     ];
 
-    // 9 distinct high-res real screenshots in BOTH TR and EN
+    // 9 distinct high-res real screenshots in BOTH TR and EN (concise tab labels so all 9 fit cleanly on one row)
     const SLIDES = [
-      { id: "overview", srcTr: "./assets/shot_player_overview.png", srcEn: "./assets/shot_player_overview_en.png", tr: "Oyuncu & PA Radar", en: "Player & PA Radar", capTr: "Canlı oyuncu profili, PR %, 🔮 PA Önizleme, 🤝 Uyum %100 ve çift katmanlı radar", capEn: "Live player profile, PR %, 🔮 PA Preview, 🤝 Max Cohesion & dual-layer radar" },
-      { id: "squad", srcTr: "./assets/shot_club_squad.png", srcEn: "./assets/shot_club_squad_en.png", tr: "Kadro & Uyum %100", en: "Squad & Cohesion", capTr: "Tek tıkla 🤝 Takım Uyumu & Taktik %100, 📸 Kadro Gelişim Takibi ve PR % sütunu", capEn: "1-click 🤝 Max Cohesion & Tactics 100%, 📸 Squad Progress Tracker & PR % column" },
-      { id: "bestxi", srcTr: "./assets/shot_club_bestxi.png", srcEn: "./assets/shot_club_bestxi_en.png", tr: "En İyi 11 & Transfer", en: "Best XI & Targets", capTr: "Kulüp En İyi 11 dizilişi, eksik analizi ve her mevki için 🔍 Akıllı Transfer Önerici", capEn: "Club Best XI pitch view, gap analysis & 🔍 Smart Transfer Finder per slot" },
-      { id: "finances", srcTr: "./assets/shot_club_finances.png", srcEn: "./assets/shot_club_finances_en.png", tr: "Finans & Sponsor", en: "Finances & Sponsors", capTr: "Bütçe, bakiye ve 🤝 Sponsorluk Anlaşmaları (Süper Sponsor Ekle, 2x, Düzenle)", capEn: "Budgets, balance & 🤝 Sponsorship Deals (Add Mega Sponsor, 2x, Edit)" },
-      { id: "home", srcTr: "./assets/shot_home_db.png", srcEn: "./assets/shot_home_db_en.png", tr: "Scout Veritabanı", en: "Scout Database", capTr: "Genie Scout filtreleri, 💎 Moneyball, PR %, Regen ve Wonderkid taraması", capEn: "Genie Scout filters, 💎 Moneyball, PR %, Regen & Wonderkid scouting" },
-      { id: "personal", srcTr: "./assets/shot_player_personal.png", srcEn: "./assets/shot_player_personal_en.png", tr: "Sözleşme & Uyruk", en: "Contract & Traits", capTr: "Sözleşme maddeleri, ikinci uyruk, diller ve tercih edilen hareketler", capEn: "Contract clauses, second nationalities, languages & player traits" },
+      { id: "overview", srcTr: "./assets/shot_player_overview.png", srcEn: "./assets/shot_player_overview_en.png", tr: "Oyuncu", en: "Player", capTr: "Canlı oyuncu profili, PR %, PA Zirve Önizleme, Uyum %100 ve çift katmanlı radar", capEn: "Live player profile, PR %, Peak PA Preview, Max Cohesion & dual-layer radar" },
+      { id: "squad", srcTr: "./assets/shot_club_squad.png", srcEn: "./assets/shot_club_squad_en.png", tr: "Kadro", en: "Squad", capTr: "Tek tıkla Takım Uyumu & Taktik %100, Kadro Gelişim Takibi ve PR % sütunu", capEn: "1-click Max Cohesion & Tactics 100%, Squad Progress Tracker & PR % column" },
+      { id: "bestxi", srcTr: "./assets/shot_club_bestxi.png", srcEn: "./assets/shot_club_bestxi_en.png", tr: "En İyi 11", en: "Best XI", capTr: "10 hazır diziliş, Özel Taktik & Roller ve her mevki için Akıllı Transfer Önerici", capEn: "10 formations, Custom Tactic & Roles & Smart Transfer Finder per slot" },
+      { id: "finances", srcTr: "./assets/shot_club_finances.png", srcEn: "./assets/shot_club_finances_en.png", tr: "Finans", en: "Finances", capTr: "4 canlı KPI kartı, bütçe, bakiye ve Sponsorluk Anlaşmaları yönetimi", capEn: "4 live KPI cards, budgets, balance & Sponsorship Deals editor" },
+      { id: "home", srcTr: "./assets/shot_home_db.png", srcEn: "./assets/shot_home_db_en.png", tr: "Scout", en: "Scout", capTr: "2 sütunlu Genie Scout filtreleri, Moneyball, PR %, Regen ve Wonderkid taraması", capEn: "2-column Genie Scout filters, Moneyball, PR %, Regen & Wonderkid scouting" },
+      { id: "personal", srcTr: "./assets/shot_player_personal.png", srcEn: "./assets/shot_player_personal_en.png", tr: "Sözleşme", en: "Contract", capTr: "Sözleşme maddeleri, ikinci uyruk, diller ve tercih edilen hareketler", capEn: "Contract clauses, second nationalities, languages & player traits" },
       { id: "relations", srcTr: "./assets/shot_club_relations.png", srcEn: "./assets/shot_club_relations_en.png", tr: "İlişkiler", en: "Relations", capTr: "Canlı rakip kulüpler, efsaneler, ikonlar ve sevilmeyen kişiler", capEn: "Live rival clubs, club legends, icons & disliked personnel" },
-      { id: "staffLight", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png", tr: "5★ Antrenör (Açık)", en: "5★ Coach (Light)", capTr: "Açık tema · FM 5★ Antrenörlük Yıldız Hesaplayıcısı & TD Hariç filtresi", capEn: "Light theme · FM 5★ Coaching Star Calculator & Hide Managers filter" },
-      { id: "multilang", srcTr: "./assets/shot_ja.png", srcEn: "./assets/shot_de.png", tr: "12 Dil", en: "12 Languages", capTr: "12 dilde eksiksiz FM terminolojisi (Japonca örneği)", capEn: "Authentic FM terminology in 12 languages (German example)" }
+      { id: "staffLight", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png", tr: "5★ Personel", en: "5★ Staff", capTr: "Açık tema · FM 5★ Antrenörlük Yıldız Hesaplayıcısı & TD Hariç filtresi", capEn: "Light theme · FM 5★ Coaching Star Calculator & Hide Managers filter" },
+      { id: "multilang", srcTr: "./assets/shot_ja.png", srcEn: "./assets/shot_de.png", tr: "12 Dil", en: "12 Langs", capTr: "12 dilde eksiksiz FM terminolojisi (Japonca örneği)", capEn: "Authentic FM terminology in 12 languages (German example)" }
     ];
 
     const I18N = {
@@ -1143,9 +1143,9 @@
         "feat.h": "Bir editörden ve scout aracından beklediğiniz her şey.",
         "feat.p": "Oyuncu aramadan personel transferine, kulüp tesislerinden canlı tema geçişine kadar tüm araçlar tek çatı altında.",
         "g1.h": "Oyuncu Arama & Scout",
-        "g1.f1t": "Gerçek Regen, PR % & 💎 Moneyball Cevher", "g1.f1d": "Sadece oyunun ürettiği gerçek regenleri ayırır; Potansiyel Reyting (PR %), çift ayak, istenen bonservis ve tek tıkla Moneyball şablonuyla gizli cevherleri bulur.",
-        "g1.f2t": "Gelişmiş Genie Scout Filtreleri & Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol uygunluğu, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.",
-        "g1.f3t": "🔮 PA Önizleme, Çift Katmanlı Radar & PNG Kart", "g1.f3d": "Oyuncunun PA zirvesindeki tahmini 1–20 özelliklerini belleğe yazmadan önizleyin, mevcut + zirve çift katmanlı radarı görün, iki oyuncuyu kıyaslayın veya PNG kart çıkarın.",
+        "g1.f1t": "Gerçek Regen, PR % & Moneyball Cevher", "g1.f1d": "Sadece oyunun ürettiği gerçek regenleri ayırır; Potansiyel Reyting (PR %), çift ayak, istenen bonservis ve tek tıkla Moneyball şablonuyla gizli cevherleri bulur.",
+        "g1.f2t": "2 Sütunlu Genie Scout Filtreleri & Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol uygunluğu, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.",
+        "g1.f3t": "PA Önizleme, Çift Katmanlı Radar & PNG Kart", "g1.f3d": "Oyuncunun PA zirvesindeki tahmini 1–20 özelliklerini belleğe yazmadan önizleyin, mevcut + zirve çift katmanlı radarı görün, iki oyuncuyu kıyaslayın veya PNG kart çıkarın.",
         "g1.f4t": "Wonderkid Oluşturucu, Model Kişilik & Alışkanlıklar", "g1.f4d": "Tekrar zar atılabilen dengeli Wonderkid üretici, tek tıkla kişilik iyileştirme ve tüm oyuncu alışkanlıklarını (Traits) düzenleme imkanı sunar.",
         "g2.h": "Personel & Transfer Yönetimi",
         "g2.f1t": "FM 5★ Antrenörlük Yıldız Hesaplayıcısı & Filtresi", "g2.f1d": "9 antrenman kategorisinde gerçek 0.5★–5.0★ hesabı, tabloda ★ Yıldız sütunu, Min. ★ filtresi ve tek tıkla \"TD Hariç\" seçeneğiyle en iyi antrenörleri anında bulun.",
@@ -1153,9 +1153,9 @@
         "g2.f3t": "Hızlı Oyuncu Transferi & Kiralık İşlemleri", "g2.f3d": "Bedelsiz veya bonservisli anında kulüp değişimi, serbest oyuncu imzalatma, kiralık oyuncuyu geri çağırma veya kalıcı transfer yapabilirsiniz.",
         "g2.f4t": "Sözleşme Maddeleri, İkinci Uyruk & Diller", "g2.f4d": "Serbest kalma bedeli ve bonus maddeleri ekleyip silebilir; oyuncunun ana uyruğunu, ikinci uyruklarını, konuştuğu dilleri ve favori kulüplerini düzenleyebilirsiniz.",
         "g3.h": "Kulüp, Kadro, Sponsor & Lig",
-        "g3.f1t": "Maça Hazırlık & 🤝 Takım Uyumu / Taktik %100", "g3.f1d": "Tek tıkla sakatlık/ceza temizliği, kondisyon/moral %100 ve tüm kadronun Takım Uyumunu + 6 taktik alan & diziliş yatkınlığını %100 yapın.",
-        "g3.f2t": "En İyi 11, 🔍 Akıllı Transfer Önerici & 📸 Gelişim Takibi", "g3.f2d": "En İyi 11'de her mevki için bütçenize uygun en iyi transfer hedeflerini anında önerir; kadro fotoğrafı çekip sezon içi CA/değer gelişimini takip etmenizi sağlar.",
-        "g3.f3t": "🤝 Sponsorluk Anlaşmaları, Finans & 🌟 Lig Altın Çağı", "g3.f3d": "Kulübün sponsorluklarını düzenleyin, Süper Sponsor (+50M/yıl) ekleyin veya 2x yapın; bütçe/tesisleri ve lig itibarını (Lig Altın Çağı) tek tıkla yükseltin.",
+        "g3.f1t": "Maça Hazırlık & Takım Uyumu / Taktik %100", "g3.f1d": "Tek tıkla sakatlık/ceza temizliği, kondisyon/moral %100 ve tüm kadronun Takım Uyumunu + 6 taktik alan & diziliş yatkınlığını %100 yapın.",
+        "g3.f2t": "10 Diziliş, Özel Roller & Akıllı Transfer Önerici", "g3.f2d": "Kendi 11'ini ve FM oyuncu rollerini oluştur; her mevki için bütçene uygun transfer hedeflerini anında gör ve Kadro Gelişim Takibiyle sezon içi CA/değer artışını izle.",
+        "g3.f3t": "Sponsorluk Anlaşmaları, Finans & Lig Altın Çağı", "g3.f3d": "Kulübün sponsorluklarını düzenleyin, Süper Sponsor (+50M/yıl) ekleyin veya 2x yapın; bütçe/tesisleri ve lig itibarını (Lig Altın Çağı) tek tıkla yükseltin.",
         "g3.f4t": "Toplu Düzenleme, Sözleşme Uzatma & Değer Sabitleme", "g3.f4d": "Birden fazla oyuncunun özelliklerini toplu değiştirebilir, tüm kadronun sözleşmesini uzatabilir veya seçtiğiniz değerlerin düşmemesi için dondurabilirsiniz.",
         "g4.h": "Kullanım Rahatlığı & Güvenlik",
         "g4.f1t": "4 Canlı Tema & Logo / Yüz Paketi Desteği", "g4.f1d": "Gece, OLED Siyah, Kömür & Altın ve Açık tema arasında anında geçiş yapabilirsiniz. Oyundaki logo ve yüz paketleriniz otomatik yüklenir.",
@@ -1197,9 +1197,9 @@
         "feat.h": "Everything you expect from a real-time editor and scout.",
         "feat.p": "From player scouting and role-based staff hiring to club facilities and live theme switching — all in one fast app.",
         "g1.h": "Player Search & Scouting",
-        "g1.f1t": "True Regen, PR % & 💎 Moneyball Gems", "g1.f1d": "Isolates true game-generated newgens; scout with Potential Rating (PR %), both feet, asking price and 1-click Moneyball presets.",
-        "g1.f2t": "Advanced Genie Scout Filters & Presets", "g1.f2d": "Filter by nationality, region, position, role rating, expiring contracts, CA/PA and hidden attributes (Professionalism, Consistency, Important Matches, Injury Proneness).",
-        "g1.f3t": "🔮 PA Preview, Dual-Layer Radar & PNG Card", "g1.f3d": "Preview projected 1–20 peak PA attributes without touching memory, view dual-layer current + peak radar, compare players side by side, or export PNG cards.",
+        "g1.f1t": "True Regen, PR % & Moneyball Gems", "g1.f1d": "Isolates true game-generated newgens; scout with Potential Rating (PR %), both feet, asking price and 1-click Moneyball presets.",
+        "g1.f2t": "2-Column Genie Scout Filters & Presets", "g1.f2d": "Filter by nationality, region, position, role rating, expiring contracts, CA/PA and hidden attributes (Professionalism, Consistency, Important Matches, Injury Proneness).",
+        "g1.f3t": "PA Preview, Dual-Layer Radar & PNG Card", "g1.f3d": "Preview projected 1–20 peak PA attributes without touching memory, view dual-layer current + peak radar, compare players side by side, or export PNG cards.",
         "g1.f4t": "Wonderkid Reroller, Model Personality & Player Traits", "g1.f4d": "Reroll balanced Wonderkids until you like the roll, max out personality traits, and toggle any player preferred move.",
         "g2.h": "Staff & Transfers",
         "g2.f1t": "FM 5★ Coaching Star Calculator & Search", "g2.f1d": "Real 0.5★–5.0★ calculator across all 9 training categories, ★ Stars column, Min ★ filter, and 1-click Hide Managers toggle.",
@@ -1207,9 +1207,9 @@
         "g2.f3t": "Instant Player Transfers & Loan Controls", "g2.f3d": "Move players with or without a transfer fee, sign free agents, recall loanees, or make loans permanent.",
         "g2.f4t": "Contract Clauses, Second Nationalities & Languages", "g2.f4d": "Add or remove release clauses and bonuses; edit primary/second nationalities, spoken languages and favoured clubs.",
         "g3.h": "Clubs, Squads, Sponsors & Leagues",
-        "g3.f1t": "Matchday Prep & 🤝 Max Cohesion / Tactics 100%", "g3.f1d": "Heal injuries, lift bans, restore fitness/morale, and max Team Cohesion (100) + Tactical Familiarity (100%) across the entire squad in one click.",
-        "g3.f2t": "Best XI, 🔍 Smart Transfer Finder & 📸 Progress Tracker", "g3.f2d": "Suggests budget-matched transfer targets for every Best XI slot, and tracks CA, value & attribute deltas across your season via local squad snapshots.",
-        "g3.f3t": "🤝 Sponsorship Deals, Finances & 🌟 League Golden Age", "g3.f3d": "Edit club sponsorship deals, add Mega Sponsors (+50M/yr) or double payouts; max budgets, facilities and entire leagues (League Golden Age) in one click.",
+        "g3.f1t": "Matchday Prep & Max Cohesion / Tactics 100%", "g3.f1d": "Heal injuries, lift bans, restore fitness/morale, and max Team Cohesion (100) + Tactical Familiarity (100%) across the entire squad in one click.",
+        "g3.f2t": "10 Formations, Custom Roles & Smart Transfer Finder", "g3.f2d": "Build custom role-based tactics, get budget-matched transfer targets for every Best XI slot, and track CA, value & attribute deltas via squad snapshots.",
+        "g3.f3t": "Sponsorship Deals, Finances & League Golden Age", "g3.f3d": "Edit club sponsorship deals, add Mega Sponsors (+50M/yr) or double payouts; max budgets, facilities and entire leagues (League Golden Age) in one click.",
         "g3.f4t": "Mass Edit, Bulk Contract Extend & Freezing", "g3.f4d": "Bulk-edit attributes across selected players, extend contracts for the whole squad, or freeze values so the game never lowers them.",
         "g4.h": "Craft & Safety",
         "g4.f1t": "4 Live Themes & FM Graphics Support", "g4.f1d": "Switch live between Midnight, OLED Black, Charcoal & Gold, and Light themes. Automatically loads logos and faces from your FM graphics folder.",
@@ -1254,6 +1254,11 @@
         : `<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>`;
     }
 
+    let slideToken = 0;
+    let fadeTimer = null;
+    // Preload all slide images in background so transitions never flicker or double-refresh
+    SLIDES.forEach(s => { new Image().src = s.srcTr; new Image().src = s.srcEn; });
+
     function renderSlides() {
       const tabs = document.getElementById("slideTabs");
       tabs.innerHTML = SLIDES.map((s, i) =>
@@ -1262,16 +1267,21 @@
       tabs.querySelectorAll(".slide-tab").forEach(b => b.addEventListener("click", () => goSlide(Number(b.dataset.idx))));
       const cur = SLIDES[slideIdx];
       const nextSrc = lang === "tr" ? cur.srcTr : cur.srcEn;
+      const nextAlt = lang === "tr" ? cur.capTr : cur.capEn;
       document.getElementById("slideCount").textContent = `${slideIdx + 1} / ${SLIDES.length}`;
-      document.getElementById("slideCaption").textContent = lang === "tr" ? cur.capTr : cur.capEn;
+      document.getElementById("slideCaption").textContent = nextAlt;
       const img = document.getElementById("slideImg");
       if (img.getAttribute("src") !== nextSrc) {
+        const myToken = ++slideToken;
+        if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
         img.classList.add("fading");
-        setTimeout(() => {
+        fadeTimer = setTimeout(() => {
+          if (myToken !== slideToken) return;
+          img.onload = () => { if (myToken === slideToken) img.classList.remove("fading"); };
           img.src = nextSrc;
-          img.alt = lang === "tr" ? cur.capTr : cur.capEn;
-          img.classList.remove("fading");
-        }, 150);
+          img.alt = nextAlt;
+          if (img.complete) img.classList.remove("fading");
+        }, 110);
       }
     }
 
