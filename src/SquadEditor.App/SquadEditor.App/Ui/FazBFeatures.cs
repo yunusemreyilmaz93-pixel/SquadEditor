@@ -432,7 +432,16 @@ public static class ClubBestXi
 
 			foreach (var (slot, p, _) in starters)
 			{
-				string shortName = p == null ? "—" : p.Name.Split(' ').Last();
+				static string PitchShortName(string full)
+				{
+					var parts = full.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+					if (parts.Length == 0) return "—";
+					if (parts.Length == 1) return parts[0];
+					// Multi-part Portuguese/Brazilian/Spanish full names (e.g. "Endrick Felipe Moreira de Sousa", "Rodrygo Silva de Goes") -> show first name ("Endrick", "Rodrygo")
+					if (parts.Length >= 3) return parts[0];
+					return parts[^1];
+				}
+				string shortName = p == null ? "—" : PitchShortName(p.Name);
 				bool weak = p == null || p.CA < avgCa - 14;
 				var badge = new Border
 				{
