@@ -348,6 +348,7 @@ public static class ClubBestXi
 			rb.Checked += (_, _) => Render(form);
 			bar.Children.Add(rb);
 		}
+		Render("4-2-3-1");
 
 		var dock = new DockPanel();
 		DockPanel.SetDock(bar, Dock.Top);
