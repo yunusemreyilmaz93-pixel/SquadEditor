@@ -1,0 +1,8 @@
+name = "squadeditor"
+compatibility_date = "2026-01-01"
+pages_build_output_dir = "website"
+
+[[d1_databases]]
+binding = "STATS_DB"
+database_name = "squadeditor-stats"
+database_id = "ac7c418a-ea8f-4dbe-97d3-de424db49f5b"

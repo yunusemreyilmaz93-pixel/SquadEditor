@@ -1322,13 +1322,27 @@
       </div>`).join("");
 
     // Links & socials
+    function trackHit(ev) {
+      try {
+        const payload = JSON.stringify({ e: ev, r: document.referrer || "", l: lang || "en" });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/api/hit", new Blob([payload], { type: "application/json" }));
+        } else {
+          fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }).catch(() => {});
+        }
+      } catch {}
+    }
+
     ["navDl", "heroDl", "bottomDl"].forEach(id => {
       const a = document.getElementById(id);
       a.href = SITE_CONFIG.downloadUrl;
       if (SITE_CONFIG.downloadUrl.startsWith("http")) { a.target = "_blank"; a.rel = "noopener"; }
+      a.addEventListener("click", () => trackHit("dl"));
     });
     document.getElementById("aboutGh").href = SITE_CONFIG.repoUrl;
+    document.getElementById("aboutGh").addEventListener("click", () => trackHit("gh"));
     document.getElementById("sourceLink").href = SITE_CONFIG.repoUrl;
+    document.getElementById("sourceLink").addEventListener("click", () => trackHit("gh"));
     document.getElementById("socialLinks").innerHTML = SITE_CONFIG.socials
       .map(s => `<a class="social-btn" href="${s.url}" target="_blank" rel="noopener">${SOCIAL_SVGS[s.id] || ""}<span>${s.label}</span></a>`)
       .join("");
@@ -1365,6 +1379,7 @@
 
     applyTheme(theme);
     applyLang(lang);
+    trackHit("view");
   </script>
 </body>
 </html>
