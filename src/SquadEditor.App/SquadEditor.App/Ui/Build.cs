@@ -127,17 +127,25 @@ public static class Build
 			return new Border { Margin = new Thickness(6, 0, 6, 0), Child = grid };
 		}
 		double boxWidth = field.IsAttribute ? 44
-			: (field.IsMoney || field.IsDate ? 132
-			: (field.IsNumeric ? 88 : 180));
+			: (field.IsMoney || field.IsDate ? 136
+			: (field.IsNumeric ? 96 : 200));
 		var box = new TextBox
 		{
-			Width = boxWidth,
 			Height = 25,
-			HorizontalContentAlignment = field.IsAttribute ? HorizontalAlignment.Center : (field.IsNumeric || field.IsDate ? HorizontalAlignment.Right : HorizontalAlignment.Left),
+			HorizontalContentAlignment = field.IsAttribute ? HorizontalAlignment.Center : HorizontalAlignment.Right,
 			FontWeight = field.IsAttribute ? FontWeights.Bold : FontWeights.Normal,
 			Padding = new Thickness(6, 1, 6, 1),
 			VerticalContentAlignment = VerticalAlignment.Center
 		};
+		if (field.IsReadOnly && !field.IsAttribute)
+		{
+			box.MinWidth = boxWidth;
+			box.HorizontalAlignment = HorizontalAlignment.Right;
+		}
+		else
+		{
+			box.Width = boxWidth;
+		}
 		if (field.IsAttribute)
 		{
 			box.SetBinding(Control.ForegroundProperty, new Binding(nameof(EditField.ValueBrush)) { Source = field });

@@ -1145,50 +1145,7 @@ public sealed class PlayerPage : UserControl, IPage
 	private FrameworkElement MiniPitch(double width)
 	{
 		double w = width, h = width * 1.32;
-		var canvas = new Canvas { Width = w, Height = h, ClipToBounds = true };
-		var lineBrush = new SolidColorBrush(Color.FromArgb(0x45, 0xFF, 0xFF, 0xFF));
-		var turf = new Border
-		{
-			Width = w,
-			Height = h,
-			CornerRadius = new CornerRadius(6),
-			Background = new SolidColorBrush(Color.FromRgb(0x14, 0x38, 0x26)),
-			BorderBrush = lineBrush,
-			BorderThickness = new Thickness(1)
-		};
-		canvas.Children.Add(turf);
-		// Subtle mowed grass stripes
-		int stripes = 8;
-		double sh = h / stripes;
-		for (int i = 0; i < stripes; i += 2)
-		{
-			var stripe = new Border { Width = w - 2, Height = sh, Background = new SolidColorBrush(Color.FromArgb(0x12, 0xFF, 0xFF, 0xFF)) };
-			Canvas.SetLeft(stripe, 1);
-			Canvas.SetTop(stripe, i * sh);
-			canvas.Children.Add(stripe);
-		}
-		// Halfway line & center circle
-		var half = new Border { Width = w, Height = 1, Background = lineBrush };
-		Canvas.SetTop(half, h / 2);
-		canvas.Children.Add(half);
-		double cr = w * 0.24;
-		var circle = new System.Windows.Shapes.Ellipse { Width = cr, Height = cr, Stroke = lineBrush, StrokeThickness = 1 };
-		Canvas.SetLeft(circle, (w - cr) / 2);
-		Canvas.SetTop(circle, (h - cr) / 2);
-		canvas.Children.Add(circle);
-		// Top & bottom penalty boxes and 6-yard boxes
-		double pbW = w * 0.56, pbH = h * 0.145, gbW = w * 0.28, gbH = h * 0.055;
-		void Box(double bw2, double bh2, double top, Thickness th)
-		{
-			var b = new Border { Width = bw2, Height = bh2, BorderBrush = lineBrush, BorderThickness = th };
-			Canvas.SetLeft(b, (w - bw2) / 2);
-			Canvas.SetTop(b, top);
-			canvas.Children.Add(b);
-		}
-		Box(pbW, pbH, 0, new Thickness(1, 0, 1, 1));
-		Box(gbW, gbH, 0, new Thickness(1, 0, 1, 1));
-		Box(pbW, pbH, h - pbH, new Thickness(1, 1, 1, 0));
-		Box(gbW, gbH, h - gbH, new Thickness(1, 1, 1, 0));
+		var canvas = PlayerVisuals.CreatePitchCanvas(w, h);
 
 		bool large = width >= 320;
 		double bw = large ? 82 : 66, bh = large ? 28 : 24;

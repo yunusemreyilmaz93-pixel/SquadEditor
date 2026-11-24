@@ -168,6 +168,60 @@ public static class PlayerVisuals
 		stack.Children.Add(track);
 		return stack;
 	}
+
+	/// <summary>
+	/// Unified football pitch canvas (mowed grass stripes, halfway line, center circle, penalty & 6-yard boxes)
+	/// shared by both PlayerPage Positions and ClubBestXi so the pitch looks identical everywhere.
+	/// </summary>
+	public static Canvas CreatePitchCanvas(double w, double h)
+	{
+		var canvas = new Canvas { Width = w, Height = h, ClipToBounds = true };
+		var lineBrush = new SolidColorBrush(Color.FromArgb(0x48, 0xFF, 0xFF, 0xFF));
+		canvas.Children.Add(new Border
+		{
+			Width = w,
+			Height = h,
+			CornerRadius = new CornerRadius(8),
+			Background = new SolidColorBrush(Color.FromRgb(0x14, 0x38, 0x26)),
+			BorderBrush = lineBrush,
+			BorderThickness = new Thickness(1)
+		});
+		int stripes = 8;
+		double sh = h / stripes;
+		for (int i = 0; i < stripes; i += 2)
+		{
+			var stripe = new Border { Width = w - 2, Height = sh, Background = new SolidColorBrush(Color.FromArgb(0x12, 0xFF, 0xFF, 0xFF)) };
+			Canvas.SetLeft(stripe, 1);
+			Canvas.SetTop(stripe, i * sh);
+			canvas.Children.Add(stripe);
+		}
+		var half = new Border { Width = w, Height = 1, Background = lineBrush };
+		Canvas.SetTop(half, h / 2);
+		canvas.Children.Add(half);
+		double cr = w * 0.24;
+		var circle = new Ellipse { Width = cr, Height = cr, Stroke = lineBrush, StrokeThickness = 1 };
+		Canvas.SetLeft(circle, (w - cr) / 2);
+		Canvas.SetTop(circle, (h - cr) / 2);
+		canvas.Children.Add(circle);
+		var centerDot = new Ellipse { Width = 5, Height = 5, Fill = lineBrush };
+		Canvas.SetLeft(centerDot, (w - 5) / 2);
+		Canvas.SetTop(centerDot, (h - 5) / 2);
+		canvas.Children.Add(centerDot);
+
+		double pbW = w * 0.56, pbH = h * 0.145, gbW = w * 0.28, gbH = h * 0.055;
+		void Box(double bw2, double bh2, double top, Thickness th)
+		{
+			var b = new Border { Width = bw2, Height = bh2, BorderBrush = lineBrush, BorderThickness = th };
+			Canvas.SetLeft(b, (w - bw2) / 2);
+			Canvas.SetTop(b, top);
+			canvas.Children.Add(b);
+		}
+		Box(pbW, pbH, 0, new Thickness(1, 0, 1, 1));
+		Box(gbW, gbH, 0, new Thickness(1, 0, 1, 1));
+		Box(pbW, pbH, h - pbH, new Thickness(1, 1, 1, 0));
+		Box(gbW, gbH, h - gbH, new Thickness(1, 1, 1, 0));
+		return canvas;
+	}
 }
 
 /// <summary>Two-player side-by-side comparison window with overlaid 8-axis radar and attribute delta table.</summary>

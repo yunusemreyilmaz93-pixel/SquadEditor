@@ -1922,19 +1922,6 @@
           "type": "i32",
           "min": 0,
           "max": 100
-        },
-        {
-          "name": "Season Ticket Price",
-          "group": "Finances",
-          "path": [
-            "0x150",
-            "0x8B8"
-          ],
-          "type": "f32",
-          "min": 0,
-          "max": 50000,
-          "format": "money",
-          "currency": "£"
         }
       ]
     },

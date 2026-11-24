@@ -158,7 +158,7 @@ public sealed class ClubPage : UserControl, IPage
 		var quickBar = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
 		var prepare = new Button
 		{
-			Content = Build.T("⚡ Tüm Kadroyu Maça Hazırla", "⚡ Prepare Squad for Match"),
+			Content = Icons.Label(IconKind.Zap, Build.T("Tüm Kadroyu Maça Hazırla", "Prepare Squad for Match"), 13.5),
 			ToolTip = Build.T("Kadroda görünen tüm oyuncuların sakatlıklarını iyileştirir, cezalarını kaldırır; kondisyon, maç formu, moral ve mutluluklarını %100 yapar (Ctrl+Z geri alır)",
 				"Heals injuries, lifts bans, and maxes condition, sharpness, morale & contract happiness for all players in the current view (Ctrl+Z undoes it)"),
 			Style = Build.StyleOf("AccentButton"),
@@ -221,7 +221,7 @@ public sealed class ClubPage : UserControl, IPage
 		quickBar.Children.Add(prepare);
 		var cohesionBtn = new Button
 		{
-			Content = Build.T("🤝 Uyum & Taktik %100", "🤝 Max Cohesion & Tactics"),
+			Content = Icons.Label(IconKind.Users, Build.T("Uyum & Taktik %100", "Max Cohesion & Tactics"), 13.5),
 			ToolTip = Build.T("Kadroda görünen tüm oyuncuların Takım Uyumunu (100) ve 6 taktik alan + diziliş yatkınlığını %100 yapar (Ctrl+Z geri alır)",
 				"Maxes Team Cohesion (100) and Tactical Familiarity (100% across all tactical areas & formations) for the current squad (Ctrl+Z undoes)"),
 			Padding = new Thickness(9, 4, 9, 4),
@@ -241,7 +241,7 @@ public sealed class ClubPage : UserControl, IPage
 		quickBar.Children.Add(cohesionBtn);
 		var snapBtn = new Button
 		{
-			Content = Build.T("📸 Gelişim", "📸 Progress"),
+			Content = Icons.Label(IconKind.Camera, Build.T("Gelişim", "Progress"), 13.5),
 			ToolTip = Build.T("Kadro fotoğrafı çek ve sezon boyunca oyuncuların CA, değer ve özellik gelişimini takip et", "Take a squad snapshot and track CA, value & attribute progression across the season"),
 			Padding = new Thickness(9, 4, 9, 4),
 			Margin = new Thickness(6, 0, 0, 0),
@@ -378,143 +378,276 @@ public sealed class ClubPage : UserControl, IPage
 
 	private UIElement Finances()
 	{
-		var grid = new Grid { MaxWidth = 1040, HorizontalAlignment = HorizontalAlignment.Left };
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 380 });
-
-		var left = new StackPanel();
-		var note = Build.Text(Build.F("Tutarlar {0} olarak gösterilir, maaşlar {1} bazında. Ayarlardan değiştirebilirsin.", "Amounts are shown in {0}, wages per {1}. Change this in Settings.", Money.Current.Code, Money.WageSuffix.TrimStart('/')), 12, Build.Res("Muted"));
-		note.Margin = new Thickness(14, 0, 14, 10);
-		note.TextWrapping = TextWrapping.Wrap;
-		var rows = Build.Rows(_fields.Where(f => f.Def.GroupKey == "Finances"));
-		rows.Children.Add(note);
-		left.Children.Add(Build.Card(Build.T("Finans", "Finances"), rows));
-
-		// Live squad payroll & valuation summary
-		var squad = _data.Squads[_club.Address].ToList();
-		long totalWages = squad.Sum(p => p.Wage);
-		long totalValue = squad.Sum(p => p.Value);
-		long wageBudget = F("Wage Budget").Number;
-		double usage = wageBudget > 0 ? (double)totalWages / wageBudget * 100.0 : 0;
-		var summary = new StackPanel { Margin = new Thickness(14, 4, 14, 12) };
-		void StatLine(string label, string val, Brush? brush = null)
+		var host = new ContentControl();
+		void BuildFinances()
 		{
-			var d = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
-			var v = Build.Text(val, 13, brush ?? Build.Res("Text"), FontWeights.SemiBold);
-			DockPanel.SetDock(v, Dock.Right);
-			d.Children.Add(v);
-			d.Children.Add(Build.Text(label, 12.5, Build.Res("Muted")));
-			summary.Children.Add(d);
-		}
-		StatLine(Build.T("Toplam Kadro Değeri", "Total Squad Value"), Money.Format(totalValue, false));
-		StatLine(Build.T("Mevcut Kadro Maaş Yükü", "Current Squad Wage Bill"), Money.Format(totalWages, true));
-		StatLine(Build.T("Maaş Bütçesi Kullanımı", "Wage Budget Usage"), wageBudget > 0 ? $"%{usage:0.0}" : "—", usage > 100 ? Build.Res("Danger") : Build.Res("Positive"));
-		StatLine(Build.T("Sözleşmesi 1 Yıl İçinde Biten", "Expiring Within 1 Year"), squad.Count(p => p.ContractDate is { } cd && cd <= _data.GameDate.AddYears(1)).ToString());
-		left.Children.Add(Build.Card(Build.T("Kadro Finans Özeti", "Squad Financial Summary"), summary));
+			var outer = new StackPanel { MaxWidth = 1120, HorizontalAlignment = HorizontalAlignment.Left };
+			var squad = _data.Squads[_club.Address].ToList();
+			long totalWages = squad.Sum(p => p.Wage);
+			long totalValue = squad.Sum(p => p.Value);
+			long balanceVal = F("Balance").Number;
+			long transferVal = F("Transfer Budget").Number;
+			long wageBudget = F("Wage Budget").Number;
+			double usage = wageBudget > 0 ? (double)totalWages / wageBudget * 100.0 : 0;
+			var sponsorDeals = ClubSponsors.ReadAll(_data, _club.Address);
+			long sponsorAnnual = sponsorDeals.Where(d => !d.IsExpired(_data.GameDate)).Sum(d => d.PerSeasonGbp);
 
-		var right = new StackPanel();
-		var quick = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(10, 2, 10, 10) };
-		bool canWrite = !AppSettings.Current.ReadOnlyMode;
-		void QuickBtn(string label, Action act)
-		{
-			var b = new Button { Content = label, Margin = new Thickness(3), Padding = new Thickness(8, 6, 8, 6), FontSize = 12, IsEnabled = canWrite };
-			b.Click += (_, _) =>
+			// Top 4 KPI Cards (modern dashboard strip)
+			var kpiGrid = new System.Windows.Controls.Primitives.UniformGrid { Columns = 4, Margin = new Thickness(0, 0, 0, 10) };
+			Border KpiCard(IconKind ic, string title, string value, string sub, Brush accent, double? meterPct = null)
 			{
-				act();
-				RefreshValues();
-				OnWritten(null, F("Balance"));
-			};
-			quick.Children.Add(b);
-		}
-		void AddMoney(string fieldName, long deltaGbp, string label)
-		{
-			EditField ef = F(fieldName);
-			long next = Math.Clamp(ef.Number + deltaGbp, (long)(ef.Def.Min ?? -2_000_000_000), (long)(ef.Def.Max ?? 2_000_000_000));
-			_data.Session.WriteField(_club.Address, ef.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
-			_nav.SetStatus(Build.F("✓ {0}: {1} uygulandı. Ctrl+Z geri alır.", "✓ {0}: {1} applied. Ctrl+Z undoes it.", _club.Name, label));
-		}
-		QuickBtn(Build.T("+10M Bakiye", "+10M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(10_000_000, false)), "+10M"));
-		QuickBtn(Build.T("+50M Bakiye", "+50M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M"));
-		QuickBtn(Build.T("+100M Bakiye", "+100M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M"));
-		QuickBtn(Build.T("+50M Transfer Bütçesi", "+50M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M Transfer"));
-		QuickBtn(Build.T("Maaş Bütçesini 2x Yap", "Double Wage Budget"), () =>
-		{
-			EditField wb = F("Wage Budget"), swb = F("Spending Wage Budget");
-			long next = Math.Clamp(Math.Max(wb.Number, 100_000) * 2L, 0, (long)(wb.Def.Max ?? 200_000_000));
-			using (_data.Session.History.BeginBatch(Build.F("{0}: Maaş bütçesi 2x", "{0}: Double wage budget", _club.Name)))
-			{
-				_data.Session.WriteField(_club.Address, wb.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
-				_data.Session.WriteField(_club.Address, swb.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
+				var sp = new StackPanel();
+				var head = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
+				var g = Icons.Glyph(ic, 14, accent);
+				g.Margin = new Thickness(0, 0, 6, 0);
+				head.Children.Add(g);
+				head.Children.Add(Build.Text(title, 11.5, Build.Res("Muted"), FontWeights.SemiBold));
+				sp.Children.Add(head);
+				sp.Children.Add(Build.Text(value, 19, Build.Res("Text"), FontWeights.Bold));
+				var subTxt = Build.Text(sub, 11, Build.Res("Faint"));
+				subTxt.Margin = new Thickness(0, 2, 0, 0);
+				sp.Children.Add(subTxt);
+				if (meterPct.HasValue)
+				{
+					double pct = Math.Clamp(meterPct.Value / 100.0, 0, 1);
+					var track = new Grid { Height = 5, Margin = new Thickness(0, 8, 0, 0), ClipToBounds = true };
+					track.Children.Add(new Border { Background = Build.Res("Field"), CornerRadius = new CornerRadius(2.5) });
+					var bar = new Border { Background = accent, CornerRadius = new CornerRadius(2.5), HorizontalAlignment = HorizontalAlignment.Left };
+					track.SizeChanged += (_, e) => bar.Width = e.NewSize.Width * pct;
+					track.Children.Add(bar);
+					sp.Children.Add(track);
+				}
+				return new Border
+				{
+					Style = Build.StyleOf("CardBorder"),
+					BorderBrush = Build.Res("StrokeSoft"),
+					Padding = new Thickness(14, 12, 14, 12),
+					Margin = new Thickness(5, 0, 5, 0),
+					Child = sp
+				};
 			}
-			_nav.SetStatus(Build.F("✓ {0} maaş bütçesi iki katına çıkarıldı.", "✓ {0} wage budget doubled.", _club.Name));
-		});
-		QuickBtn(Build.T("+100M Transfer Bütçesi", "+100M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M Transfer"));
-		QuickBtn(Build.T("💎 Zengin Patron (+500M / +200M)", "💎 Rich Owner (+500M / +200M)"), () =>
-		{
-			using (_data.Session.History.BeginBatch(Build.F("{0}: Zengin patron", "{0}: Rich owner", _club.Name)))
-			{
-				AddMoney("Balance", (long)Math.Round(Money.FromDisplay(500_000_000, false)), "+500M");
-				AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(200_000_000, false)), "+200M");
-			}
-		});
-		QuickBtn(Build.T("Transfer Geliri %100", "Transfer Revenue 100%"), () =>
-		{
-			EditField tr = F("Transfer Revenue %");
-			_data.Session.WriteField(_club.Address, tr.Def, "100", _club.Name);
-			_nav.SetStatus(Build.F("✓ {0} transfer gelir yüzdesi %100 yapıldı.", "✓ {0} transfer revenue set to 100%.", _club.Name));
-		});
-		right.Children.Add(Build.Card(Build.T("Hızlı Finans İşlemleri", "Quick Finance Actions"), quick));
-		right.Children.Add(ClubSponsors.BuildCard(_data, _club, _nav));
 
-		Grid.SetColumn(right, 1);
-		grid.Children.Add(left);
-		grid.Children.Add(right);
-		return Build.Scroll(grid);
+			kpiGrid.Children.Add(KpiCard(IconKind.Wallet, Build.T("Kulüp Bakiyesi", "Club Balance"), Money.Format(balanceVal, false),
+				balanceVal >= 0 ? Build.T("Finansal durum sağlıklı", "Healthy balance") : Build.T("Ekside", "In debt"),
+				balanceVal >= 0 ? Build.Res("Positive") : Build.Res("Danger")));
+			kpiGrid.Children.Add(KpiCard(IconKind.Coins, Build.T("Transfer Bütçesi", "Transfer Budget"), Money.Format(transferVal, false),
+				Build.F("Transfer geliri: %{0}", "Transfer revenue: {0}%", F("Transfer Revenue %").Number),
+				Build.Res("Accent")));
+			kpiGrid.Children.Add(KpiCard(IconKind.Users, Build.T("Maaş Kullanımı", "Wage Usage"), wageBudget > 0 ? $"%{usage:0.0}" : "—",
+				$"{Money.Format(totalWages, true)} / {Money.Format(wageBudget, true)}",
+				usage > 100 ? Build.Res("Danger") : Build.Res("Positive"), usage));
+			kpiGrid.Children.Add(KpiCard(IconKind.Briefcase, Build.T("Yıllık Sponsor", "Annual Sponsors"), Money.Format(sponsorAnnual, false),
+				Build.F("{0} aktif anlaşma", "{0} active deals", sponsorDeals.Count(d => !d.IsExpired(_data.GameDate))),
+				Build.Res("Positive")));
+			outer.Children.Add(kpiGrid);
+
+			var grid = new Grid();
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 430 });
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.12, GridUnitType.Star), MinWidth = 430 });
+
+			var left = new StackPanel();
+			var note = Build.Text(Build.F("Tutarlar {0} olarak gösterilir, maaşlar {1} bazında. Ayarlardan değiştirebilirsin.", "Amounts are shown in {0}, wages per {1}. Change this in Settings.", Money.Current.Code, Money.WageSuffix.TrimStart('/')), 11.5, Build.Res("Faint"));
+			note.Margin = new Thickness(14, 4, 14, 10);
+			note.TextWrapping = TextWrapping.Wrap;
+			var rows = Build.Rows(_fields.Where(f => f.Def.GroupKey == "Finances"));
+			rows.Children.Add(note);
+			left.Children.Add(Build.Card(Build.T("Finans Detayları", "Financial Details"), rows));
+
+			var summary = new StackPanel { Margin = new Thickness(14, 4, 14, 12) };
+			void StatLine(string label, string val, Brush? brush = null)
+			{
+				var d = new DockPanel { Margin = new Thickness(0, 4, 0, 4) };
+				var v = Build.Text(val, 13, brush ?? Build.Res("Text"), FontWeights.SemiBold);
+				DockPanel.SetDock(v, Dock.Right);
+				d.Children.Add(v);
+				d.Children.Add(Build.Text(label, 12.5, Build.Res("Muted")));
+				summary.Children.Add(d);
+			}
+			StatLine(Build.T("Toplam Kadro Değeri", "Total Squad Value"), Money.Format(totalValue, false));
+			StatLine(Build.T("Mevcut Kadro Maaş Yükü", "Current Squad Wage Bill"), Money.Format(totalWages, true));
+			StatLine(Build.T("Maaş Bütçesi Kullanımı", "Wage Budget Usage"), wageBudget > 0 ? $"%{usage:0.0}" : "—", usage > 100 ? Build.Res("Danger") : Build.Res("Positive"));
+			StatLine(Build.T("Sözleşmesi 1 Yıl İçinde Biten", "Expiring Within 1 Year"), squad.Count(p => p.ContractDate is { } cd && cd <= _data.GameDate.AddYears(1)).ToString());
+			left.Children.Add(Build.Card(Build.T("Kadro Finans Özeti", "Squad Financial Summary"), summary));
+
+			var right = new StackPanel();
+			var quick = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(10, 4, 10, 10) };
+			bool canWrite = !AppSettings.Current.ReadOnlyMode;
+			void QuickBtn(IconKind ic, string label, Action act, bool accentStyle = false)
+			{
+				var b = new Button
+				{
+					Content = Icons.Label(ic, label, 13.5),
+					Margin = new Thickness(4),
+					Padding = new Thickness(10, 7, 10, 7),
+					FontSize = 12,
+					HorizontalContentAlignment = HorizontalAlignment.Left,
+					IsEnabled = canWrite
+				};
+				if (accentStyle) b.Style = Build.StyleOf("AccentButton");
+				b.Click += (_, _) =>
+				{
+					act();
+					RefreshValues();
+					OnWritten(null, F("Balance"));
+					BuildFinances();
+				};
+				quick.Children.Add(b);
+			}
+			void AddMoney(string fieldName, long deltaGbp, string label)
+			{
+				EditField ef = F(fieldName);
+				long next = Math.Clamp(ef.Number + deltaGbp, (long)(ef.Def.Min ?? -2_000_000_000), (long)(ef.Def.Max ?? 2_000_000_000));
+				_data.Session.WriteField(_club.Address, ef.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
+				_nav.SetStatus(Build.F("✓ {0}: {1} uygulandı. Ctrl+Z geri alır.", "✓ {0}: {1} applied. Ctrl+Z undoes it.", _club.Name, label));
+			}
+			QuickBtn(IconKind.Plus, Build.T("+10M Bakiye", "+10M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(10_000_000, false)), "+10M"));
+			QuickBtn(IconKind.Plus, Build.T("+50M Bakiye", "+50M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M"));
+			QuickBtn(IconKind.Plus, Build.T("+100M Bakiye", "+100M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M"));
+			QuickBtn(IconKind.Coins, Build.T("+50M Transfer Bütçesi", "+50M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M Transfer"));
+			QuickBtn(IconKind.TrendingUp, Build.T("Maaş Bütçesini 2x Yap", "Double Wage Budget"), () =>
+			{
+				EditField wb = F("Wage Budget"), swb = F("Spending Wage Budget");
+				long next = Math.Clamp(Math.Max(wb.Number, 100_000) * 2L, 0, (long)(wb.Def.Max ?? 200_000_000));
+				using (_data.Session.History.BeginBatch(Build.F("{0}: Maaş bütçesi 2x", "{0}: Double wage budget", _club.Name)))
+				{
+					_data.Session.WriteField(_club.Address, wb.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
+					_data.Session.WriteField(_club.Address, swb.Def, next.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name);
+				}
+				_nav.SetStatus(Build.F("✓ {0} maaş bütçesi iki katına çıkarıldı.", "✓ {0} wage budget doubled.", _club.Name));
+			});
+			QuickBtn(IconKind.Coins, Build.T("+100M Transfer Bütçesi", "+100M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M Transfer"));
+			QuickBtn(IconKind.Award, Build.T("Zengin Patron (+500M / +200M)", "Rich Owner (+500M / +200M)"), () =>
+			{
+				using (_data.Session.History.BeginBatch(Build.F("{0}: Zengin patron", "{0}: Rich owner", _club.Name)))
+				{
+					AddMoney("Balance", (long)Math.Round(Money.FromDisplay(500_000_000, false)), "+500M");
+					AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(200_000_000, false)), "+200M");
+				}
+			}, accentStyle: true);
+			QuickBtn(IconKind.Percent, Build.T("Transfer Geliri %100", "Transfer Revenue 100%"), () =>
+			{
+				EditField tr = F("Transfer Revenue %");
+				_data.Session.WriteField(_club.Address, tr.Def, "100", _club.Name);
+				_nav.SetStatus(Build.F("✓ {0} transfer gelir yüzdesi %100 yapıldı.", "✓ {0} transfer revenue set to 100%.", _club.Name));
+			});
+			right.Children.Add(Build.Card(Build.T("Hızlı Finans İşlemleri", "Quick Finance Actions"), quick));
+			right.Children.Add(ClubSponsors.BuildCard(_data, _club, _nav));
+
+			Grid.SetColumn(right, 1);
+			grid.Children.Add(left);
+			grid.Children.Add(right);
+			outer.Children.Add(grid);
+			host.Content = Build.Scroll(outer);
+		}
+		BuildFinances();
+		return host;
 	}
 
 	private UIElement Info()
 	{
-		var grid = new Grid { MaxWidth = 1040, HorizontalAlignment = HorizontalAlignment.Left };
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 400 });
-		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 400 });
-		var left = new StackPanel();
-		left.Children.Add(Build.Card(Build.T("Genel", "General"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "General"))));
-		left.Children.Add(Build.Card(Build.T("Taraftarlar (1-20)", "Supporters (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Supporters"))));
-		var right = new StackPanel();
-		var facQuick = new Button
+		var host = new ContentControl();
+		void RenderInfo()
 		{
-			Content = Build.T("⭐ Tüm Tesisleri 20 Yap", "⭐ Max All Facilities (20)"),
-			Padding = new Thickness(8, 2, 8, 2),
-			FontSize = 11,
-			IsEnabled = !AppSettings.Current.ReadOnlyMode,
-			ToolTip = Build.T("Antrenman, Altyapı, Gençlik ve Stadyum Zeminini maksimuma çıkarır (Ctrl+Z geri alır)", "Maxes Training, Youth, Junior Coaching, Recruitment & Pitch Condition (Ctrl+Z undoes)")
-		};
-		facQuick.Click += (_, _) =>
-		{
-			using (_data.Session.History.BeginBatch(Build.F("{0}: Tesisleri fulle", "{0}: Max facilities", _club.Name)))
+			StackPanel MeterRows(IEnumerable<EditField> fields)
 			{
-				foreach (EditField ef in _fields.Where(f => f.Def.GroupKey == "Facilities" && f.Def.IsWritable))
+				var stack = new StackPanel { Margin = new Thickness(0, 2, 0, 8) };
+				foreach (EditField f in fields)
 				{
-					if (ef.Def.Max is double mv)
+					EditField cur = f;
+					var g = new Grid { Height = AppSettings.Current.Compact ? 28 : 34, Margin = new Thickness(8, 0, 8, 0) };
+					g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+					g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+					g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
+
+					var lbl = Build.Text(cur.Label, 13, Build.Res("Muted"));
+					lbl.Margin = new Thickness(6, 0, 8, 0);
+					g.Children.Add(lbl);
+
+					// Visual 1-20 colored meter bar
+					var track = new Grid { Height = 6, Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, ClipToBounds = true };
+					track.Children.Add(new Border { Background = Build.Res("Field"), CornerRadius = new CornerRadius(3) });
+					var fill = new Border { CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left };
+					void SyncBar(double w)
 					{
-						try { _data.Session.WriteField(_club.Address, ef.Def, mv.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
+						int v = Math.Clamp(cur.Number, 0, 20);
+						fill.Background = Colors.Attribute(v);
+						fill.Width = w * (v / 20.0);
+					}
+					track.SizeChanged += (_, e) => SyncBar(e.NewSize.Width);
+					cur.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(EditField.Value)) SyncBar(track.ActualWidth); };
+					track.Children.Add(fill);
+					Grid.SetColumn(track, 1);
+					g.Children.Add(track);
+
+					var box = new TextBox
+					{
+						Width = 44,
+						Height = 25,
+						HorizontalAlignment = HorizontalAlignment.Right,
+						HorizontalContentAlignment = HorizontalAlignment.Center,
+						VerticalContentAlignment = VerticalAlignment.Center,
+						FontWeight = FontWeights.Bold,
+						Padding = new Thickness(4, 1, 4, 1)
+					};
+					box.SetBinding(Control.ForegroundProperty, new Binding(nameof(EditField.ValueBrush)) { Source = cur });
+					FieldBox.SetField(box, cur);
+					Grid.SetColumn(box, 2);
+					g.Children.Add(box);
+
+					var wrap = new Border { CornerRadius = new CornerRadius(4), Background = Brushes.Transparent, Child = g };
+					wrap.MouseEnter += (_, _) => wrap.Background = Build.Res("CardHover");
+					wrap.MouseLeave += (_, _) => wrap.Background = Brushes.Transparent;
+					stack.Children.Add(wrap);
+				}
+				return stack;
+			}
+
+			var grid = new Grid { MaxWidth = 1080, HorizontalAlignment = HorizontalAlignment.Left };
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
+			var left = new StackPanel();
+			left.Children.Add(Build.Card(Build.T("Genel", "General"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "General"))));
+			left.Children.Add(Build.Card(Build.T("Taraftarlar (1-20)", "Supporters (1-20)"), MeterRows(_fields.Where(f => f.Def.GroupKey == "Supporters"))));
+			var right = new StackPanel();
+			var facQuick = new Button
+			{
+				Content = Icons.Label(IconKind.TrendingUp, Build.T("Tüm Tesisleri 20 Yap", "Max All Facilities (20)"), 13),
+				Style = Build.StyleOf("AccentButton"),
+				Padding = new Thickness(9, 3, 9, 3),
+				FontSize = 11.5,
+				IsEnabled = !AppSettings.Current.ReadOnlyMode,
+				ToolTip = Build.T("Antrenman, Altyapı, Gençlik ve Stadyum Zeminini maksimuma çıkarır (Ctrl+Z geri alır)", "Maxes Training, Youth, Junior Coaching, Recruitment & Pitch Condition (Ctrl+Z undoes)")
+			};
+			facQuick.Click += (_, _) =>
+			{
+				using (_data.Session.History.BeginBatch(Build.F("{0}: Tesisleri fulle", "{0}: Max facilities", _club.Name)))
+				{
+					foreach (EditField ef in _fields.Where(f => f.Def.GroupKey == "Facilities" && f.Def.IsWritable))
+					{
+						if (ef.Def.Max is double mv)
+						{
+							try { _data.Session.WriteField(_club.Address, ef.Def, mv.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
+						}
+					}
+					var pitch = _fields.FirstOrDefault(f => f.Key == "Pitch Condition" && f.Def.IsWritable);
+					if (pitch?.Def.Max is double pm)
+					{
+						try { _data.Session.WriteField(_club.Address, pitch.Def, pm.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
 					}
 				}
-				var pitch = _fields.FirstOrDefault(f => f.Key == "Pitch Condition" && f.Def.IsWritable);
-				if (pitch?.Def.Max is double pm)
-				{
-					try { _data.Session.WriteField(_club.Address, pitch.Def, pm.ToString(System.Globalization.CultureInfo.InvariantCulture), _club.Name); } catch { }
-				}
-			}
-			RefreshValues();
-			_nav.SetStatus(Build.F("✓ {0}: Tüm tesisler ve saha zemini maksimuma çıkarıldı. Ctrl+Z geri alır.", "✓ {0}: All facilities & pitch condition maxed. Ctrl+Z undoes it.", _club.Name));
-		};
-		right.Children.Add(Build.Card(Build.T("Tesisler (1-20)", "Facilities (1-20)"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Facilities")), facQuick));
-		right.Children.Add(Build.Card(Build.T("Stadyum", "Stadium"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Stadium"))));
-		Grid.SetColumn(right, 1);
-		grid.Children.Add(left);
-		grid.Children.Add(right);
-		return Build.Scroll(grid);
+				RefreshValues();
+				RenderInfo();
+				_nav.SetStatus(Build.F("✓ {0}: Tüm tesisler ve saha zemini maksimuma çıkarıldı. Ctrl+Z geri alır.", "✓ {0}: All facilities & pitch condition maxed. Ctrl+Z undoes it.", _club.Name));
+			};
+			right.Children.Add(Build.Card(Build.T("Tesisler (1-20)", "Facilities (1-20)"), MeterRows(_fields.Where(f => f.Def.GroupKey == "Facilities")), facQuick));
+			right.Children.Add(Build.Card(Build.T("Stadyum", "Stadium"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Stadium"))));
+			Grid.SetColumn(right, 1);
+			grid.Children.Add(left);
+			grid.Children.Add(right);
+			host.Content = Build.Scroll(grid);
+		}
+		RenderInfo();
+		return host;
 	}
 
 	/// <summary>Sortable player table shared by squads and the player browser. Multi-select + right-click applies presets.</summary>

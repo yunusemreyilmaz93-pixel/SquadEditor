@@ -155,25 +155,37 @@ public static class ClubSponsors
 			var stack = new StackPanel { Margin = new Thickness(12, 4, 12, 10) };
 
 			long totalAnnual = deals.Where(d => !d.IsExpired(data.GameDate)).Sum(d => d.PerSeasonGbp);
-			var summary = Build.Text(
-				Build.F("Aktif yıllık sponsor geliri: {0} ({1} anlaşma)", "Active annual sponsorship income: {0} ({1} deals)", Money.Format(totalAnnual, false), deals.Count),
-				12, Build.Res("Positive"), FontWeights.SemiBold);
-			summary.Margin = new Thickness(0, 0, 0, 8);
-			stack.Children.Add(summary);
+			var summaryBar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+			var activeCount = deals.Count(d => !d.IsExpired(data.GameDate));
+			var badge = new Border
+			{
+				Background = new SolidColorBrush(Color.FromArgb(0x22, 0x3D, 0xD6, 0x8C)),
+				BorderBrush = Build.Res("Positive"),
+				BorderThickness = new Thickness(1),
+				CornerRadius = new CornerRadius(10),
+				Padding = new Thickness(8, 2, 8, 2),
+				Child = Build.Text(Build.F("{0} aktif", "{0} active", activeCount), 11, Build.Res("Positive"), FontWeights.SemiBold)
+			};
+			DockPanel.SetDock(badge, Dock.Right);
+			summaryBar.Children.Add(badge);
+			summaryBar.Children.Add(Build.Text(
+				Build.F("Yıllık Sponsor Geliri: {0}", "Annual Sponsorship Income: {0}", Money.Format(totalAnnual, false)),
+				13, Build.Res("Text"), FontWeights.SemiBold));
+			stack.Children.Add(summaryBar);
 
 			if (deals.Count > 0 && canWrite)
 			{
-				var btnRow = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
+				var btnRow = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
 
 				var megaBtn = new Button
 				{
-					Content = Build.T("✨ Süper Sponsor Ekle (+50M/yıl)", "✨ Add Mega Sponsor (+50M/yr)"),
+					Content = Icons.Label(IconKind.PlusCircle, Build.T("Süper Sponsor Ekle (+50M/yıl)", "Add Mega Sponsor (+50M/yr)"), 14),
 					ToolTip = Build.T("En küçük veya süresi dolmuş sponsorluk yuvasını 5 yıllık +50M/yıl Süper Sponsorluk anlaşmasına yükseltir (Ctrl+Z geri alır)",
 						"Upgrades the smallest or expired sponsorship slot into a 5-year +50M/yr Mega Sponsorship deal (Ctrl+Z undoes)"),
 					Style = Build.StyleOf("AccentButton"),
-					Padding = new Thickness(9, 4, 9, 4),
-					Margin = new Thickness(0, 0, 6, 4),
-					FontSize = 11.5
+					Padding = new Thickness(11, 5, 11, 5),
+					Margin = new Thickness(0, 0, 8, 4),
+					FontSize = 12
 				};
 				megaBtn.Click += (_, _) =>
 				{
@@ -191,12 +203,12 @@ public static class ClubSponsors
 
 				var doubleBtn = new Button
 				{
-					Content = Build.T("⚡ Tüm Sponsorları 2x Yap", "⚡ Double All Sponsors (2x)"),
+					Content = Icons.Label(IconKind.TrendingUp, Build.T("Tüm Sponsorları 2x Yap", "Double All Sponsors (2x)"), 14),
 					ToolTip = Build.T("Kulübün tüm aktif sponsorluk gelirlerini 2 katına çıkarır (Ctrl+Z geri alır)",
 						"Doubles annual payout of all club sponsorship deals (Ctrl+Z undoes)"),
-					Padding = new Thickness(9, 4, 9, 4),
+					Padding = new Thickness(11, 5, 11, 5),
 					Margin = new Thickness(0, 0, 6, 4),
-					FontSize = 11.5
+					FontSize = 12
 				};
 				doubleBtn.Click += (_, _) =>
 				{
@@ -223,20 +235,21 @@ public static class ClubSponsors
 			}
 			else
 			{
-				foreach (Deal d in deals.OrderByDescending(x => x.PerSeasonGbp))
+				long maxAnnual = Math.Max(1, deals.Max(x => x.PerSeasonGbp));
+				foreach (Deal d in deals.OrderBy(x => x.IsExpired(data.GameDate)).ThenByDescending(x => x.PerSeasonGbp))
 				{
 					Deal cur = d;
 					bool expired = cur.IsExpired(data.GameDate);
-					var row = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
+					var itemStack = new StackPanel();
+					var row = new DockPanel();
 					if (canWrite)
 					{
 						var editBtn = new Button
 						{
-							Content = "✎",
+							Content = Icons.Glyph(IconKind.Edit, 13),
 							Style = Build.StyleOf("GhostButton"),
-							Padding = new Thickness(6, 1, 6, 1),
-							FontSize = 11.5,
-							Margin = new Thickness(6, 0, 0, 0),
+							Padding = new Thickness(6, 3, 6, 3),
+							Margin = new Thickness(8, 0, 0, 0),
 							ToolTip = Build.T("Sponsor tutarını ve bitiş yılını düzenle", "Edit sponsor amount and end year")
 						};
 						editBtn.Click += (_, _) =>
@@ -246,15 +259,57 @@ public static class ClubSponsors
 						DockPanel.SetDock(editBtn, Dock.Right);
 						row.Children.Add(editBtn);
 					}
-					var amt = Build.Text(cur.PerSeasonText, 12.5, expired ? Build.Res("Faint") : Build.Res("Accent"), FontWeights.SemiBold);
+					var amt = Build.Text(cur.PerSeasonText, 12.5, expired ? Build.Res("Faint") : Build.Res("Positive"), FontWeights.Bold);
+					amt.VerticalAlignment = VerticalAlignment.Center;
 					DockPanel.SetDock(amt, Dock.Right);
 					row.Children.Add(amt);
 
 					var leftInfo = new StackPanel();
-					leftInfo.Children.Add(Build.Text(cur.KindName + (expired ? " (" + Build.T("Bitti", "Expired") + ")" : ""), 12.5, expired ? Build.Res("Muted") : Build.Res("Text"), FontWeights.SemiBold));
+					var titleLine = new StackPanel { Orientation = Orientation.Horizontal };
+					titleLine.Children.Add(Build.Text(cur.KindName, 12.5, expired ? Build.Res("Muted") : Build.Res("Text"), FontWeights.SemiBold));
+					if (expired)
+					{
+						var expTag = new Border
+						{
+							Background = Build.Res("Field"),
+							CornerRadius = new CornerRadius(4),
+							Padding = new Thickness(5, 1, 5, 1),
+							Margin = new Thickness(6, 0, 0, 0),
+							Child = Build.Text(Build.T("Bitti", "Expired"), 10, Build.Res("Faint"))
+						};
+						titleLine.Children.Add(expTag);
+					}
+					leftInfo.Children.Add(titleLine);
 					leftInfo.Children.Add(Build.Text(cur.PeriodText + (cur.RelegationCut > 0 ? $" · -{cur.RelegationCut}%" : ""), 11, Build.Res("Faint")));
 					row.Children.Add(leftInfo);
-					stack.Children.Add(row);
+					itemStack.Children.Add(row);
+
+					// Subtle share bar for active deals
+					if (!expired && maxAnnual > 0)
+					{
+						double pct = Math.Clamp((double)cur.PerSeasonGbp / maxAnnual, 0.04, 1.0);
+						var track = new Grid { Height = 3, Margin = new Thickness(0, 5, 0, 0), ClipToBounds = true };
+						track.Children.Add(new Border { Background = Build.Res("Field"), CornerRadius = new CornerRadius(1.5) });
+						var fill = new Border { Background = Build.Res("Accent"), CornerRadius = new CornerRadius(1.5), HorizontalAlignment = HorizontalAlignment.Left };
+						track.SizeChanged += (_, e) => fill.Width = e.NewSize.Width * pct;
+						track.Children.Add(fill);
+						itemStack.Children.Add(track);
+					}
+
+					var baseBg = Brushes.Transparent;
+					var cardRow = new Border
+					{
+						Background = baseBg,
+						BorderBrush = Build.Res("StrokeSoft"),
+						BorderThickness = new Thickness(0, 0, 0, 1),
+						CornerRadius = new CornerRadius(4),
+						Padding = new Thickness(8, 6, 6, 6),
+						Margin = new Thickness(0, 1, 0, 1),
+						Child = itemStack
+					};
+					cardRow.MouseEnter += (_, _) => cardRow.Background = Build.Res("CardHover");
+					cardRow.MouseLeave += (_, _) => cardRow.Background = baseBg;
+					stack.Children.Add(cardRow);
 				}
 			}
 
@@ -262,7 +317,7 @@ public static class ClubSponsors
 		}
 
 		Fill();
-		return Build.Card(Build.T("🤝 Sponsorluk Anlaşmaları", "🤝 Sponsorship Deals"), host);
+		return Build.Card(Build.T("Sponsorluk Anlaşmaları", "Sponsorship Deals"), host);
 	}
 
 	private static bool OpenEditDialog(GameData data, ClubRow club, Deal deal, INavigator nav)
