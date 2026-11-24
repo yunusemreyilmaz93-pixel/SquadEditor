@@ -219,6 +219,26 @@ public sealed class ClubPage : UserControl, IPage
 			_nav.SetStatus(Build.F("✓ {0} oyuncu maça hazırlandı ({1} sakatlık, {2} ceza, kondisyon/moral/mutluluk fullendi · {3} alan). Ctrl+Z geri alır.", "✓ {0} players prepared ({1} healed, {2} bans lifted, fitness/morale/happiness maxed · {3} fields). Ctrl+Z undoes it.", rows.Count, healed, lifted, boosted));
 		};
 		quickBar.Children.Add(prepare);
+		var cohesionBtn = new Button
+		{
+			Content = Build.T("🤝 Uyum & Taktik %100", "🤝 Max Cohesion & Tactics"),
+			ToolTip = Build.T("Kadroda görünen tüm oyuncuların Takım Uyumunu (100) ve 6 taktik alan + diziliş yatkınlığını %100 yapar (Ctrl+Z geri alır)",
+				"Maxes Team Cohesion (100) and Tactical Familiarity (100% across all tactical areas & formations) for the current squad (Ctrl+Z undoes)"),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		cohesionBtn.Click += (_, _) =>
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).ToList();
+			if (rows.Count == 0) return;
+			var (coh, tac) = TeamCohesion.MaxSquad(_data, _club, rows);
+			_nav.SetStatus(Build.F("✓ {0}: {1} oyuncunun takım uyumu, {2} oyuncunun taktik yatkınlığı %100 yapıldı. Ctrl+Z geri alır.",
+				"✓ {0}: Maxed team cohesion for {1} players and tactical familiarity for {2} players. Ctrl+Z undoes it.",
+				_club.Name, coh, tac));
+		};
+		quickBar.Children.Add(cohesionBtn);
 		var snapBtn = new Button
 		{
 			Content = Build.T("📸 Gelişim", "📸 Progress"),
@@ -444,6 +464,7 @@ public sealed class ClubPage : UserControl, IPage
 			_nav.SetStatus(Build.F("✓ {0} transfer gelir yüzdesi %100 yapıldı.", "✓ {0} transfer revenue set to 100%.", _club.Name));
 		});
 		right.Children.Add(Build.Card(Build.T("Hızlı Finans İşlemleri", "Quick Finance Actions"), quick));
+		right.Children.Add(ClubSponsors.BuildCard(_data, _club, _nav));
 
 		Grid.SetColumn(right, 1);
 		grid.Children.Add(left);

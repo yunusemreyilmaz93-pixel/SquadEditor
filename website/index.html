@@ -783,7 +783,7 @@
           </div>
           <p class="hero-note" data-i18n="hero.note">Kurulum gerektirmez, tek dosya olarak çalışır.</p>
           <div class="hero-trust">
-            <span id="releaseInfo">v1.1.0 · Açık Kaynak (MIT)</span>
+            <span id="releaseInfo">v1.2.0 · Açık Kaynak (MIT)</span>
             <a id="sourceLink" href="https://github.com/basitbioyun/SquadEditor" target="_blank" rel="noopener" data-i18n="trust.source">Kaynak Kodu (GitHub)</a>
             <a href="#faq" data-i18n="trust.smartscreen">İlk açılışta SmartScreen uyarısı normaldir</a>
           </div>
@@ -1038,7 +1038,7 @@
           <div>
             <h2 data-i18n="cta.h">Hemen indir.</h2>
             <p data-i18n="cta.p">Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.</p>
-            <p class="dl-meta" id="dlMeta">Sürüm v1.1.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)</p>
+            <p class="dl-meta" id="dlMeta">Sürüm v1.2.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)</p>
           </div>
           <a id="bottomDl" href="#download" class="btn btn-primary btn-lg">
             <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1074,7 +1074,7 @@
     // TEK NOKTA AYAR BLOĞU — Yayınlarken doğrudan .exe/.zip linkini buraya koy
     // =========================================================================
     const SITE_CONFIG = {
-      version: "v1.1.0",
+      version: "v1.2.0",
       downloadUrl: "https://github.com/yunusemreyilmaz93-pixel/SquadEditor/releases/latest/download/SquadEditor.exe",
       repoUrl: "https://github.com/yunusemreyilmaz93-pixel/SquadEditor",
       socials: [
@@ -1107,15 +1107,16 @@
       { flag: "kr", name: "한국어" }
     ];
 
-    // 8 distinct high-res real screenshots in BOTH TR and EN
+    // 9 distinct high-res real screenshots in BOTH TR and EN
     const SLIDES = [
-      { id: "overview", srcTr: "./assets/shot_player_overview.png", srcEn: "./assets/shot_player_overview_en.png", tr: "Oyuncu & Radar", en: "Player & Radar", capTr: "Canlı oyuncu profili, 8 eksenli radar, CA/PA çubuğu ve mevki sahası", capEn: "Live player profile, 8-axis radar, CA/PA bar & pitch map" },
-      { id: "home", srcTr: "./assets/shot_home_db.png", srcEn: "./assets/shot_home_db_en.png", tr: "Veritabanı", en: "Database", capTr: "Canlı oyuncu arama tablosu, Regen, Wonderkid ve uyruk filtreleri", capEn: "Live player database, Regen, Wonderkid & nationality filters" },
-      { id: "bestxi", srcTr: "./assets/shot_club_bestxi.png", srcEn: "./assets/shot_club_bestxi_en.png", tr: "En İyi 11", en: "Best XI", capTr: "Kulüp En İyi 11 dizilişi ve kadro derinliği eksik analizi", capEn: "Club Best XI pitch view & squad depth gap analysis" },
-      { id: "finances", srcTr: "./assets/shot_club_finances.png", srcEn: "./assets/shot_club_finances_en.png", tr: "Finans & Tesis", en: "Finances", capTr: "Bütçe, bakiye, zengin patron ve tek tıkla 20 tesis düzenleme", capEn: "Balance, budgets, rich owner & 1-click max facilities" },
+      { id: "overview", srcTr: "./assets/shot_player_overview.png", srcEn: "./assets/shot_player_overview_en.png", tr: "Oyuncu & PA Radar", en: "Player & PA Radar", capTr: "Canlı oyuncu profili, PR %, 🔮 PA Önizleme, 🤝 Uyum %100 ve çift katmanlı radar", capEn: "Live player profile, PR %, 🔮 PA Preview, 🤝 Max Cohesion & dual-layer radar" },
+      { id: "squad", srcTr: "./assets/shot_club_squad.png", srcEn: "./assets/shot_club_squad_en.png", tr: "Kadro & Uyum %100", en: "Squad & Cohesion", capTr: "Tek tıkla 🤝 Takım Uyumu & Taktik %100, 📸 Kadro Gelişim Takibi ve PR % sütunu", capEn: "1-click 🤝 Max Cohesion & Tactics 100%, 📸 Squad Progress Tracker & PR % column" },
+      { id: "bestxi", srcTr: "./assets/shot_club_bestxi.png", srcEn: "./assets/shot_club_bestxi_en.png", tr: "En İyi 11 & Transfer", en: "Best XI & Targets", capTr: "Kulüp En İyi 11 dizilişi, eksik analizi ve her mevki için 🔍 Akıllı Transfer Önerici", capEn: "Club Best XI pitch view, gap analysis & 🔍 Smart Transfer Finder per slot" },
+      { id: "finances", srcTr: "./assets/shot_club_finances.png", srcEn: "./assets/shot_club_finances_en.png", tr: "Finans & Sponsor", en: "Finances & Sponsors", capTr: "Bütçe, bakiye ve 🤝 Sponsorluk Anlaşmaları (Süper Sponsor Ekle, 2x, Düzenle)", capEn: "Budgets, balance & 🤝 Sponsorship Deals (Add Mega Sponsor, 2x, Edit)" },
+      { id: "home", srcTr: "./assets/shot_home_db.png", srcEn: "./assets/shot_home_db_en.png", tr: "Scout Veritabanı", en: "Scout Database", capTr: "Genie Scout filtreleri, 💎 Moneyball, PR %, Regen ve Wonderkid taraması", capEn: "Genie Scout filters, 💎 Moneyball, PR %, Regen & Wonderkid scouting" },
       { id: "personal", srcTr: "./assets/shot_player_personal.png", srcEn: "./assets/shot_player_personal_en.png", tr: "Sözleşme & Uyruk", en: "Contract & Traits", capTr: "Sözleşme maddeleri, ikinci uyruk, diller ve tercih edilen hareketler", capEn: "Contract clauses, second nationalities, languages & player traits" },
       { id: "relations", srcTr: "./assets/shot_club_relations.png", srcEn: "./assets/shot_club_relations_en.png", tr: "İlişkiler", en: "Relations", capTr: "Canlı rakip kulüpler, efsaneler, ikonlar ve sevilmeyen kişiler", capEn: "Live rival clubs, club legends, icons & disliked personnel" },
-      { id: "staffLight", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png", tr: "Personel (Açık)", en: "Staff (Light)", capTr: "Açık tema · 5★ Antrenör & Teknik Direktörler Hariç filtresi", capEn: "Light theme · 5★ Coach & Hide Managers filter" },
+      { id: "staffLight", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png", tr: "5★ Antrenör (Açık)", en: "5★ Coach (Light)", capTr: "Açık tema · FM 5★ Antrenörlük Yıldız Hesaplayıcısı & TD Hariç filtresi", capEn: "Light theme · FM 5★ Coaching Star Calculator & Hide Managers filter" },
       { id: "multilang", srcTr: "./assets/shot_ja.png", srcEn: "./assets/shot_de.png", tr: "12 Dil", en: "12 Languages", capTr: "12 dilde eksiksiz FM terminolojisi (Japonca örneği)", capEn: "Authentic FM terminology in 12 languages (German example)" }
     ];
 
@@ -1135,19 +1136,19 @@
         "feat.h": "Bir editörden ve scout aracından beklediğiniz her şey.",
         "feat.p": "Oyuncu aramadan personel transferine, kulüp tesislerinden canlı tema geçişine kadar tüm araçlar tek çatı altında.",
         "g1.h": "Oyuncu Arama & Scout",
-        "g1.f1t": "Gerçek Regen (Newgen) Filtresi", "g1.f1d": "Gerçek genç oyuncularla karışmadan sadece oyunun ürettiği yeni yetenekleri listeler.",
-        "g1.f2t": "Gelişmiş Oyuncu Filtresi & Hazır Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol uygunluğu, sözleşme bitişi, mevcut/potansiyel yetenek ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.",
-        "g1.f3t": "8 Eksenli Radar, Karşılaştırma & Oyuncu Kartı", "g1.f3d": "İki oyuncuyu yan yana kıyaslayabilir, sağ panelden hızlı önizleme açabilir veya tek tıkla paylaşılabilir PNG oyuncu kartı oluşturabilirsiniz.",
-        "g1.f4t": "Wonderkid Oluşturucu, Model Kişilik & Tercih Edilen Hareketler", "g1.f4d": "Tekrar zar atılabilen dengeli Wonderkid üretici, tek tıkla kişilik iyileştirme ve tüm oyuncu alışkanlıklarını (Traits) düzenleme imkanı sunar.",
+        "g1.f1t": "Gerçek Regen, PR % & 💎 Moneyball Cevher", "g1.f1d": "Sadece oyunun ürettiği gerçek regenleri ayırır; Potansiyel Reyting (PR %), çift ayak, istenen bonservis ve tek tıkla Moneyball şablonuyla gizli cevherleri bulur.",
+        "g1.f2t": "Gelişmiş Genie Scout Filtreleri & Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol uygunluğu, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.",
+        "g1.f3t": "🔮 PA Önizleme, Çift Katmanlı Radar & PNG Kart", "g1.f3d": "Oyuncunun PA zirvesindeki tahmini 1–20 özelliklerini belleğe yazmadan önizleyin, mevcut + zirve çift katmanlı radarı görün, iki oyuncuyu kıyaslayın veya PNG kart çıkarın.",
+        "g1.f4t": "Wonderkid Oluşturucu, Model Kişilik & Alışkanlıklar", "g1.f4d": "Tekrar zar atılabilen dengeli Wonderkid üretici, tek tıkla kişilik iyileştirme ve tüm oyuncu alışkanlıklarını (Traits) düzenleme imkanı sunar.",
         "g2.h": "Personel & Transfer Yönetimi",
-        "g2.f1t": "5★ Antrenör, Gözlemci & Fizyoterapist Filtresi", "g2.f1d": "1–20 personel özelliklerine göre doğrudan arama yapabilir, tek tıkla \"Teknik Direktörler Hariç\" seçeneğiyle boştaki menajerleri gizleyebilirsiniz.",
+        "g2.f1t": "FM 5★ Antrenörlük Yıldız Hesaplayıcısı & Filtresi", "g2.f1d": "9 antrenman kategorisinde gerçek 0.5★–5.0★ hesabı, tabloda ★ Yıldız sütunu, Min. ★ filtresi ve tek tıkla \"TD Hariç\" seçeneğiyle en iyi antrenörleri anında bulun.",
         "g2.f2t": "Rol Seçerek Personel İşe Alma & Taşıma", "g2.f2d": "Boştaki veya sözleşmeli personeli istediğiniz göreve (Asistan Menajer, Kaleci Antrenörü, Gözlemci, Fizyoterapist vb.) atayarak kulübe ekleyebilirsiniz.",
         "g2.f3t": "Hızlı Oyuncu Transferi & Kiralık İşlemleri", "g2.f3d": "Bedelsiz veya bonservisli anında kulüp değişimi, serbest oyuncu imzalatma, kiralık oyuncuyu geri çağırma veya kalıcı transfer yapabilirsiniz.",
         "g2.f4t": "Sözleşme Maddeleri, İkinci Uyruk & Diller", "g2.f4d": "Serbest kalma bedeli ve bonus maddeleri ekleyip silebilir; oyuncunun ana uyruğunu, ikinci uyruklarını, konuştuğu dilleri ve favori kulüplerini düzenleyebilirsiniz.",
-        "g3.h": "Kulüp, Kadro & Finans",
-        "g3.f1t": "Tek Tıkla Tüm Kadroyu Maça Hazırlama", "g3.f1d": "Sakatlıkları iyileştirebilir, cezaları kaldırabilir; kondisyon, maç formu, moral ve sözleşme memnuniyetini tüm takımda anında yükseltebilirsiniz.",
-        "g3.f2t": "En İyi 11 & Kadro Derinliği", "g3.f2d": "Seçtiğiniz dizilişe göre kulübün en güçlü ilk 11'ini ve yedek derinliğini saha görünümünde otomatik çıkarır.",
-        "g3.f3t": "Finans, Tesisler & Kulüp İlişkileri", "g3.f3d": "Bakiye, transfer ve maaş bütçesini düzenleyebilir; tüm tesisleri tek tıkla 20 yapabilir; rakip kulüpleri, efsaneleri ve sevilmeyen kişileri yönetebilirsiniz.",
+        "g3.h": "Kulüp, Kadro, Sponsor & Lig",
+        "g3.f1t": "Maça Hazırlık & 🤝 Takım Uyumu / Taktik %100", "g3.f1d": "Tek tıkla sakatlık/ceza temizliği, kondisyon/moral %100 ve tüm kadronun Takım Uyumunu + 6 taktik alan & diziliş yatkınlığını %100 yapın.",
+        "g3.f2t": "En İyi 11, 🔍 Akıllı Transfer Önerici & 📸 Gelişim Takibi", "g3.f2d": "En İyi 11'de her mevki için bütçenize uygun en iyi transfer hedeflerini anında önerir; kadro fotoğrafı çekip sezon içi CA/değer gelişimini takip etmenizi sağlar.",
+        "g3.f3t": "🤝 Sponsorluk Anlaşmaları, Finans & 🌟 Lig Altın Çağı", "g3.f3d": "Kulübün sponsorluklarını düzenleyin, Süper Sponsor (+50M/yıl) ekleyin veya 2x yapın; bütçe/tesisleri ve lig itibarını (Lig Altın Çağı) tek tıkla yükseltin.",
         "g3.f4t": "Toplu Düzenleme, Sözleşme Uzatma & Değer Sabitleme", "g3.f4d": "Birden fazla oyuncunun özelliklerini toplu değiştirebilir, tüm kadronun sözleşmesini uzatabilir veya seçtiğiniz değerlerin düşmemesi için dondurabilirsiniz.",
         "g4.h": "Kullanım Rahatlığı & Güvenlik",
         "g4.f1t": "4 Canlı Tema & Logo / Yüz Paketi Desteği", "g4.f1d": "Gece, OLED Siyah, Kömür & Altın ve Açık tema arasında anında geçiş yapabilirsiniz. Oyundaki logo ve yüz paketleriniz otomatik yüklenir.",
@@ -1169,8 +1170,8 @@
         "q3.q": "Kariyer kaydıma zarar verir mi? Dondurma (Freeze) nasıl çalışır?", "q3.a": "Oyuna herhangi bir DLL enjeksiyonu yapılmaz; tüm okumalar/yazmalar doğrulamalı bellek erişimiyle çalışır, Dondurma özelliği periyodik kontrolle değerleri korur ve tüm işlemler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce Yedek butonuyla kaydınızı yedeklemeniz önerilir.",
         "q4.q": "Hangi sürümle uyumlu? FM27'ye yeni yama gelirse ne olur?", "q4.a": "Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. Bellek adresleri kod içine gömülü değildir; harici JSON düzeni ve dinamik tarama kullanıldığı için yeni FM27 yamalarında hızlıca güncellenir.",
         "cta.h": "Hemen indir.", "cta.p": "Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.", "cta.btn": "Squadeditor İndir (Windows)",
-        "dl.meta": "Sürüm v1.1.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)",
-        "release.info": "v1.1.0 · Açık Kaynak (MIT)",
+        "dl.meta": "Sürüm v1.2.0 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)",
+        "release.info": "v1.2.0 · Açık Kaynak (MIT)",
         "foot.legal": "Squadeditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
       },
       en: {
@@ -1188,19 +1189,19 @@
         "feat.h": "Everything you expect from a real-time editor and scout.",
         "feat.p": "From player scouting and role-based staff hiring to club facilities and live theme switching — all in one fast app.",
         "g1.h": "Player Search & Scouting",
-        "g1.f1t": "True Regen (Newgen) Filter", "g1.f1d": "Finds only game-generated newgens without mixing in real young players.",
-        "g1.f2t": "Advanced Scout Filters & Presets", "g1.f2d": "Filter by nationality, region, position, role rating, expiring contracts, CA/PA and hidden attributes (Professionalism, Consistency, Important Matches, Injury Proneness).",
-        "g1.f3t": "8-Axis Radar, Player Comparison & PNG Card", "g1.f3d": "Compare two players side by side, inspect via the quick preview drawer, or export a shareable PNG player card in one click.",
+        "g1.f1t": "True Regen, PR % & 💎 Moneyball Gems", "g1.f1d": "Isolates true game-generated newgens; scout with Potential Rating (PR %), both feet, asking price and 1-click Moneyball presets.",
+        "g1.f2t": "Advanced Genie Scout Filters & Presets", "g1.f2d": "Filter by nationality, region, position, role rating, expiring contracts, CA/PA and hidden attributes (Professionalism, Consistency, Important Matches, Injury Proneness).",
+        "g1.f3t": "🔮 PA Preview, Dual-Layer Radar & PNG Card", "g1.f3d": "Preview projected 1–20 peak PA attributes without touching memory, view dual-layer current + peak radar, compare players side by side, or export PNG cards.",
         "g1.f4t": "Wonderkid Reroller, Model Personality & Player Traits", "g1.f4d": "Reroll balanced Wonderkids until you like the roll, max out personality traits, and toggle any player preferred move.",
         "g2.h": "Staff & Transfers",
-        "g2.f1t": "5★ Coach, Scout & Physio Search", "g2.f1d": "Filter staff directly by 1–20 attributes and exclude head coaches (including unemployed managers) with one click.",
+        "g2.f1t": "FM 5★ Coaching Star Calculator & Search", "g2.f1d": "Real 0.5★–5.0★ calculator across all 9 training categories, ★ Stars column, Min ★ filter, and 1-click Hide Managers toggle.",
         "g2.f2t": "Role-Based Staff Hiring & Transfers", "g2.f2d": "Pick the exact job (Assistant Manager, GK Coach, Fitness Coach, Scout, Physio, etc.) and matching club department when hiring or moving staff.",
         "g2.f3t": "Instant Player Transfers & Loan Controls", "g2.f3d": "Move players with or without a transfer fee, sign free agents, recall loanees, or make loans permanent.",
         "g2.f4t": "Contract Clauses, Second Nationalities & Languages", "g2.f4d": "Add or remove release clauses and bonuses; edit primary/second nationalities, spoken languages and favoured clubs.",
-        "g3.h": "Clubs, Squads & Finances",
-        "g3.f1t": "1-Click Matchday Squad Prep", "g3.f1d": "Heal injuries, lift suspensions, and restore condition, match sharpness, morale and happiness across the entire squad.",
-        "g3.f2t": "Best XI & Squad Depth View", "g3.f2d": "Automatically maps your strongest starting eleven and positional depth onto a tactical pitch view.",
-        "g3.f3t": "Finances, Facilities & Club Relationships", "g3.f3d": "Adjust balance, transfer and wage budgets; max all club facilities to 20; edit rival clubs, legends and disliked personnel.",
+        "g3.h": "Clubs, Squads, Sponsors & Leagues",
+        "g3.f1t": "Matchday Prep & 🤝 Max Cohesion / Tactics 100%", "g3.f1d": "Heal injuries, lift bans, restore fitness/morale, and max Team Cohesion (100) + Tactical Familiarity (100%) across the entire squad in one click.",
+        "g3.f2t": "Best XI, 🔍 Smart Transfer Finder & 📸 Progress Tracker", "g3.f2d": "Suggests budget-matched transfer targets for every Best XI slot, and tracks CA, value & attribute deltas across your season via local squad snapshots.",
+        "g3.f3t": "🤝 Sponsorship Deals, Finances & 🌟 League Golden Age", "g3.f3d": "Edit club sponsorship deals, add Mega Sponsors (+50M/yr) or double payouts; max budgets, facilities and entire leagues (League Golden Age) in one click.",
         "g3.f4t": "Mass Edit, Bulk Contract Extend & Freezing", "g3.f4d": "Bulk-edit attributes across selected players, extend contracts for the whole squad, or freeze values so the game never lowers them.",
         "g4.h": "Craft & Safety",
         "g4.f1t": "4 Live Themes & FM Graphics Support", "g4.f1d": "Switch live between Midnight, OLED Black, Charcoal & Gold, and Light themes. Automatically loads logos and faces from your FM graphics folder.",
@@ -1222,8 +1223,8 @@
         "q3.q": "Will it harm my save? How does Freezing work?", "q3.a": "No DLL injection is used — all reads and writes are validated memory operations, Freezing works via lightweight polling, and every edit is undoable with Ctrl+Z. Backing up your save with the built-in Backup button before major changes is still recommended.",
         "q4.q": "Which version is supported? What about FM27 patches?", "q4.a": "Verified on Windows 10/11 (64-bit) with Steam Football Manager 27 (27.0.1). Offsets live in an external JSON layout with dynamic RTTI scanning, so new FM27 patches can be supported quickly without rewriting the app.",
         "cta.h": "Download now.", "cta.p": "Single file for Windows, no installer needed, completely free.", "cta.btn": "Download Squadeditor (Windows)",
-        "dl.meta": "Version v1.1.0 · Windows 10/11 (64-bit) · Open Source (MIT)",
-        "release.info": "v1.1.0 · Open Source (MIT)",
+        "dl.meta": "Version v1.2.0 · Windows 10/11 (64-bit) · Open Source (MIT)",
+        "release.info": "v1.2.0 · Open Source (MIT)",
         "foot.legal": "Squadeditor is an independent, free community tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
       }
     };

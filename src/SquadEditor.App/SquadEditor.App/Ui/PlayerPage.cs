@@ -399,6 +399,30 @@ public sealed class PlayerPage : UserControl, IPage
 			panel.Children.Add(freeze);
 			panel.Children.Add(shortlistBtn);
 			panel.Children.Add(healMax);
+			var cohBtn = new Button
+			{
+				Content = Build.T("🤝 Uyum %100", "🤝 Max Cohesion"),
+				ToolTip = Build.T("Oyuncunun kulüp uyumunu ve tüm taktik yatkınlıklarını %100 yapar (Ctrl+Z geri alır)",
+					"Maxes player's club cohesion and tactical familiarity to 100% (Ctrl+Z undoes)"),
+				Padding = new Thickness(9, 4, 9, 4),
+				Margin = new Thickness(0, 0, 6, 0),
+				IsEnabled = canWrite
+			};
+			cohBtn.Click += (_, _) =>
+			{
+				ulong clubAddr = ulong.TryParse(_data.Read(Address, _data.PlayerDef, "Club Ref"), out ulong ca) ? ca : 0;
+				bool coh;
+				int tac;
+				using (_data.Session.History.BeginBatch(Build.F("{0}: Uyum & Taktik %100", "{0}: Max Cohesion & Tactics", Name)))
+				{
+					coh = TeamCohesion.MaxPlayerCohesion(_data, Address, clubAddr, Name);
+					tac = TeamCohesion.MaxPlayerTacticalFamiliarity(_data, Address, Name);
+				}
+				_nav.SetStatus(coh || tac > 0
+					? Build.F("✓ {0}: Takım uyumu ve taktik yatkınlığı ({1} alan) %100 yapıldı. Ctrl+Z geri alır.", "✓ {0}: Team cohesion & tactical familiarity ({1} entries) maxed to 100%. Ctrl+Z undoes it.", Name, tac)
+					: Build.F("✓ {0} zaten %100 uyum ve taktik yatkınlığında.", "✓ {0} is already at 100% cohesion & tactical familiarity.", Name));
+			};
+			panel.Children.Add(cohBtn);
 			panel.Children.Add(ExtendBtn(1));
 			panel.Children.Add(ExtendBtn(3));
 			panel.Children.Add(rename);
