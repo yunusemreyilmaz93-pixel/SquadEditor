@@ -42,6 +42,7 @@ public partial class EditorWindow : Window, INavigator
 	private IPage? _current;
 	private bool _connecting;
 	private int _failedPid;
+	private UpdateInfo? _pendingUpdate;
 
 	public EditorWindow()
 	{
@@ -93,6 +94,7 @@ public partial class EditorWindow : Window, INavigator
 				TryConnect();
 				_connectTimer.Start();
 			}
+			_ = CheckForUpdatesAsync();
 		};
 		Closed += (_, _) =>
 		{
@@ -903,5 +905,39 @@ public partial class EditorWindow : Window, INavigator
 		ApplyPreferences();
 		UpdateCounts();
 		SetStatus(Build.T("Ayarlar kaydedildi.", "Settings saved."));
+	}
+
+	private async Task CheckForUpdatesAsync()
+	{
+		try
+		{
+			await Task.Delay(2500).ConfigureAwait(false);
+			UpdateInfo? info = await AppUpdater.CheckAsync().ConfigureAwait(false);
+			if (info == null) return;
+			Dispatcher.UIThread.Post(() =>
+			{
+				_pendingUpdate = info;
+				UpdateText.Text = AppUpdater.BadgeText(info);
+				ToolTip.SetTip(UpdateButton, AppUpdater.BadgeTooltip(info));
+				UpdateButton.IsVisible = true;
+			});
+		}
+		catch
+		{
+		}
+	}
+
+	private async void Update_Click(object? sender, RoutedEventArgs e)
+	{
+		if (_pendingUpdate == null) return;
+		bool shouldShutdown = await AppUpdater.ShowUpdateDialogAsync(this, _pendingUpdate);
+		if (shouldShutdown)
+		{
+			Close();
+			if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+			{
+				desktop.Shutdown();
+			}
+		}
 	}
 }
