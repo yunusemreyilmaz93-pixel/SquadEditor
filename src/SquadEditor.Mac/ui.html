@@ -1,84 +1,84 @@
 <!doctype html>
-<html lang="tr" data-theme="navy">
+<html lang="tr" data-theme="wtcs">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SquadEditor — FM27</title>
 <style>
-  :root, [data-theme="navy"] {
+  :root, [data-theme="wtcs"] {
+    --bg: #13161C;
+    --bg-elev: #191D25;
+    --card: #1F242E;
+    --card-2: #262C38;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text: #F3F4F6;
+    --text-2: #D1D5DB;
+    --muted: #8B93A1;
+    --accent: #EAB308;
+    --accent-ink: #111318;
+    --accent-soft: rgba(234, 179, 8, 0.16);
+    --emerald: #22C55E;
+    --emerald-soft: rgba(34, 197, 94, 0.15);
+    --blue: #38BDF8;
+    --danger: #EF4444;
+    --attr-hi: #22C55E;
+    --attr-mid: #38BDF8;
+    --attr-low: #F59E0B;
+    --attr-dim: #EF4444;
+    --row-hover: rgba(255, 255, 255, 0.04);
+    --row-active: rgba(234, 179, 8, 0.13);
+  }
+  [data-theme="navy"] {
     --bg: #0B1120;
     --bg-elev: #111827;
     --card: #161F33;
-    --card-2: #1C2740;
+    --card-2: #1E2942;
     --border: rgba(148, 163, 184, 0.14);
     --border-strong: rgba(148, 163, 184, 0.26);
     --text: #F1F5F9;
     --text-2: #CBD5E1;
     --muted: #8B9BB4;
     --accent: #3B82F6;
-    --accent-soft: rgba(59, 130, 246, 0.16);
-    --emerald: #10B981;
-    --emerald-soft: rgba(16, 185, 129, 0.15);
-    --gold: #F59E0B;
-    --gold-soft: rgba(245, 158, 11, 0.16);
+    --accent-ink: #FFFFFF;
+    --accent-soft: rgba(59, 130, 246, 0.18);
+    --emerald: #22C55E;
+    --emerald-soft: rgba(34, 197, 94, 0.15);
+    --blue: #38BDF8;
     --danger: #EF4444;
     --attr-hi: #34D399;
     --attr-mid: #38BDF8;
-    --attr-low: #CBD5E1;
-    --attr-dim: #64748B;
-    --row-hover: rgba(59, 130, 246, 0.10);
-    --row-active: rgba(59, 130, 246, 0.20);
+    --attr-low: #FBBF24;
+    --attr-dim: #F87171;
+    --row-hover: rgba(59, 130, 246, 0.09);
+    --row-active: rgba(59, 130, 246, 0.18);
   }
   [data-theme="oled"] {
     --bg: #000000;
-    --bg-elev: #09090B;
-    --card: #111114;
-    --card-2: #18181C;
+    --bg-elev: #0A0A0D;
+    --card: #121216;
+    --card-2: #1A1A20;
     --border: rgba(255, 255, 255, 0.10);
     --border-strong: rgba(255, 255, 255, 0.22);
     --text: #FAFAFA;
     --text-2: #D4D4D8;
     --muted: #71717A;
-    --accent: #22C55E;
-    --accent-soft: rgba(34, 197, 94, 0.15);
+    --accent: #EAB308;
+    --accent-ink: #000000;
+    --accent-soft: rgba(234, 179, 8, 0.18);
     --emerald: #4ADE80;
     --emerald-soft: rgba(74, 222, 128, 0.15);
-    --gold: #FBBF24;
-    --gold-soft: rgba(251, 191, 36, 0.16);
+    --blue: #38BDF8;
     --danger: #F87171;
     --attr-hi: #4ADE80;
     --attr-mid: #38BDF8;
-    --attr-low: #D4D4D8;
-    --attr-dim: #52525B;
+    --attr-low: #FBBF24;
+    --attr-dim: #F87171;
     --row-hover: rgba(255, 255, 255, 0.05);
-    --row-active: rgba(34, 197, 94, 0.18);
-  }
-  [data-theme="wtcs"] {
-    --bg: #141416;
-    --bg-elev: #1B1B1F;
-    --card: #222227;
-    --card-2: #2A2A31;
-    --border: rgba(212, 175, 55, 0.16);
-    --border-strong: rgba(212, 175, 55, 0.34);
-    --text: #F8F7F4;
-    --text-2: #D6D3CD;
-    --muted: #9A958C;
-    --accent: #D4AF37;
-    --accent-soft: rgba(212, 175, 55, 0.18);
-    --emerald: #34D399;
-    --emerald-soft: rgba(52, 211, 153, 0.15);
-    --gold: #FBBF24;
-    --gold-soft: rgba(251, 191, 36, 0.18);
-    --danger: #F87171;
-    --attr-hi: #FCD34D;
-    --attr-mid: #6EE7B7;
-    --attr-low: #D6D3CD;
-    --attr-dim: #78716C;
-    --row-hover: rgba(212, 175, 55, 0.09);
-    --row-active: rgba(212, 175, 55, 0.20);
+    --row-active: rgba(234, 179, 8, 0.16);
   }
   [data-theme="light"] {
-    --bg: #F4F5F7;
+    --bg: #F3F4F6;
     --bg-elev: #FFFFFF;
     --card: #FFFFFF;
     --card-2: #F1F5F9;
@@ -87,341 +87,333 @@
     --text: #0F172A;
     --text-2: #334155;
     --muted: #64748B;
-    --accent: #2563EB;
-    --accent-soft: rgba(37, 99, 235, 0.12);
+    --accent: #D97706;
+    --accent-ink: #FFFFFF;
+    --accent-soft: rgba(217, 119, 6, 0.14);
     --emerald: #059669;
     --emerald-soft: rgba(5, 150, 105, 0.12);
-    --gold: #D97706;
-    --gold-soft: rgba(217, 119, 6, 0.12);
+    --blue: #0284C7;
     --danger: #DC2626;
     --attr-hi: #059669;
     --attr-mid: #0284C7;
-    --attr-low: #334155;
-    --attr-dim: #94A3B8;
-    --row-hover: rgba(37, 99, 235, 0.06);
-    --row-active: rgba(37, 99, 235, 0.14);
+    --attr-low: #D97706;
+    --attr-dim: #DC2626;
+    --row-hover: rgba(15, 23, 42, 0.04);
+    --row-active: rgba(217, 119, 6, 0.12);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif; font-size: 12.5px; -webkit-font-smoothing: antialiased; }
 
-  /* Layout */
-  .app { display: flex; flex-direction: column; height: 100vh; }
+  .app { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
 
-  /* Topbar */
+  /* TOP BAR — Exact Windows Veritabanı Header */
   .topbar {
     height: 54px; flex: 0 0 54px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 0 16px; background: var(--bg-elev); border-bottom: 1px solid var(--border);
     user-select: none;
   }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-logo { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
-  .brand-title { font-weight: 800; font-size: 15px; letter-spacing: -0.02em; }
-  .brand-ver { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); letter-spacing: 0.02em; }
+  .tb-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-logo { width: 28px; height: 28px; border-radius: 7px; object-fit: cover; flex-shrink: 0; }
+  .tb-title-box { display: flex; flex-direction: column; min-width: 0; }
+  .tb-title { font-weight: 800; font-size: 14.5px; letter-spacing: -0.015em; line-height: 1.1; }
+  .tb-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); margin-right: 5px; vertical-align: middle; }
+  .dot.ok { background: var(--emerald); }
 
-  .status-pill {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
-    background: var(--card); border: 1px solid var(--border); color: var(--text-2);
-    max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* Center Pill Navigation (like Windows: Oyuncular | Personel | Kulüpler | Ligler) */
+  .nav-pills { display: flex; align-items: center; gap: 4px; background: var(--bg); padding: 3px; border-radius: 9px; border: 1px solid var(--border); }
+  .nav-pill {
+    padding: 6px 13px; border-radius: 6px; border: none; background: transparent;
+    color: var(--text-2); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: all .12s;
   }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
-  .status-dot.ok { background: var(--emerald); box-shadow: 0 0 0 3px var(--emerald-soft); }
+  .nav-pill:hover { color: var(--text); background: var(--row-hover); }
+  .nav-pill.active { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
 
-  .toolbar { display: flex; align-items: center; gap: 6px; }
+  .tb-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .search-box {
+    width: 190px; height: 30px; padding: 0 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    font-size: 12px; outline: none; font-family: inherit;
+  }
+  .search-box:focus { border-color: var(--accent); }
+
   .btn, select.ctrl {
     height: 30px; padding: 0 10px; border-radius: 7px;
     border: 1px solid var(--border); background: var(--card); color: var(--text);
     font-size: 12px; font-weight: 600; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 5px; transition: all .14s ease;
-    font-family: inherit;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    transition: all .12s; font-family: inherit; white-space: nowrap;
   }
   .btn:hover, select.ctrl:hover { border-color: var(--border-strong); background: var(--card-2); }
+  .btn.gold { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .btn.gold:hover { filter: brightness(1.06); }
   .btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn.primary:hover { filter: brightness(1.08); }
-  .btn.emerald { background: var(--emerald-soft); border-color: rgba(16,185,129,.35); color: var(--emerald); }
-  .btn.gold { background: var(--gold-soft); border-color: rgba(245,158,11,.35); color: var(--gold); }
-  .btn.danger { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.35); color: var(--danger); }
-  .btn:disabled { opacity: .42; cursor: not-allowed; }
-  select.ctrl { padding-right: 22px; outline: none; }
+  .btn.emerald { background: var(--emerald-soft); border-color: rgba(34,197,94,.35); color: var(--emerald); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  select.ctrl { outline: none; padding-right: 18px; }
 
-  /* Body Shell */
-  .shell { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+  /* MAIN AREA */
+  .main { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* Left Rail */
-  .rail {
-    width: 196px; flex: 0 0 196px;
-    background: var(--bg-elev); border-right: 1px solid var(--border);
-    padding: 12px 10px; display: flex; flex-direction: column; gap: 4px;
-    user-select: none;
-  }
-  .rail-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 10px 4px; }
-  .nav-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 10px; border-radius: 8px; cursor: pointer;
-    color: var(--text-2); font-weight: 600; font-size: 12.5px; border: 1px solid transparent;
-    transition: all .12s ease;
-  }
-  .nav-item:hover { background: var(--row-hover); color: var(--text); }
-  .nav-item.active { background: var(--accent-soft); border-color: rgba(59,130,246,.30); color: var(--accent); }
-  .nav-left { display: flex; align-items: center; gap: 8px; }
-  .nav-count { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--card-2); color: var(--muted); }
-  .nav-item.active .nav-count { background: var(--accent); color: #fff; }
+  /* === HOME / DATABASE VIEW === */
+  .db-view { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 16px 14px; gap: 10px; }
 
-  .rail-footer {
-    margin-top: auto; padding: 10px; border-radius: 10px;
-    background: var(--card); border: 1px solid var(--border); font-size: 11px; color: var(--muted);
-    line-height: 1.45;
+  .filter-bar {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 12px; display: flex; flex-direction: column; gap: 8px;
   }
-  .rail-footer strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 11.5px; }
-
-  /* Workspace */
-  .workspace { flex: 1; display: flex; min-width: 0; min-height: 0; }
-
-  /* List Pane */
-  .list-pane {
-    width: 470px; flex: 0 0 470px;
-    display: flex; flex-direction: column; min-height: 0;
-    border-right: 1px solid var(--border); background: var(--bg);
-  }
-  .filters {
-    padding: 10px 12px; border-bottom: 1px solid var(--border);
-    background: var(--bg-elev); display: flex; flex-direction: column; gap: 8px;
-  }
-  .filter-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .input {
-    height: 30px; padding: 0 10px; border-radius: 7px;
+  .filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .f-lbl { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .f-num {
+    width: 60px; height: 28px; padding: 0 6px; text-align: center; border-radius: 6px;
     border: 1px solid var(--border); background: var(--card); color: var(--text);
     font-size: 12px; outline: none; font-family: inherit;
   }
-  .input:focus { border-color: var(--accent); }
-  .input.search { flex: 1; min-width: 140px; }
-  .input.num { width: 64px; text-align: center; }
-
-  .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .f-num:focus { border-color: var(--accent); }
   .chip {
-    font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 999px;
+    height: 26px; padding: 0 10px; border-radius: 6px;
     border: 1px solid var(--border); background: var(--card); color: var(--text-2);
-    cursor: pointer; transition: all .12s;
+    font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
   }
   .chip:hover { border-color: var(--border-strong); color: var(--text); }
   .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .spacer { flex: 1; }
 
-  .table-wrap { flex: 1; overflow: auto; }
-  table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .db-body { flex: 1; min-height: 0; display: flex; gap: 12px; overflow: hidden; }
+  .table-card {
+    flex: 1; min-width: 0; background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 10px; overflow: auto;
+  }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   table.grid thead th {
     position: sticky; top: 0; z-index: 2;
-    background: var(--bg-elev); color: var(--muted);
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
-    padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border);
-    white-space: nowrap;
+    background: var(--card); color: var(--muted);
+    font-size: 11px; font-weight: 700; padding: 9px 10px; text-align: left;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
   }
-  table.grid tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+  table.grid tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .08s; }
   table.grid tbody tr:hover { background: var(--row-hover); }
   table.grid tbody tr.active { background: var(--row-active); }
-  table.grid td { padding: 7px 8px; vertical-align: middle; }
-  .cell-name { font-weight: 700; color: var(--text); max-width: 155px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cell-sub { font-size: 11px; color: var(--muted); max-width: 155px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pos-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; background: var(--card-2); color: var(--text-2); }
-  .ca-pill { font-weight: 800; font-variant-numeric: tabular-nums; }
-  .pr-pill { font-size: 11px; font-weight: 700; padding: 2px 5px; border-radius: 5px; background: var(--emerald-soft); color: var(--emerald); font-variant-numeric: tabular-nums; }
+  table.grid td { padding: 8px 10px; vertical-align: middle; white-space: nowrap; }
+  .td-name { font-weight: 600; color: var(--text); }
+  .td-muted { color: var(--text-2); }
+  .td-ca { font-weight: 700; color: var(--emerald); font-variant-numeric: tabular-nums; }
+  .td-pa { font-weight: 700; color: var(--blue); font-variant-numeric: tabular-nums; }
   .star-btn { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted); padding: 0 2px; }
-  .star-btn.on { color: var(--gold); }
+  .star-btn.on { color: var(--accent); }
 
-  /* Detail Pane */
-  .detail-pane { flex: 1; overflow: auto; padding: 16px 20px; background: var(--bg); min-width: 0; }
-  .empty-state {
-    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; gap: 10px; color: var(--muted); padding: 40px;
+  /* RIGHT PREVIEW CARD (Exact Windows shot_home_db.png right card!) */
+  .preview-card {
+    width: 270px; flex: 0 0 270px; background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+    overflow: auto;
   }
-  .empty-state img { width: 56px; height: 56px; border-radius: 14px; opacity: .9; }
-  .empty-state h2 { color: var(--text); font-size: 18px; font-weight: 800; }
-
-  /* Entity Header Card */
-  .hero-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 16px 18px; margin-bottom: 14px;
-    display: flex; flex-direction: column; gap: 12px;
-  }
-  .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-  .hero-id { display: flex; align-items: center; gap: 13px; min-width: 0; }
+  .preview-card.hidden { display: none; }
+  .pv-head { display: flex; align-items: center; gap: 10px; }
   .avatar {
-    width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 17px; color: #fff;
-    background: linear-gradient(135deg, var(--accent), #6366F1);
-    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    background: #3B321C; border: 1px solid rgba(234,179,8,.35); color: #FDE68A;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px;
   }
-  .hero-name { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
-  .hero-meta { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .pv-name { font-size: 14.5px; font-weight: 800; line-height: 1.2; }
+  .pv-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .pv-club { font-size: 11.5px; color: var(--accent); font-weight: 600; }
+  .capa-bar-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .capa-bar-top { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+  .capa-bar { height: 5px; border-radius: 999px; background: var(--card-2); overflow: hidden; }
+  .capa-fill { height: 100%; background: var(--emerald); border-radius: 999px; }
+  .pv-kv { display: flex; justify-content: space-between; font-size: 11.5px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .pv-kv span:first-child { color: var(--muted); }
+  .pv-kv span:last-child { font-weight: 700; color: var(--text); }
 
-  .pill-strip { display: flex; gap: 8px; flex-wrap: wrap; }
-  .stat-pill {
-    padding: 6px 10px; border-radius: 9px; background: var(--card-2); border: 1px solid var(--border);
-    display: flex; flex-direction: column; min-width: 78px;
+  /* === FULL-WIDTH PROFILE VIEW (Exact Windows shot_player_overview.png!) === */
+  .profile-view { flex: 1; min-height: 0; overflow: auto; padding: 14px 16px 20px; display: none; flex-direction: column; gap: 12px; }
+  .profile-view.active { display: flex; }
+
+  .p-hero {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
   }
-  .stat-pill .k { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-  .stat-pill .v { font-size: 14px; font-weight: 800; margin-top: 1px; font-variant-numeric: tabular-nums; }
-  .stat-pill.accent .v { color: var(--accent); }
-  .stat-pill.emerald .v { color: var(--emerald); }
-  .stat-pill.gold .v { color: var(--gold); }
-
-  .action-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding-top: 4px; border-top: 1px solid var(--border); }
-
-  /* Player Overview Grid: Radar + Key Info */
-  .overview-row { display: grid; grid-template-columns: 270px 1fr; gap: 14px; margin-bottom: 14px; }
-  @media (max-width: 1120px) { .overview-row { grid-template-columns: 1fr; } }
-
-  .panel {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+  .p-hero-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .p-hero-id { display: flex; align-items: center; gap: 12px; }
+  .p-hero-name { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .p-hero-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .p-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .p-pill {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; text-align: center; min-width: 96px;
   }
-  .panel-title {
+  .p-pill .v { font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .p-pill .k { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .p-actions { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--border); }
+
+  /* 4-Column Windows Attribute Grid */
+  .p-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+  @media (max-width: 1100px) { .p-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .p-col { display: flex; flex-direction: column; gap: 12px; }
+
+  .panel { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .panel-h {
     font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
-    color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;
+    color: var(--muted); margin-bottom: 8px; padding-left: 8px; border-left: 3px solid var(--accent);
+    display: flex; align-items: center; justify-content: space-between;
   }
-
-  /* 3-Column FM Attribute Grid */
-  .attr-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
-  @media (max-width: 1060px) { .attr-cols { grid-template-columns: repeat(2, 1fr); } }
   .attr-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 4px 6px; border-radius: 6px; transition: background .12s;
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    padding: 3px 6px; border-radius: 5px;
   }
   .attr-row:hover { background: var(--row-hover); }
-  .attr-name { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .attr-input {
-    width: 44px; height: 24px; text-align: center; font-weight: 800; font-size: 12.5px;
-    border-radius: 5px; border: 1px solid transparent; background: var(--card-2);
+  .attr-name { font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attr-val {
+    width: 40px; height: 23px; text-align: center; font-weight: 800; font-size: 12px;
+    border-radius: 4px; border: 1px solid transparent; background: var(--card);
     font-variant-numeric: tabular-nums; outline: none; font-family: inherit;
   }
-  .attr-input:focus { border-color: var(--accent); background: var(--bg-elev); }
-  .attr-input.ro { opacity: .85; cursor: default; }
+  .attr-val:focus { border-color: var(--accent); }
   .a-hi { color: var(--attr-hi); }
   .a-mid { color: var(--attr-mid); }
   .a-low { color: var(--attr-low); }
   .a-dim { color: var(--attr-dim); }
-  .attr-proj { font-size: 10px; font-weight: 700; color: var(--gold); margin-left: 3px; }
+  .proj { font-size: 10px; font-weight: 700; color: var(--accent); margin-left: 3px; }
 
-  /* Generic Field Grid (Overview/Contract/Club/Staff/Comp) */
-  .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 14px; }
-  .field-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; border-radius: 7px; background: var(--card-2); }
-  .field-item label { font-size: 11.5px; color: var(--muted); font-weight: 600; }
-  .field-item input {
-    width: 130px; height: 25px; text-align: right; font-weight: 700; font-size: 12px;
-    border-radius: 5px; border: 1px solid transparent; background: var(--bg-elev); color: var(--text);
+  .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .kv-edit { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .kv-edit:last-child { border-bottom: none; }
+  .kv-edit label { font-size: 12px; color: var(--muted); }
+  .kv-edit input {
+    width: 118px; height: 25px; text-align: right; font-weight: 700; font-size: 12px;
+    border-radius: 5px; border: 1px solid var(--border); background: var(--card); color: var(--text);
     padding: 0 7px; outline: none; font-family: inherit;
   }
-  .field-item input:focus { border-color: var(--accent); }
+  .kv-edit input:focus { border-color: var(--accent); }
 
   /* Club KPI & Facilities */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
-  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
-  .kpi-card .k { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-  .kpi-card .v { font-size: 18px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
-
+  .kpi-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .kpi-box { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .kpi-box .k { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .kpi-box .v { font-size: 18px; font-weight: 800; margin-top: 4px; }
   .fac-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .fac-label { width: 150px; font-size: 12px; color: var(--text-2); font-weight: 600; }
-  .fac-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--card-2); overflow: hidden; }
-  .fac-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--emerald)); transition: width .2s; }
+  .fac-lbl { width: 155px; font-size: 12px; color: var(--text-2); }
+  .fac-bar { flex: 1; height: 7px; border-radius: 999px; background: var(--card-2); overflow: hidden; }
+  .fac-fill { height: 100%; background: var(--accent); border-radius: 999px; }
 
-  /* Toast */
+  /* SETTINGS MODAL */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    width: 440px; max-width: 92vw; background: var(--bg-elev); border: 1px solid var(--border-strong);
+    border-radius: 14px; padding: 18px 20px; box-shadow: 0 20px 50px rgba(0,0,0,.5);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .modal-h { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 800; }
+  .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .set-row:last-child { border-bottom: none; }
+  .set-lbl strong { display: block; font-size: 13px; }
+  .set-lbl span { font-size: 11.5px; color: var(--muted); }
+
   .toast {
-    position: fixed; bottom: 18px; right: 20px; z-index: 99;
-    padding: 9px 14px; border-radius: 10px;
-    background: var(--bg-elev); border: 1px solid var(--border-strong); color: var(--text);
-    font-size: 12px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.45);
-    opacity: 0; transform: translateY(8px); pointer-events: none; transition: all .18s ease;
+    position: fixed; bottom: 16px; right: 18px; z-index: 99;
+    padding: 9px 14px; border-radius: 9px;
+    background: var(--card-2); border: 1px solid var(--border-strong); color: var(--text);
+    font-size: 12px; font-weight: 600; box-shadow: 0 10px 28px rgba(0,0,0,.45);
+    opacity: 0; transform: translateY(8px); pointer-events: none; transition: all .16s ease;
   }
   .toast.show { opacity: 1; transform: translateY(0); }
 
-  /* Scrollbars */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.25); border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,.42); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.28); }
 </style>
 </head>
 <body>
 <div class="app">
   <!-- TOPBAR -->
   <header class="topbar">
-    <div class="brand">
+    <div class="tb-left">
+      <button class="btn" id="btnBack" style="display:none" onclick="closeProfile()">← <span data-i18n="back">Geri</span></button>
       <img src="/logo.png" class="brand-logo" alt="SquadEditor" />
-      <span class="brand-title">SquadEditor</span>
-      <span class="brand-ver">v1.6.0 · macOS</span>
-      <div class="status-pill" id="statusPill">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusText">Bağlanıyor…</span>
+      <div class="tb-title-box">
+        <span class="tb-title" id="topTitle">Veritabanı</span>
+        <span class="tb-sub"><span class="dot" id="statusDot"></span><span id="statusText">Bağlanıyor…</span></span>
       </div>
     </div>
 
-    <div class="toolbar">
-      <button class="btn" id="btnWeight" onclick="toggleWeightMode()" title="Rol Rating Ağırlık Modu">⚖️ Classic FM</button>
-      <button class="btn" id="btnRo" onclick="toggleReadOnly()">🔓 <span data-i18n="editable">Düzenlenebilir</span></button>
-      <select class="ctrl" id="selTheme" onchange="setTheme(this.value)">
-        <option value="navy">FM Night Navy</option>
-        <option value="oled">OLED Pure Black</option>
-        <option value="wtcs">WTCS Charcoal &amp; Gold</option>
-        <option value="light">Light Editorial</option>
-      </select>
-      <button class="btn" id="btnLang" onclick="toggleLang()">TR</button>
-      <button class="btn" id="btnUndo" onclick="doUndo()" disabled>↩ <span data-i18n="undo">Geri Al</span> (<span id="undoCount">0</span>)</button>
-      <button class="btn primary" onclick="reconnect()">↻ <span data-i18n="reload">Yenile</span></button>
+    <nav class="nav-pills" id="navPills">
+      <button class="nav-pill active" data-tab="players" onclick="switchTab('players')" data-i18n="players">Oyuncular</button>
+      <button class="nav-pill" data-tab="staff" onclick="switchTab('staff')" data-i18n="staff">Personel</button>
+      <button class="nav-pill" data-tab="clubs" onclick="switchTab('clubs')" data-i18n="clubs">Kulüpler</button>
+      <button class="nav-pill" data-tab="comps" onclick="switchTab('comps')" data-i18n="comps">Ligler</button>
+    </nav>
+
+    <div class="tb-right">
+      <input class="search-box" id="globalSearch" placeholder="Ara..." oninput="onSearchInput(this.value)" />
+      <button class="btn" id="btnUndo" onclick="doUndo()" disabled title="⌘Z">↩ <span id="undoCount">0</span></button>
+      <button class="btn" onclick="reconnect()" title="Yenile">↻</button>
+      <button class="btn" onclick="openSettings()" title="Ayarlar">⚙ <span data-i18n="settings">Ayarlar</span></button>
     </div>
   </header>
 
-  <!-- SHELL -->
-  <div class="shell">
-    <!-- LEFT RAIL -->
-    <aside class="rail">
-      <div class="rail-label" data-i18n="database">Veritabanı</div>
-      <div class="nav-item active" data-tab="players" onclick="switchTab('players')">
-        <span class="nav-left">⚽ <span data-i18n="players">Scout &amp; Oyuncular</span></span>
-        <span class="nav-count" id="cntPlayers">0</span>
-      </div>
-      <div class="nav-item" data-tab="clubs" onclick="switchTab('clubs')">
-        <span class="nav-left">🏟️ <span data-i18n="clubs">Kulüpler</span></span>
-        <span class="nav-count" id="cntClubs">0</span>
-      </div>
-      <div class="nav-item" data-tab="staff" onclick="switchTab('staff')">
-        <span class="nav-left">📋 <span data-i18n="staff">Personel (5★)</span></span>
-        <span class="nav-count" id="cntStaff">0</span>
-      </div>
-      <div class="nav-item" data-tab="comps" onclick="switchTab('comps')">
-        <span class="nav-left">🏆 <span data-i18n="comps">Ligler</span></span>
-        <span class="nav-count" id="cntComps">0</span>
-      </div>
-
-      <div class="rail-footer">
-        <strong>SquadEditor Live</strong>
-        <span data-i18n="footerTip">Değişiklikler FM27 belleğine anında yazılır. ⌘Z ile geri alabilirsiniz.</span>
-      </div>
-    </aside>
-
-    <!-- WORKSPACE -->
-    <main class="workspace">
-      <!-- LIST PANE -->
-      <section class="list-pane">
-        <div class="filters" id="filterBar"></div>
-        <div class="table-wrap">
+  <main class="main">
+    <!-- DATABASE / HOME VIEW -->
+    <section class="db-view" id="dbView">
+      <div class="filter-bar" id="filterBar"></div>
+      <div class="db-body">
+        <div class="table-card">
           <table class="grid">
             <thead id="tableHead"></thead>
             <tbody id="tableBody"></tbody>
           </table>
         </div>
-      </section>
+        <aside class="preview-card" id="previewCard"></aside>
+      </div>
+    </section>
 
-      <!-- DETAIL PANE -->
-      <section class="detail-pane" id="detailPane">
-        <div class="empty-state">
-          <img src="/logo.png" alt="SquadEditor" />
-          <h2 data-i18n="welcomeTitle">SquadEditor · FM27 Canlı Editör &amp; Scout</h2>
-          <p data-i18n="welcomeDesc">Soldaki listeden bir oyuncu, kulüp, personel veya lig seçerek anında inceleyip düzenleyebilirsiniz.</p>
-        </div>
-      </section>
-    </main>
+    <!-- FULL-WIDTH PROFILE VIEW -->
+    <section class="profile-view" id="profileView"></section>
+  </main>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <div class="modal-h">
+      <span>⚙ <span data-i18n="settings">Ayarlar</span></span>
+      <button class="btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="set-row">
+      <div class="set-lbl"><strong data-i18n="theme">Tema</strong><span data-i18n="themeDesc">Uygulama renk görünümü</span></div>
+      <select class="ctrl" id="selTheme" onchange="setTheme(this.value)">
+        <option value="wtcs">WTCS Charcoal &amp; Gold</option>
+        <option value="navy">FM Night Navy</option>
+        <option value="oled">OLED Pure Black</option>
+        <option value="light">Light Editorial</option>
+      </select>
+    </div>
+    <div class="set-row">
+      <div class="set-lbl"><strong data-i18n="language">Dil</strong><span data-i18n="langDesc">Arayüz dili (TR / EN)</span></div>
+      <select class="ctrl" id="selLang" onchange="setLang(this.value)">
+        <option value="tr">Türkçe</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div class="set-row">
+      <div class="set-lbl"><strong data-i18n="weightMode">Rol Ağırlık Modu</strong><span data-i18n="weightDesc">Klasik FM veya Maç Motoru (ME Meta)</span></div>
+      <select class="ctrl" id="selWeight" onchange="setWeightMode(this.value)">
+        <option value="classic">Classic FM</option>
+        <option value="meta">ME Meta</option>
+      </select>
+    </div>
+    <div class="set-row">
+      <div class="set-lbl"><strong data-i18n="readOnly">Salt Okunur Mod</strong><span data-i18n="roDesc">Yanlışlıkla değişiklik yapılmasını engeller</span></div>
+      <button class="btn" id="btnRoModal" onclick="toggleReadOnly()">Kapalı</button>
+    </div>
   </div>
 </div>
 
@@ -430,55 +422,45 @@
 <script>
 const I18N = {
   tr: {
-    database: 'Veritabanı', players: 'Scout & Oyuncular', clubs: 'Kulüpler', staff: 'Personel (5★)', comps: 'Ligler',
-    editable: 'Düzenlenebilir', readonly: 'Salt Okunur', undo: 'Geri Al', reload: 'Yenile',
-    footerTip: 'Değişiklikler FM27 belleğine anında yazılır. ⌘Z ile geri alabilirsiniz.',
-    welcomeTitle: 'SquadEditor · FM27 Canlı Editör & Scout',
-    welcomeDesc: 'Soldaki listeden bir oyuncu, kulüp, personel veya lig seçerek anında inceleyip düzenleyebilirsiniz.',
-    searchPlayers: 'Oyuncu, kulüp veya ülke ara...', searchClubs: 'Kulüp ara...', searchStaff: 'Personel veya kulüp ara...', searchComps: 'Lig veya turnuva ara...',
-    allPos: 'Tüm Poz.', maxAge: 'Max Yaş', minCa: 'Min CA', minPa: 'Min PA', maxVal: 'Max M€',
-    sortCa: 'Sıra: CA', sortPa: 'Sıra: PA', sortRole: 'Sıra: Rol %', sortPr: 'Sıra: PR %', sortGrowth: 'Sıra: Gelişim', sortAge: 'Sıra: Yaş',
-    moneyball: '🔥 Moneyball', wonderkids: '⭐ Wonderkids', freeAgents: '🆓 Serbestler', shortlist: '★ Shortlist', reset: '↺ Sıfırla', csv: 'CSV',
-    colPlayer: 'Oyuncu', colPos: 'Poz', colAge: 'Yaş', colCaPa: 'CA/PA', colRole: 'Rol', colPr: 'PR%',
-    colClub: 'Kulüp', colRep: 'İtibar', colBal: 'Bakiye', colTb: 'Transfer',
-    colStaff: 'Personel', colStars: 'Yıldız', colComp: 'Lig / Turnuva',
-    maxFit: '⚡ Full Kondisyon & Moral', freeze: '❄️ Dondur', unfreeze: '🔥 Dondurmayı Kaldır', paPreview: '📈 PA Zirve Önizleme',
-    radarTitle: '8 Eksenli Oyuncu Radarı', radarSub: 'Mevcut vs. Zirve PA',
-    overview: 'Genel & Sözleşme', technical: 'Teknik', mental: 'Zihinsel', physical: 'Fiziksel', goalkeeping: 'Kalecilik', hidden: 'Gizli & Kişilik', other: 'Diğer',
-    bal: 'Bakiye', tb: 'Transfer Bütçesi', wb: 'Maaş Bütçesi', fac: 'Antrenman / Altyapı',
-    richClub: '💰 Zengin Kulüp', maxFac: '🏟️ Max Tesisler (20)', worldNo1: '🏆 Dünya #1 Ligi (Rep 200)',
-    facilities: 'Tesisler (1–20)', squad: 'Kulüp Kadrosu', saved: 'Kaydedildi', undone: 'Son işlem geri alındı', reconnected: 'FM27 bağlantısı yenilendi'
+    dbTitle: 'Veritabanı', back: 'Geri', players: 'Oyuncular', staff: 'Personel', clubs: 'Kulüpler', comps: 'Ligler',
+    settings: 'Ayarlar', theme: 'Tema', themeDesc: 'Uygulama renk görünümü', language: 'Dil', langDesc: 'Arayüz dili (TR / EN)',
+    weightMode: 'Rol Ağırlık Modu', weightDesc: 'Klasik FM veya Maç Motoru (ME Meta)', readOnly: 'Salt Okunur Mod', roDesc: 'Yanlışlıkla değişiklik yapılmasını engeller',
+    searchPh: 'Oyuncu, kulüp, ülke ara...', pos: 'Mevki', all: 'Tümü', maxAge: 'Max Yaş', minCa: 'CA ≥', minPa: 'PA ≥', maxVal: 'Değer ≤M€',
+    sort: 'Sırala', moneyball: '🔥 Moneyball', wonderkid: '⭐ Wonderkid', free: 'Serbest', shortlist: '★ Kısa Liste', clear: 'Temizle', csv: 'CSV', preview: 'Önizleme',
+    colPlayer: 'Oyuncu', colPos: 'Mevki', colAge: 'Yaş', colClub: 'Kulüp', colNation: 'Uyruk', colRole: 'En İyi Rol', colPr: 'PR %',
+    colRep: 'İtibar', colBal: 'Bakiye', colTb: 'Transfer', colStaff: 'Personel', colStars: 'Yıldız', colComp: 'Lig / Turnuva',
+    openProfile: 'Profili Aç', freeze: '❄️ Dondur', unfreeze: '🔥 Dondurmayı Kaldır', maxFit: '⚡ Kondisyon, Moral & Mutluluk Fulle',
+    paPreview: '📈 PA Önizleme', tech: 'TEKNİK', gk: 'KALECİLİK', mental: 'ZİHİNSEL', physical: 'FİZİKSEL',
+    presets: 'ÖN AYARLAR', hidden: 'GİZLİ', personality: 'KİŞİLİK (1-20)', ability: 'YETENEK', status: 'DURUM', radar: 'ÖZELLİK RADARI',
+    overview: 'Genel Bilgiler', facilities: 'Tesisler (1-20)', squad: 'Kulüp Kadrosu',
+    val: 'Değer', wage: 'Maaş', contract: 'Sözleşme bitişi', saved: 'Kaydedildi', undone: 'Son işlem geri alındı', reconnected: 'Bağlantı yenilendi',
+    on: 'Açık', off: 'Kapalı'
   },
   en: {
-    database: 'Database', players: 'Scout & Players', clubs: 'Clubs', staff: 'Staff (5★)', comps: 'Leagues',
-    editable: 'Editable', readonly: 'Read-Only', undo: 'Undo', reload: 'Reload',
-    footerTip: 'Edits write live to FM27 memory. Press ⌘Z anytime to undo.',
-    welcomeTitle: 'SquadEditor · FM27 Live Editor & Scout',
-    welcomeDesc: 'Select a player, club, staff member or competition on the left to inspect and edit live.',
-    searchPlayers: 'Search player, club, nation...', searchClubs: 'Search club...', searchStaff: 'Search staff or club...', searchComps: 'Search league or cup...',
-    allPos: 'All Pos', maxAge: 'Max Age', minCa: 'Min CA', minPa: 'Min PA', maxVal: 'Max M€',
-    sortCa: 'Sort: CA', sortPa: 'Sort: PA', sortRole: 'Sort: Role %', sortPr: 'Sort: PR %', sortGrowth: 'Sort: Growth', sortAge: 'Sort: Age',
-    moneyball: '🔥 Moneyball', wonderkids: '⭐ Wonderkids', freeAgents: '🆓 Free Agents', shortlist: '★ Shortlist', reset: '↺ Reset', csv: 'CSV',
-    colPlayer: 'Player', colPos: 'Pos', colAge: 'Age', colCaPa: 'CA/PA', colRole: 'Role', colPr: 'PR%',
-    colClub: 'Club', colRep: 'Rep', colBal: 'Balance', colTb: 'Transfer',
-    colStaff: 'Staff', colStars: 'Stars', colComp: 'Competition',
-    maxFit: '⚡ Max Fitness & Morale', freeze: '❄️ Freeze', unfreeze: '🔥 Unfreeze', paPreview: '📈 PA Peak Preview',
-    radarTitle: '8-Axis Player Radar', radarSub: 'Current vs. Peak PA',
-    overview: 'Overview & Contract', technical: 'Technical', mental: 'Mental', physical: 'Physical', goalkeeping: 'Goalkeeping', hidden: 'Hidden & Personality', other: 'Other',
-    bal: 'Balance', tb: 'Transfer Budget', wb: 'Wage Budget', fac: 'Training / Youth',
-    richClub: '💰 Rich Owner', maxFac: '🏟️ Max Facilities (20)', worldNo1: '🏆 World #1 League (Rep 200)',
-    facilities: 'Facilities (1–20)', squad: 'Club Squad', saved: 'Saved', undone: 'Last edit undone', reconnected: 'FM27 connection refreshed'
+    dbTitle: 'Database', back: 'Back', players: 'Players', staff: 'Staff', clubs: 'Clubs', comps: 'Leagues',
+    settings: 'Settings', theme: 'Theme', themeDesc: 'Application color theme', language: 'Language', langDesc: 'Interface language (TR / EN)',
+    weightMode: 'Role Weight Mode', weightDesc: 'Classic FM or Match Engine Meta', readOnly: 'Read-Only Mode', roDesc: 'Prevent accidental live memory edits',
+    searchPh: 'Search player, club, nation...', pos: 'Pos', all: 'All', maxAge: 'Max Age', minCa: 'CA ≥', minPa: 'PA ≥', maxVal: 'Val ≤M€',
+    sort: 'Sort', moneyball: '🔥 Moneyball', wonderkid: '⭐ Wonderkid', free: 'Free Agent', shortlist: '★ Shortlist', clear: 'Clear', csv: 'CSV', preview: 'Preview',
+    colPlayer: 'Player', colPos: 'Pos', colAge: 'Age', colClub: 'Club', colNation: 'Nation', colRole: 'Best Role', colPr: 'PR %',
+    colRep: 'Rep', colBal: 'Balance', colTb: 'Transfer', colStaff: 'Staff', colStars: 'Stars', colComp: 'Competition',
+    openProfile: 'Open Profile', freeze: '❄️ Freeze', unfreeze: '🔥 Unfreeze', maxFit: '⚡ Max Fitness, Morale & Happiness',
+    paPreview: '📈 PA Preview', tech: 'TECHNICAL', gk: 'GOALKEEPING', mental: 'MENTAL', physical: 'PHYSICAL',
+    presets: 'PRESETS', hidden: 'HIDDEN', personality: 'PERSONALITY (1-20)', ability: 'ABILITY', status: 'STATUS', radar: 'ATTRIBUTE RADAR',
+    overview: 'Overview', facilities: 'Facilities (1-20)', squad: 'Club Squad',
+    val: 'Value', wage: 'Wage', contract: 'Contract expires', saved: 'Saved', undone: 'Undone', reconnected: 'Connection refreshed',
+    on: 'Enabled', off: 'Disabled'
   }
 };
 
 let lang = localStorage.getItem('se_lang') || 'tr';
-let theme = localStorage.getItem('se_theme') || 'navy';
+let theme = localStorage.getItem('se_theme') || 'wtcs';
 let tab = 'players';
 let weightMode = 'classic';
 let readOnly = false;
+let showPreview = true;
 let currentRows = [];
-let selectedAddr = null;
-let selectedType = null;
+let previewRow = null;
 let currentEntity = null;
 let paPreview = false;
 let shortlistOnly = false;
@@ -486,8 +468,7 @@ let activePreset = '';
 let staffMinStars = 0;
 let searchTimer = null;
 const shortlist = new Set(JSON.parse(localStorage.getItem('se_shortlist') || '[]'));
-
-const filterState = { q: '', pos: '', maxAge: '', minCa: '', minPa: '', maxValM: '', free: false, sort: 'ca' };
+const f = { q: '', pos: '', maxAge: '', minCa: '', minPa: '', maxValM: '', free: false, sort: 'ca' };
 
 function t(k) { return (I18N[lang] && I18N[lang][k]) || k; }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -505,8 +486,8 @@ function initials(name) {
 function attrClass(v) {
   const n = Number(v);
   if (n >= 16) return 'a-hi';
-  if (n >= 11) return 'a-mid';
-  if (n >= 6) return 'a-low';
+  if (n >= 12) return 'a-mid';
+  if (n >= 8) return 'a-low';
   return 'a-dim';
 }
 function toast(msg) {
@@ -514,8 +495,9 @@ function toast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+  el._t = setTimeout(() => el.classList.remove('show'), 2100);
 }
+async function api(url, opts) { return await (await fetch(url, opts)).json(); }
 
 function setTheme(v) {
   theme = v;
@@ -523,68 +505,59 @@ function setTheme(v) {
   document.getElementById('selTheme').value = v;
   localStorage.setItem('se_theme', v);
 }
-function applyI18n() {
-  document.getElementById('btnLang').textContent = lang.toUpperCase();
-  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
-  updateTopToggles();
-  renderFilterBar();
-  renderTable();
-  if (currentEntity) renderDetail(currentEntity);
-}
-function toggleLang() {
-  lang = lang === 'tr' ? 'en' : 'tr';
-  localStorage.setItem('se_lang', lang);
+function setLang(v) {
+  lang = v;
+  document.getElementById('selLang').value = v;
+  localStorage.setItem('se_lang', v);
   applyI18n();
 }
-
-function updateTopToggles() {
-  const bw = document.getElementById('btnWeight');
-  bw.textContent = weightMode === 'meta' ? '⚡ ME Meta' : '⚖️ Classic FM';
-  bw.classList.toggle('gold', weightMode === 'meta');
-  const bro = document.getElementById('btnRo');
-  bro.innerHTML = readOnly ? `🔒 <span>${t('readonly')}</span>` : `🔓 <span>${t('editable')}</span>`;
-  bro.classList.toggle('danger', readOnly);
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.getElementById('globalSearch').placeholder = t('searchPh');
+  document.getElementById('btnRoModal').textContent = readOnly ? t('on') : t('off');
+  document.getElementById('btnRoModal').classList.toggle('gold', readOnly);
+  if (!currentEntity) document.getElementById('topTitle').textContent = t('dbTitle');
+  renderFilterBar();
+  renderTable();
+  renderPreview();
+  if (currentEntity) renderProfile(currentEntity);
 }
 
-async function api(url, opts) {
-  const r = await fetch(url, opts);
-  return await r.json();
+function openSettings() {
+  document.getElementById('selTheme').value = theme;
+  document.getElementById('selLang').value = lang;
+  document.getElementById('selWeight').value = weightMode;
+  document.getElementById('btnRoModal').textContent = readOnly ? t('on') : t('off');
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+
+async function setWeightMode(v) {
+  const r = await api('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ weightMode: v }) });
+  weightMode = r.weightMode;
+  await loadList();
+  toast(weightMode === 'meta' ? '⚡ ME Meta' : '⚖️ Classic FM');
+}
+async function toggleReadOnly() {
+  const r = await api('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ readOnly: !readOnly }) });
+  readOnly = !!r.readOnly;
+  document.getElementById('btnRoModal').textContent = readOnly ? t('on') : t('off');
+  document.getElementById('btnRoModal').classList.toggle('gold', readOnly);
+  if (currentEntity) await openProfile(currentEntity.type, currentEntity.addr);
 }
 
 async function refreshStatus() {
   try {
     const s = await api('/api/status');
     document.getElementById('statusDot').classList.toggle('ok', !!s.connected);
-    document.getElementById('statusText').textContent = s.status || '';
-    document.getElementById('cntPlayers').textContent = (s.players || 0).toLocaleString();
-    document.getElementById('cntClubs').textContent = (s.clubs || 0).toLocaleString();
-    document.getElementById('cntStaff').textContent = (s.staff || 0).toLocaleString();
-    document.getElementById('cntComps').textContent = (s.comps || 0).toLocaleString();
+    document.getElementById('statusText').textContent = s.connected
+      ? `${(s.players||0).toLocaleString()} ${t('players').toLowerCase()} · ${(s.staff||0).toLocaleString()} ${t('staff').toLowerCase()} · ${(s.clubs||0).toLocaleString()} ${t('clubs').toLowerCase()}`
+      : (s.status || '');
     document.getElementById('undoCount').textContent = s.undoCount || 0;
     document.getElementById('btnUndo').disabled = !(s.undoCount > 0);
     weightMode = s.weightMode || 'classic';
     readOnly = !!s.readOnly;
-    updateTopToggles();
-  } catch (e) {}
-}
-
-async function toggleWeightMode() {
-  const next = weightMode === 'meta' ? 'classic' : 'meta';
-  toast(next === 'meta' ? 'ME Meta hesaplanıyor…' : 'Classic FM hesaplanıyor…');
-  const r = await api('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ weightMode: next }) });
-  weightMode = r.weightMode;
-  updateTopToggles();
-  await loadList();
-  if (selectedType === 'Player' && selectedAddr) await openEntity('Player', selectedAddr);
-  toast(weightMode === 'meta' ? '⚡ ME Meta aktif' : '⚖️ Classic FM aktif');
-}
-
-async function toggleReadOnly() {
-  const r = await api('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ readOnly: !readOnly }) });
-  readOnly = !!r.readOnly;
-  updateTopToggles();
-  if (selectedType && selectedAddr) await openEntity(selectedType, selectedAddr);
-  toast(readOnly ? '🔒 ' + t('readonly') : '🔓 ' + t('editable'));
+  } catch {}
 }
 
 async function reconnect() {
@@ -598,16 +571,25 @@ async function doUndo() {
   const r = await api('/api/undo', { method: 'POST' });
   document.getElementById('undoCount').textContent = r.undoCount || 0;
   document.getElementById('btnUndo').disabled = !(r.undoCount > 0);
-  if (selectedType && selectedAddr) await openEntity(selectedType, selectedAddr);
+  if (currentEntity) await openProfile(currentEntity.type, currentEntity.addr);
   toast(t('undone'));
 }
 
 function switchTab(next) {
   tab = next;
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === next));
-  filterState.q = '';
+  closeProfile();
+  document.querySelectorAll('.nav-pill').forEach(b => b.classList.toggle('active', b.dataset.tab === next));
+  f.q = '';
+  document.getElementById('globalSearch').value = '';
   renderFilterBar();
   loadList();
+}
+
+function onSearchInput(val) {
+  f.q = val;
+  if (currentEntity) closeProfile();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadList, 130);
 }
 
 function renderFilterBar() {
@@ -615,105 +597,94 @@ function renderFilterBar() {
   if (tab === 'players') {
     fb.innerHTML = `
       <div class="filter-row">
-        <input class="input search" id="fQ" placeholder="${t('searchPlayers')}" value="${esc(filterState.q)}" oninput="onFilterInput()" />
-        <select class="ctrl" id="fPos" onchange="onFilterInput()">
-          <option value="">${t('allPos')}</option>
-          ${['GK','DC','DL','DR','DM','MC','AMC','AML','AMR','ST'].map(p => `<option value="${p}" ${filterState.pos===p?'selected':''}>${p}</option>`).join('')}
+        <span class="f-lbl">${t('pos')}</span>
+        <select class="ctrl" style="height:28px" id="fPos" onchange="onFilter()">
+          <option value="">${t('all')}</option>
+          ${['GK','DC','DL','DR','DM','MC','AMC','AML','AMR','ST'].map(p => `<option value="${p}" ${f.pos===p?'selected':''}>${p}</option>`).join('')}
         </select>
-        <select class="ctrl" id="fSort" onchange="onFilterInput()">
-          <option value="ca" ${filterState.sort==='ca'?'selected':''}>${t('sortCa')}</option>
-          <option value="pa" ${filterState.sort==='pa'?'selected':''}>${t('sortPa')}</option>
-          <option value="role" ${filterState.sort==='role'?'selected':''}>${t('sortRole')}</option>
-          <option value="pr" ${filterState.sort==='pr'?'selected':''}>${t('sortPr')}</option>
-          <option value="growth" ${filterState.sort==='growth'?'selected':''}>${t('sortGrowth')}</option>
-          <option value="age" ${filterState.sort==='age'?'selected':''}>${t('sortAge')}</option>
+        <span class="f-lbl">${t('maxAge')}</span><input class="f-num" id="fAge" type="number" value="${esc(f.maxAge)}" oninput="onFilter()" />
+        <span class="f-lbl">${t('minCa')}</span><input class="f-num" id="fCa" type="number" value="${esc(f.minCa)}" oninput="onFilter()" />
+        <span class="f-lbl">${t('minPa')}</span><input class="f-num" id="fPa" type="number" value="${esc(f.minPa)}" oninput="onFilter()" />
+        <span class="f-lbl">${t('maxVal')}</span><input class="f-num" id="fVal" type="number" value="${esc(f.maxValM)}" oninput="onFilter()" />
+        <span class="f-lbl">${t('sort')}</span>
+        <select class="ctrl" style="height:28px" id="fSort" onchange="onFilter()">
+          <option value="ca" ${f.sort==='ca'?'selected':''}>CA</option>
+          <option value="pa" ${f.sort==='pa'?'selected':''}>PA</option>
+          <option value="role" ${f.sort==='role'?'selected':''}>Rol %</option>
+          <option value="pr" ${f.sort==='pr'?'selected':''}>PR %</option>
+          <option value="growth" ${f.sort==='growth'?'selected':''}>PA-CA</option>
+          <option value="age" ${f.sort==='age'?'selected':''}>${t('colAge')}</option>
         </select>
       </div>
       <div class="filter-row">
-        <input class="input num" id="fAge" type="number" placeholder="${t('maxAge')}" value="${esc(filterState.maxAge)}" oninput="onFilterInput()" />
-        <input class="input num" id="fCa" type="number" placeholder="${t('minCa')}" value="${esc(filterState.minCa)}" oninput="onFilterInput()" />
-        <input class="input num" id="fPa" type="number" placeholder="${t('minPa')}" value="${esc(filterState.minPa)}" oninput="onFilterInput()" />
-        <input class="input num" id="fVal" type="number" placeholder="${t('maxVal')}" value="${esc(filterState.maxValM)}" oninput="onFilterInput()" />
-        <button class="btn" style="margin-left:auto" onclick="exportCsv()">⬇ ${t('csv')}</button>
-      </div>
-      <div class="chips">
         <span class="chip ${activePreset==='moneyball'?'active':''}" onclick="applyPreset('moneyball')">${t('moneyball')}</span>
-        <span class="chip ${activePreset==='wonderkids'?'active':''}" onclick="applyPreset('wonderkids')">${t('wonderkids')}</span>
-        <span class="chip ${activePreset==='free'?'active':''}" onclick="applyPreset('free')">${t('freeAgents')}</span>
-        <span class="chip ${shortlistOnly?'active':''}" onclick="toggleShortlistOnly()">${t('shortlist')} (${shortlist.size})</span>
-        <span class="chip" onclick="resetFilters()">${t('reset')}</span>
+        <span class="chip ${activePreset==='wonderkid'?'active':''}" onclick="applyPreset('wonderkid')">${t('wonderkid')}</span>
+        <span class="chip ${activePreset==='free'?'active':''}" onclick="applyPreset('free')">${t('free')}</span>
+        <span class="chip ${shortlistOnly?'active':''}" onclick="shortlistOnly=!shortlistOnly;activePreset='';renderFilterBar();renderTable()">${t('shortlist')} (${shortlist.size})</span>
+        <span class="chip" onclick="resetFilters()">${t('clear')}</span>
+        <span class="spacer"></span>
+        <button class="chip" onclick="exportCsv()">⬇ ${t('csv')}</button>
+        <button class="chip ${showPreview?'active':''}" onclick="showPreview=!showPreview;renderFilterBar();renderPreview()">▣ ${t('preview')}</button>
       </div>`;
   } else if (tab === 'staff') {
-    fb.innerHTML = `
-      <div class="filter-row">
-        <input class="input search" id="fQ" placeholder="${t('searchStaff')}" value="${esc(filterState.q)}" oninput="onFilterInput()" />
-      </div>
-      <div class="chips">
-        ${[0, 4.0, 4.5, 5.0].map(s => `<span class="chip ${staffMinStars===s?'active':''}" onclick="setStaffStars(${s})">${s===0 ? (lang==='tr'?'Tümü':'All') : s.toFixed(1)+'★+'}</span>`).join('')}
-      </div>`;
+    fb.innerHTML = `<div class="filter-row">
+      ${[0, 4.0, 4.5, 5.0].map(s => `<span class="chip ${staffMinStars===s?'active':''}" onclick="staffMinStars=${s};renderFilterBar();loadList()">${s===0 ? t('all') : s.toFixed(1)+'★+'}</span>`).join('')}
+    </div>`;
   } else {
-    const ph = tab === 'clubs' ? t('searchClubs') : t('searchComps');
-    fb.innerHTML = `<div class="filter-row"><input class="input search" id="fQ" placeholder="${ph}" value="${esc(filterState.q)}" oninput="onFilterInput()" /></div>`;
+    fb.innerHTML = '';
+    fb.style.display = 'none';
+    return;
   }
+  fb.style.display = 'flex';
 }
 
-function onFilterInput() {
-  const qEl = document.getElementById('fQ');
-  if (qEl) filterState.q = qEl.value;
-  if (tab === 'players') {
-    filterState.pos = document.getElementById('fPos')?.value || '';
-    filterState.sort = document.getElementById('fSort')?.value || 'ca';
-    filterState.maxAge = document.getElementById('fAge')?.value || '';
-    filterState.minCa = document.getElementById('fCa')?.value || '';
-    filterState.minPa = document.getElementById('fPa')?.value || '';
-    filterState.maxValM = document.getElementById('fVal')?.value || '';
-  }
+function onFilter() {
+  f.pos = document.getElementById('fPos')?.value || '';
+  f.maxAge = document.getElementById('fAge')?.value || '';
+  f.minCa = document.getElementById('fCa')?.value || '';
+  f.minPa = document.getElementById('fPa')?.value || '';
+  f.maxValM = document.getElementById('fVal')?.value || '';
+  f.sort = document.getElementById('fSort')?.value || 'ca';
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(loadList, 140);
+  searchTimer = setTimeout(loadList, 130);
 }
-
 function applyPreset(p) {
-  shortlistOnly = false;
-  activePreset = p;
-  filterState.free = false;
-  filterState.maxAge = ''; filterState.minCa = ''; filterState.minPa = ''; filterState.maxValM = '';
-  if (p === 'moneyball') { filterState.maxAge = '25'; filterState.maxValM = '15'; filterState.sort = 'pr'; }
-  else if (p === 'wonderkids') { filterState.maxAge = '20'; filterState.minPa = '155'; filterState.sort = 'pa'; }
-  else if (p === 'free') { filterState.free = true; filterState.sort = 'ca'; }
-  renderFilterBar();
-  loadList();
+  shortlistOnly = false; activePreset = p;
+  f.free = false; f.maxAge = ''; f.minCa = ''; f.minPa = ''; f.maxValM = '';
+  if (p === 'moneyball') { f.maxAge = '25'; f.maxValM = '15'; f.sort = 'pr'; }
+  else if (p === 'wonderkid') { f.maxAge = '20'; f.minPa = '155'; f.sort = 'pa'; }
+  else if (p === 'free') { f.free = true; f.sort = 'ca'; }
+  renderFilterBar(); loadList();
 }
-function toggleShortlistOnly() { shortlistOnly = !shortlistOnly; activePreset = ''; renderFilterBar(); renderTable(); }
 function resetFilters() {
   shortlistOnly = false; activePreset = '';
-  Object.assign(filterState, { q: '', pos: '', maxAge: '', minCa: '', minPa: '', maxValM: '', free: false, sort: 'ca' });
-  renderFilterBar();
-  loadList();
+  Object.assign(f, { q: '', pos: '', maxAge: '', minCa: '', minPa: '', maxValM: '', free: false, sort: 'ca' });
+  document.getElementById('globalSearch').value = '';
+  renderFilterBar(); loadList();
 }
-function setStaffStars(s) { staffMinStars = s; renderFilterBar(); loadList(); }
 
 async function loadList() {
   let url = '';
   if (tab === 'players') {
     const p = new URLSearchParams();
-    if (filterState.q) p.set('q', filterState.q);
-    if (filterState.pos) p.set('pos', filterState.pos);
-    if (filterState.maxAge) p.set('maxAge', filterState.maxAge);
-    if (filterState.minCa) p.set('minCa', filterState.minCa);
-    if (filterState.minPa) p.set('minPa', filterState.minPa);
-    if (filterState.maxValM) p.set('maxValM', filterState.maxValM);
-    if (filterState.free) p.set('free', '1');
-    p.set('sort', filterState.sort);
+    if (f.q) p.set('q', f.q);
+    if (f.pos) p.set('pos', f.pos);
+    if (f.maxAge) p.set('maxAge', f.maxAge);
+    if (f.minCa) p.set('minCa', f.minCa);
+    if (f.minPa) p.set('minPa', f.minPa);
+    if (f.maxValM) p.set('maxValM', f.maxValM);
+    if (f.free) p.set('free', '1');
+    p.set('sort', f.sort);
     url = '/api/players?' + p.toString();
-  } else if (tab === 'clubs') {
-    url = '/api/clubs?q=' + encodeURIComponent(filterState.q);
-  } else if (tab === 'staff') {
-    url = `/api/staff?q=${encodeURIComponent(filterState.q)}&minStars=${staffMinStars}`;
-  } else {
-    url = '/api/comps?q=' + encodeURIComponent(filterState.q);
-  }
+  } else if (tab === 'clubs') url = '/api/clubs?q=' + encodeURIComponent(f.q);
+  else if (tab === 'staff') url = `/api/staff?q=${encodeURIComponent(f.q)}&minStars=${staffMinStars}`;
+  else url = '/api/comps?q=' + encodeURIComponent(f.q);
   currentRows = await api(url);
+  if (tab === 'players' && currentRows.length && (!previewRow || !currentRows.some(r => r.addr === previewRow.addr))) {
+    previewRow = currentRows[0];
+  }
   renderTable();
+  renderPreview();
 }
 
 function toggleShortlist(uid, ev) {
@@ -721,9 +692,8 @@ function toggleShortlist(uid, ev) {
   if (!uid) return;
   if (shortlist.has(uid)) shortlist.delete(uid); else shortlist.add(uid);
   localStorage.setItem('se_shortlist', JSON.stringify([...shortlist]));
-  renderFilterBar();
-  renderTable();
-  if (currentEntity) renderDetail(currentEntity);
+  renderFilterBar(); renderTable(); renderPreview();
+  if (currentEntity) renderProfile(currentEntity);
 }
 
 function renderTable() {
@@ -733,71 +703,122 @@ function renderTable() {
   if (tab === 'players' && shortlistOnly) rows = rows.filter(r => shortlist.has(r.uid));
 
   if (tab === 'players') {
-    th.innerHTML = `<tr><th></th><th>${t('colPlayer')}</th><th>${t('colPos')}</th><th>${t('colAge')}</th><th>${t('colCaPa')}</th><th>${t('colRole')}</th><th>${t('colPr')}</th></tr>`;
+    th.innerHTML = `<tr><th style="width:28px">★</th><th>${t('colPlayer')}</th><th>${t('colPos')}</th><th>${t('colAge')}</th><th>${t('colClub')}</th><th>${t('colNation')}</th><th>CA</th><th>PA</th><th>PA-CA</th><th>${t('colRole')}</th><th>${t('colPr')}</th></tr>`;
     tb.innerHTML = rows.map(r => `
-      <tr class="${selectedType==='Player'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Player','${r.addr}')">
+      <tr class="${previewRow&&previewRow.addr===r.addr?'active':''}" onclick="selectPreview('${r.addr}')" ondblclick="openProfile('Player','${r.addr}')">
         <td><button class="star-btn ${shortlist.has(r.uid)?'on':''}" onclick="toggleShortlist('${esc(r.uid)}',event)">★</button></td>
-        <td><div class="cell-name">${esc(r.name)}</div><div class="cell-sub">${esc(r.club || (lang==='tr'?'Serbest':'Free Agent'))} · ${esc(r.nation)}</div></td>
-        <td><span class="pos-tag">${esc(r.pos)}</span></td>
+        <td class="td-name">${esc(r.name)}</td>
+        <td class="td-muted">${esc(r.pos)}</td>
         <td>${r.age || '-'}</td>
-        <td class="ca-pill">${r.ca}<span style="color:var(--muted);font-weight:600">/${r.pa}</span></td>
-        <td><span style="font-weight:700">${esc(r.bestRole)}</span> <span style="color:var(--muted);font-size:11px">${r.rolePct}%</span></td>
-        <td><span class="pr-pill">${r.prPct}%</span></td>
+        <td class="td-muted">${esc(r.club || '-')}</td>
+        <td class="td-muted">${esc(r.nation)}</td>
+        <td class="td-ca">${r.ca}</td>
+        <td class="td-pa">${r.pa}</td>
+        <td>${r.growth}</td>
+        <td>${esc(r.bestRole)} ${r.rolePct}%</td>
+        <td class="td-ca">${r.prPct}%</td>
       </tr>`).join('');
   } else if (tab === 'clubs') {
-    th.innerHTML = `<tr><th>${t('colClub')}</th><th>${t('colRep')}</th><th>${t('colBal')}</th><th>${t('colTb')}</th></tr>`;
+    th.innerHTML = `<tr><th>${t('colClub')}</th><th>${t('colRep')}</th><th>${t('colBal')}</th><th>${t('colTb')}</th><th>${t('facilities')}</th></tr>`;
     tb.innerHTML = rows.map(r => `
-      <tr class="${selectedType==='Club'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Club','${r.addr}')">
-        <td><div class="cell-name">${esc(r.name)}</div><div class="cell-sub">Tr ${r.trainingFac} · Yth ${r.youthFac}</div></td>
-        <td class="ca-pill">${r.rep}</td>
+      <tr onclick="openProfile('Club','${r.addr}')">
+        <td class="td-name">${esc(r.name)}</td>
+        <td class="td-ca">${r.rep}</td>
         <td>${fmtMoney(r.balance)}</td>
-        <td style="color:var(--emerald);font-weight:700">${fmtMoney(r.transferBudget)}</td>
+        <td class="td-pa">${fmtMoney(r.transferBudget)}</td>
+        <td class="td-muted">Tr ${r.trainingFac} · Yth ${r.youthFac}</td>
       </tr>`).join('');
   } else if (tab === 'staff') {
-    th.innerHTML = `<tr><th>${t('colStaff')}</th><th>${t('colStars')}</th><th>${t('colCaPa')}</th></tr>`;
+    th.innerHTML = `<tr><th>${t('colStaff')}</th><th>${t('colClub')}</th><th>${t('colNation')}</th><th>${t('colStars')}</th><th>CA</th><th>PA</th></tr>`;
     tb.innerHTML = rows.map(r => `
-      <tr class="${selectedType==='Staff'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Staff','${r.addr}')">
-        <td><div class="cell-name">${esc(r.name)}</div><div class="cell-sub">${esc(r.club || '-')} · ${esc(r.nation)}</div></td>
-        <td><span class="pr-pill" style="background:var(--gold-soft);color:var(--gold)">${r.stars.toFixed(1)}★</span></td>
-        <td class="ca-pill">${r.ca}/${r.pa}</td>
+      <tr onclick="openProfile('Staff','${r.addr}')">
+        <td class="td-name">${esc(r.name)}</td>
+        <td class="td-muted">${esc(r.club || '-')}</td>
+        <td class="td-muted">${esc(r.nation)}</td>
+        <td style="color:var(--accent);font-weight:800">${r.stars.toFixed(1)}★</td>
+        <td class="td-ca">${r.ca}</td>
+        <td class="td-pa">${r.pa}</td>
       </tr>`).join('');
   } else {
     th.innerHTML = `<tr><th>${t('colComp')}</th><th>${t('colRep')}</th></tr>`;
     tb.innerHTML = rows.map(r => `
-      <tr class="${selectedType==='Competition'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Competition','${r.addr}')">
-        <td><div class="cell-name">${esc(r.name)}</div></td>
-        <td class="ca-pill">${r.rep}</td>
+      <tr onclick="openProfile('Competition','${r.addr}')">
+        <td class="td-name">${esc(r.name)}</td>
+        <td class="td-ca">${r.rep}</td>
       </tr>`).join('');
   }
+}
+
+function selectPreview(addr) {
+  previewRow = currentRows.find(r => r.addr === addr) || null;
+  renderTable();
+  renderPreview();
+}
+
+function renderPreview() {
+  const pc = document.getElementById('previewCard');
+  if (tab !== 'players' || !showPreview || !previewRow) { pc.classList.add('hidden'); return; }
+  pc.classList.remove('hidden');
+  const r = previewRow;
+  const pct = Math.min(100, Math.round((r.ca / 200) * 100));
+  pc.innerHTML = `
+    <div class="pv-head">
+      <div class="avatar">${esc(initials(r.name))}</div>
+      <div>
+        <div class="pv-name">${esc(r.name)}</div>
+        <div class="pv-sub">${esc(r.pos)} · ${r.age || '-'} ${lang==='tr'?'yaş':'yrs'}</div>
+        <div class="pv-club">${esc(r.club || (lang==='tr'?'Serbest':'Free Agent'))}</div>
+      </div>
+    </div>
+    <div class="capa-bar-wrap">
+      <div class="capa-bar-top"><span>CA ${r.ca} / PA ${r.pa}</span><span style="color:var(--emerald)">+${r.growth}</span></div>
+      <div class="capa-bar"><div class="capa-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div>
+      <div class="pv-kv"><span>${t('colRole')}</span><span>${esc(r.bestRole)} ${r.rolePct}%</span></div>
+      <div class="pv-kv"><span>${t('colPr')}</span><span style="color:var(--emerald)">${r.prPct}%</span></div>
+      <div class="pv-kv"><span>${t('val')}</span><span>${fmtMoney(r.value)}</span></div>
+      <div class="pv-kv"><span>${t('wage')}</span><span>${fmtMoney(r.wage)}/w</span></div>
+      <div class="pv-kv"><span>${t('contract')}</span><span>${esc(r.contractEnd || '-')}</span></div>
+    </div>
+    <button class="btn gold" style="width:100%;height:34px;margin-top:4px" onclick="openProfile('Player','${r.addr}')">${t('openProfile')}</button>
+    <button class="btn" style="width:100%" onclick="toggleShortlist('${esc(r.uid)}')">${shortlist.has(r.uid)?'★':'☆'} ${t('shortlist')}</button>
+  `;
 }
 
 function exportCsv() {
   if (!currentRows.length) return;
   const cols = ['name','pos','age','club','nation','ca','pa','bestRole','rolePct','prPct','value','wage','contractEnd'];
   const lines = [cols.join(',')].concat(currentRows.map(r => cols.map(c => `"${String(r[c]??'').replace(/"/g,'""')}"`).join(',')));
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' }));
   a.download = 'squadeditor-scout.csv';
   a.click();
 }
 
-async function openEntity(type, addr) {
-  selectedType = type;
-  selectedAddr = addr;
-  renderTable();
+async function openProfile(type, addr) {
   const data = await api(`/api/entity?type=${encodeURIComponent(type)}&addr=${encodeURIComponent(addr)}`);
   if (data.error) { toast(data.error); return; }
   currentEntity = data;
-  renderDetail(data);
+  document.getElementById('dbView').style.display = 'none';
+  document.getElementById('profileView').classList.add('active');
+  document.getElementById('btnBack').style.display = 'inline-flex';
+  const name = (data.fields || []).find(x => x.name === 'Name')?.value || data.addr;
+  document.getElementById('topTitle').textContent = name;
+  renderProfile(data);
+}
+
+function closeProfile() {
+  currentEntity = null;
+  document.getElementById('profileView').classList.remove('active');
+  document.getElementById('dbView').style.display = 'flex';
+  document.getElementById('btnBack').style.display = 'none';
+  document.getElementById('topTitle').textContent = t('dbTitle');
 }
 
 async function writeField(type, addr, field, val, label) {
-  if (readOnly) { toast('🔒 ' + t('readonly')); return; }
-  const r = await api('/api/write', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ type, addr, field, value: String(val), label })
-  });
+  if (readOnly) { toast('🔒 ' + t('readOnly')); return; }
+  const r = await api('/api/write', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type, addr, field, value: String(val), label }) });
   if (r.error) { toast(r.error); return; }
   document.getElementById('undoCount').textContent = r.undoCount || 0;
   document.getElementById('btnUndo').disabled = !(r.undoCount > 0);
@@ -805,66 +826,56 @@ async function writeField(type, addr, field, val, label) {
 }
 
 async function runQuick(type, addr, action, label) {
-  if (readOnly) { toast('🔒 ' + t('readonly')); return; }
-  const r = await api('/api/quick', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ type, addr, action, label })
-  });
+  if (readOnly) { toast('🔒 ' + t('readOnly')); return; }
+  const r = await api('/api/quick', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ type, addr, action, label }) });
   if (r.error) { toast(r.error); return; }
   document.getElementById('undoCount').textContent = r.undoCount || 0;
   document.getElementById('btnUndo').disabled = !(r.undoCount > 0);
-  await openEntity(type, addr);
+  await openProfile(type, addr);
   toast(t('saved'));
 }
 
-function buildRadarSvg(fieldsMap, ca, pa, isGk) {
-  const num = k => Number(fieldsMap[k] || 10);
-  const gain = Math.max(0, (pa - ca) * 0.42 / 5.0); // 1-20 scale gain
+function buildRadarSvg(fmap, ca, pa, isGk) {
+  const n = k => Number(fmap[k] || 10);
+  const gain = Math.max(0, (pa - ca) * 0.42 / 5.0);
   const axes = isGk ? [
-    ['Reflexes', num('Reflexes')], ['Handling', num('Handling')], ['Aerial', num('Aerial Reach')],
-    ['Command', num('Command of Area')], ['1v1', num('One on Ones')], ['Position', num('Positioning')],
-    ['Agility', num('Agility')], ['Mental', (num('Concentration') + num('Decisions')) / 2]
+    ['Reflex', n('Reflexes')], ['Hand', n('Handling')], ['Aerial', n('Aerial Reach')], ['Cmd', n('Command of Area')],
+    ['1v1', n('One on Ones')], ['Pos', n('Positioning')], ['Agi', n('Agility')], ['Mental', (n('Concentration')+n('Decisions'))/2]
   ] : [
-    ['Defending', (num('Marking') + num('Tackling') + num('Positioning')) / 3],
-    ['Physical', (num('Strength') + num('Stamina') + num('Balance')) / 3],
-    ['Speed', (num('Pace') + num('Acceleration') + num('Agility')) / 3],
-    ['Vision', (num('Vision') + num('Passing') + num('Flair')) / 3],
-    ['Attacking', (num('Finishing') + num('Off the Ball') + num('Composure')) / 3],
-    ['Technical', (num('Dribbling') + num('First Touch') + num('Technique')) / 3],
-    ['Aerial', (num('Jumping Reach') + num('Heading')) / 2],
-    ['Mental', (num('Anticipation') + num('Decisions') + num('Work Rate')) / 3]
+    [lang==='tr'?'Hücum':'Attack', (n('Finishing')+n('Off the Ball')+n('Composure'))/3],
+    [lang==='tr'?'Teknik':'Tech', (n('Dribbling')+n('First Touch')+n('Technique'))/3],
+    [lang==='tr'?'Zihinsel':'Mental', (n('Anticipation')+n('Decisions')+n('Work Rate'))/3],
+    [lang==='tr'?'Savunma':'Defend', (n('Marking')+n('Tackling')+n('Positioning'))/3],
+    [lang==='tr'?'Fizik':'Phys', (n('Strength')+n('Stamina')+n('Balance'))/3],
+    [lang==='tr'?'Hız':'Speed', (n('Pace')+n('Acceleration')+n('Agility'))/3],
+    [lang==='tr'?'Hava':'Aerial', (n('Jumping Reach')+n('Heading'))/2],
+    [lang==='tr'?'Vizyon':'Vision', (n('Vision')+n('Passing')+n('Flair'))/3]
   ];
-
-  const cx = 120, cy = 112, R = 76;
-  const pt = (i, val) => {
+  const cx = 115, cy = 105, R = 72;
+  const pt = (i, v) => {
     const a = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
-    const r = (Math.min(20, Math.max(1, val)) / 20) * R;
+    const r = (Math.min(20, Math.max(1, v)) / 20) * R;
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
   };
-  const poly = vals => vals.map((v, i) => pt(i, v).map(x => x.toFixed(1)).join(',')).join(' ');
-  const curVals = axes.map(x => x[1]);
-  const prVals = axes.map(x => Math.min(20, x[1] + gain));
-
-  const rings = [5, 10, 15, 20].map(v => `<polygon points="${poly(axes.map(() => v))}" fill="none" stroke="var(--border-strong)" stroke-width="1" />`).join('');
+  const poly = vs => vs.map((v, i) => pt(i, v).map(x => x.toFixed(1)).join(',')).join(' ');
+  const rings = [5, 10, 15, 20].map(v => `<polygon points="${poly(axes.map(()=>v))}" fill="none" stroke="var(--border-strong)" stroke-width="1"/>`).join('');
   const spokes = axes.map((a, i) => {
-    const [x, y] = pt(i, 20);
-    const [lx, ly] = pt(i, 24.2);
-    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>
-            <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="var(--muted)" font-size="9.5" font-weight="700" text-anchor="middle" dominant-baseline="middle">${a[0]}</text>`;
+    const [x, y] = pt(i, 20), [lx, ly] = pt(i, 24.5);
+    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)"/>
+            <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="var(--muted)" font-size="9.5" font-weight="600" text-anchor="middle" dominant-baseline="middle">${a[0]}</text>`;
   }).join('');
-
-  return `<svg viewBox="0 0 240 224" style="width:100%;max-width:240px;display:block;margin:0 auto">
+  return `<svg viewBox="0 0 230 210" style="width:100%;max-width:230px;display:block;margin:0 auto">
     ${rings}${spokes}
-    <polygon points="${poly(prVals)}" fill="rgba(245,158,11,0.14)" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="4 3" />
-    <polygon points="${poly(curVals)}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2" />
+    <polygon points="${poly(axes.map(a=>Math.min(20,a[1]+gain)))}" fill="rgba(34,197,94,0.14)" stroke="var(--emerald)" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <polygon points="${poly(axes.map(a=>a[1]))}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.8"/>
   </svg>`;
 }
 
-function renderDetail(data) {
-  const dp = document.getElementById('detailPane');
+function renderProfile(data) {
+  const pv = document.getElementById('profileView');
   const fields = data.fields || [];
   const fmap = {};
-  fields.forEach(f => fmap[f.name] = f.value);
+  fields.forEach(x => fmap[x.name] = x.value);
   const name = fmap['Name'] || data.extra?.name || data.extra?.club?.name || data.addr;
 
   if (data.type === 'Player') {
@@ -873,214 +884,161 @@ function renderDetail(data) {
     const pa = Number(fmap['PA'] || p.pa || 0);
     const gain120 = Math.max(0, (pa - ca) * 0.42 / 5.0);
     const isGk = (p.pos || '').startsWith('GK');
+    const byG = {};
+    fields.forEach(x => (byG[x.group || 'Other'] ||= []).push(x));
 
-    const byGroup = {};
-    fields.forEach(f => { (byGroup[f.group || 'Other'] ||= []).push(f); });
-
-    const renderAttrCol = (titleKey, groupNames) => {
-      const list = groupNames.flatMap(g => byGroup[g] || []);
-      if (!list.length) return '';
-      return `<div class="panel">
-        <div class="panel-title"><span>${t(titleKey)}</span><span>1–20</span></div>
-        ${list.map(f => {
-          const v = Number(f.value);
+    const attrBox = (title, list) => !list.length ? '' : `
+      <div class="panel">
+        <div class="panel-h"><span>${title}</span></div>
+        ${list.map(x => {
+          const v = Number(x.value);
           const proj = paPreview && !isNaN(v) && v >= 1 && v <= 20 ? Math.min(20, Math.round(v + gain120)) : null;
           return `<div class="attr-row">
-            <span class="attr-name">${esc(f.name)}</span>
+            <span class="attr-name">${esc(x.name)}</span>
             <div>
-              <input class="attr-input ${attrClass(v)} ${!f.writable?'ro':''}" value="${esc(f.value)}" ${!f.writable?'readonly':''}
-                onchange="writeField('Player','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
-              ${proj && proj > v ? `<span class="attr-proj">→${proj}</span>` : ''}
+              <input class="attr-val ${attrClass(v)}" value="${esc(x.value)}" ${!x.writable?'readonly':''}
+                onchange="writeField('Player','${data.addr}','${esc(x.name)}',this.value,'${esc(name)}')" />
+              ${proj && proj > v ? `<span class="proj">→${proj}</span>` : ''}
             </div>
           </div>`;
         }).join('')}
       </div>`;
-    };
 
-    const overviewList = [...(byGroup['Overview'] || []), ...(byGroup['Contract'] || []), ...(byGroup['Condition'] || [])].filter(f => f.name !== 'Name');
-    const hiddenList = [...(byGroup['Hidden'] || []), ...(byGroup['Personality'] || [])];
+    const statusFields = [...(byG['Condition'] || []), ...(byG['Overview'] || []), ...(byG['Contract'] || [])].filter(x => !['Name','CA','PA'].includes(x.name));
+    const caPct = Math.min(100, Math.round((ca / 200) * 100));
 
-    dp.innerHTML = `
-      <div class="hero-card">
-        <div class="hero-top">
-          <div class="hero-id">
-            <div class="avatar">${esc(initials(name))}</div>
+    pv.innerHTML = `
+      <div class="p-hero">
+        <div class="p-hero-top">
+          <div class="p-hero-id">
+            <div class="avatar" style="width:50px;height:50px;font-size:17px">${esc(initials(name))}</div>
             <div>
-              <div class="hero-name">${esc(name)}</div>
-              <div class="hero-meta">
-                <span class="pos-tag">${esc(p.pos || '-')}</span>
-                <span>${esc(p.club || (lang==='tr'?'Serbest':'Free Agent'))}</span>
-                <span>·</span>
-                <span>${esc(p.nation || '-')}</span>
-                <span>·</span>
-                <span>${p.age ? p.age + (lang==='tr'?' yaş':' yrs') : ''} (${esc(p.dob || '-')})</span>
-                <span>·</span>
-                <span>UID ${esc(p.uid || '-')}</span>
-              </div>
+              <div class="p-hero-name">${esc(name)}</div>
+              <div class="p-hero-meta">${esc(p.pos || '-')} · ${esc(p.nation || '-')} · ${p.age ? p.age + (lang==='tr'?' yaşında':' yrs') : ''} (${esc(p.dob || '-')}) · <strong style="color:var(--accent)">${esc(p.club || (lang==='tr'?'Serbest':'Free Agent'))}</strong></div>
             </div>
           </div>
-          <div class="pill-strip">
-            <div class="stat-pill accent"><span class="k">CA / PA</span><span class="v">${ca} / ${pa}</span></div>
-            <div class="stat-pill emerald"><span class="k">${esc(p.bestRole || 'ROLE')} / PR</span><span class="v">${p.rolePct || 0}% · ${p.prPct || 0}%</span></div>
-            <div class="stat-pill gold"><span class="k">${lang==='tr'?'Değer':'Value'}</span><span class="v">${fmtMoney(p.value)}</span></div>
-            <div class="stat-pill"><span class="k">${lang==='tr'?'Maaş':'Wage'}</span><span class="v">${fmtMoney(p.wage)}/w</span></div>
-            <div class="stat-pill"><span class="k">${lang==='tr'?'Sözleşme':'Contract'}</span><span class="v">${esc(p.contractEnd || '-')}</span></div>
+          <div class="p-pills">
+            <div class="p-pill"><div class="v" style="color:var(--emerald)">${ca} / ${pa}</div><div class="k">CA / PA</div></div>
+            <div class="p-pill"><div class="v" style="color:var(--accent)">${esc(p.bestRole||'-')} ${p.rolePct||0}% → ${p.prPct||0}%</div><div class="k">${t('colRole')} / PR %</div></div>
+            <div class="p-pill"><div class="v">${fmtMoney(p.value)}</div><div class="k">${t('val')}</div></div>
+            <div class="p-pill"><div class="v">${fmtMoney(p.wage)}/w</div><div class="k">${t('wage')}</div></div>
+            <div class="p-pill"><div class="v">${esc(p.contractEnd || '-')}</div><div class="k">${t('contract')}</div></div>
           </div>
         </div>
-        <div class="action-bar">
-          <button class="btn emerald" onclick="runQuick('Player','${data.addr}','max_fitness','${esc(name)}')">${t('maxFit')}</button>
+        <div class="p-actions">
           <button class="btn ${data.frozen?'gold':''}" onclick="runQuick('Player','${data.addr}','toggle_freeze','${esc(name)}')">${data.frozen ? t('unfreeze') : t('freeze')}</button>
-          <button class="btn ${shortlist.has(p.uid)?'gold':''}" onclick="toggleShortlist('${esc(p.uid)}')">${shortlist.has(p.uid)?'★':'☆'} Shortlist</button>
-          <button class="btn ${paPreview?'active':''}" onclick="paPreview=!paPreview;renderDetail(currentEntity)">${t('paPreview')}</button>
+          <button class="btn ${shortlist.has(p.uid)?'gold':''}" onclick="toggleShortlist('${esc(p.uid)}')">${shortlist.has(p.uid)?'★':'☆'} ${t('shortlist')}</button>
+          <button class="btn emerald" onclick="runQuick('Player','${data.addr}','max_fitness','${esc(name)}')">${t('maxFit')}</button>
+          <button class="btn ${paPreview?'active':''}" onclick="paPreview=!paPreview;renderProfile(currentEntity)">${t('paPreview')}</button>
         </div>
       </div>
 
-      <div class="overview-row">
-        <div class="panel">
-          <div class="panel-title"><span>${t('radarTitle')}</span><span style="color:var(--gold)">${t('radarSub')}</span></div>
-          ${buildRadarSvg(fmap, ca, pa, isGk)}
-        </div>
-        <div class="panel">
-          <div class="panel-title"><span>${t('overview')}</span><span>${esc(weightMode === 'meta' ? 'ME Meta' : 'Classic FM')}</span></div>
-          <div class="field-grid">
-            ${overviewList.map(f => `<div class="field-item">
-              <label>${esc(f.name)}</label>
-              <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
-                onchange="writeField('Player','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
-            </div>`).join('')}
+      <div class="p-grid-4">
+        <div class="p-col">
+          ${attrBox(isGk ? t('gk') : t('tech'), isGk ? (byG['Goalkeeping']||[]) : (byG['Technical']||[]))}
+          <div class="panel">
+            <div class="panel-h"><span>${t('presets')}</span></div>
+            <div class="preset-grid">
+              <button class="btn" onclick="runQuick('Player','${data.addr}','max_personality','${esc(name)}')">${lang==='tr'?'Kişilik tam':'Max Personality'}</button>
+              <button class="btn" onclick="runQuick('Player','${data.addr}','world_class','${esc(name)}')">${lang==='tr'?'Dünya yıldızı':'World Class'}</button>
+              <button class="btn" onclick="runQuick('Player','${data.addr}','max_pa','${esc(name)}')">${lang==='tr'?'Maksimum PA':'Max PA (200)'}</button>
+              <button class="btn" onclick="runQuick('Player','${data.addr}','boost_all_2','${esc(name)}')">${lang==='tr'?'Hepsine +2':'All Attrs +2'}</button>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div class="attr-cols">
-        ${isGk ? renderAttrCol('goalkeeping', ['Goalkeeping']) : renderAttrCol('technical', ['Technical'])}
-        ${renderAttrCol('mental', ['Mental'])}
-        ${renderAttrCol('physical', ['Physical'])}
-      </div>
-
-      ${hiddenList.length ? `<div class="panel">
-        <div class="panel-title"><span>${t('hidden')}</span></div>
-        <div class="field-grid">
-          ${hiddenList.map(f => `<div class="field-item">
-            <label>${esc(f.name)}</label>
-            <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
-              onchange="writeField('Player','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
-          </div>`).join('')}
+        <div class="p-col">
+          ${attrBox(t('mental'), byG['Mental']||[])}
+          ${attrBox(t('hidden'), byG['Hidden']||[])}
         </div>
-      </div>` : ''}
-    `;
+        <div class="p-col">
+          ${attrBox(t('physical'), byG['Physical']||[])}
+          ${attrBox(t('personality'), byG['Personality']||[])}
+        </div>
+        <div class="p-col">
+          <div class="panel">
+            <div class="panel-h"><span>${t('ability')}</span></div>
+            <div class="kv-edit"><label>CA</label><input value="${ca}" ${readOnly?'readonly':''} onchange="writeField('Player','${data.addr}','CA',this.value,'${esc(name)}')" /></div>
+            <div class="kv-edit"><label>PA</label><input value="${pa}" ${readOnly?'readonly':''} onchange="writeField('Player','${data.addr}','PA',this.value,'${esc(name)}')" /></div>
+            <div class="capa-bar-wrap" style="margin-top:8px">
+              <div class="capa-bar-top"><span>CA ${ca} / PA ${pa}</span><span style="color:var(--emerald)">+${Math.max(0,pa-ca)}</span></div>
+              <div class="capa-bar"><div class="capa-fill" style="width:${caPct}%"></div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><span>${t('status')}</span></div>
+            ${statusFields.slice(0, 10).map(x => `<div class="kv-edit"><label>${esc(x.name)}</label><input value="${esc(x.value)}" ${!x.writable?'readonly':''} onchange="writeField('Player','${data.addr}','${esc(x.name)}',this.value,'${esc(name)}')" /></div>`).join('')}
+          </div>
+          <div class="panel">
+            <div class="panel-h"><span>${t('radar')}</span></div>
+            ${buildRadarSvg(fmap, ca, pa, isGk)}
+          </div>
+        </div>
+      </div>`;
     return;
   }
 
   if (data.type === 'Club') {
-    const c = data.extra?.club || {};
     const squad = data.extra?.squad || [];
     const facNames = ['Training Facilities','Youth Facilities','Youth Coaching','Youth Recruitment','Corporate Facilities'];
-    const facFields = fields.filter(f => facNames.includes(f.name));
-    const otherFields = fields.filter(f => f.name !== 'Name' && !facNames.includes(f.name));
-
-    dp.innerHTML = `
-      <div class="hero-card">
-        <div class="hero-top">
-          <div class="hero-id">
-            <div class="avatar" style="background:linear-gradient(135deg,#059669,#0284C7)">${esc(initials(name))}</div>
-            <div>
-              <div class="hero-name">${esc(name)}</div>
-              <div class="hero-meta"><span>${t('colRep')}: <strong>${esc(fmap['Reputation'] || c.rep || '-')}</strong></span> · <span>${squad.length} ${lang==='tr'?'oyuncu':'players'}</span></div>
-            </div>
+    const facFields = fields.filter(x => facNames.includes(x.name));
+    const otherFields = fields.filter(x => x.name !== 'Name' && !facNames.includes(x.name));
+    pv.innerHTML = `
+      <div class="p-hero">
+        <div class="p-hero-top">
+          <div class="p-hero-id">
+            <div class="avatar" style="width:48px;height:48px">${esc(initials(name))}</div>
+            <div><div class="p-hero-name">${esc(name)}</div><div class="p-hero-meta">${t('colRep')}: ${esc(fmap['Reputation']||'-')} · ${squad.length} ${t('players').toLowerCase()}</div></div>
           </div>
         </div>
-        <div class="action-bar">
-          <button class="btn emerald" onclick="runQuick('Club','${data.addr}','bal_50','${esc(name)}')">+€50M ${t('bal')}</button>
-          <button class="btn emerald" onclick="runQuick('Club','${data.addr}','tb_50','${esc(name)}')">+€50M ${t('tb')}</button>
-          <button class="btn gold" onclick="runQuick('Club','${data.addr}','rich_club','${esc(name)}')">${t('richClub')}</button>
-          <button class="btn active" onclick="runQuick('Club','${data.addr}','max_facilities','${esc(name)}')">${t('maxFac')}</button>
+        <div class="p-actions">
+          <button class="btn emerald" onclick="runQuick('Club','${data.addr}','bal_50','${esc(name)}')">+€50M ${t('colBal')}</button>
+          <button class="btn emerald" onclick="runQuick('Club','${data.addr}','tb_50','${esc(name)}')">+€50M ${t('colTb')}</button>
+          <button class="btn gold" onclick="runQuick('Club','${data.addr}','rich_club','${esc(name)}')">💰 ${lang==='tr'?'Zengin Kulüp':'Rich Owner'}</button>
+          <button class="btn active" onclick="runQuick('Club','${data.addr}','max_facilities','${esc(name)}')">🏟️ Max Tesisler (20)</button>
         </div>
       </div>
-
-      <div class="kpi-grid">
-        <div class="kpi-card"><div class="k">${t('bal')}</div><div class="v">${fmtMoney(fmap['Balance'])}</div></div>
-        <div class="kpi-card"><div class="k">${t('tb')}</div><div class="v" style="color:var(--emerald)">${fmtMoney(fmap['Transfer Budget'])}</div></div>
-        <div class="kpi-card"><div class="k">${t('wb')}</div><div class="v">${fmtMoney(fmap['Wage Budget'])}</div></div>
-        <div class="kpi-card"><div class="k">${t('fac')}</div><div class="v" style="color:var(--accent)">${esc(fmap['Training Facilities']||'-')} / ${esc(fmap['Youth Facilities']||'-')}</div></div>
+      <div class="kpi-4">
+        <div class="kpi-box"><div class="k">${t('colBal')}</div><div class="v">${fmtMoney(fmap['Balance'])}</div></div>
+        <div class="kpi-box"><div class="k">${t('colTb')}</div><div class="v" style="color:var(--emerald)">${fmtMoney(fmap['Transfer Budget'])}</div></div>
+        <div class="kpi-box"><div class="k">${t('wage')}</div><div class="v">${fmtMoney(fmap['Wage Budget'])}</div></div>
+        <div class="kpi-box"><div class="k">${t('facilities')}</div><div class="v" style="color:var(--accent)">${esc(fmap['Training Facilities']||'-')} / ${esc(fmap['Youth Facilities']||'-')}</div></div>
       </div>
-
-      <div class="overview-row" style="grid-template-columns:1fr 1fr">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="panel">
-          <div class="panel-title"><span>${t('facilities')}</span></div>
-          ${facFields.map(f => {
-            const pct = Math.min(100, Math.max(0, Number(f.value || 0) * 5));
-            return `<div class="fac-row">
-              <span class="fac-label">${esc(f.name)}</span>
-              <div class="fac-bar"><div class="fac-fill" style="width:${pct}%"></div></div>
-              <input class="attr-input ${attrClass(f.value)}" value="${esc(f.value)}" ${!f.writable?'readonly':''}
-                onchange="writeField('Club','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
-            </div>`;
-          }).join('')}
+          <div class="panel-h"><span>${t('facilities')}</span></div>
+          ${facFields.map(x => `<div class="fac-row"><span class="fac-lbl">${esc(x.name)}</span><div class="fac-bar"><div class="fac-fill" style="width:${Math.min(100,Number(x.value||0)*5)}%"></div></div><input class="attr-val ${attrClass(x.value)}" value="${esc(x.value)}" ${!x.writable?'readonly':''} onchange="writeField('Club','${data.addr}','${esc(x.name)}',this.value,'${esc(name)}')" /></div>`).join('')}
         </div>
         <div class="panel">
-          <div class="panel-title"><span>${t('overview')}</span></div>
-          <div class="field-grid" style="grid-template-columns:1fr">
-            ${otherFields.map(f => `<div class="field-item">
-              <label>${esc(f.name)}</label>
-              <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
-                onchange="writeField('Club','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
-            </div>`).join('')}
-          </div>
+          <div class="panel-h"><span>${t('overview')}</span></div>
+          ${otherFields.map(x => `<div class="kv-edit"><label>${esc(x.name)}</label><input value="${esc(x.value)}" ${!x.writable?'readonly':''} onchange="writeField('Club','${data.addr}','${esc(x.name)}',this.value,'${esc(name)}')" /></div>`).join('')}
         </div>
       </div>
-
       ${squad.length ? `<div class="panel">
-        <div class="panel-title"><span>${t('squad')} (${squad.length})</span></div>
-        <table class="grid">
-          <thead><tr><th>${t('colPlayer')}</th><th>${t('colPos')}</th><th>${t('colAge')}</th><th>${t('colCaPa')}</th><th>${t('colRole')}</th><th>${t('colPr')}</th></tr></thead>
-          <tbody>
-            ${squad.map(p => `<tr onclick="openEntity('Player','${p.addr}')">
-              <td><div class="cell-name">${esc(p.name)}</div></td>
-              <td><span class="pos-tag">${esc(p.pos)}</span></td>
-              <td>${p.age || '-'}</td>
-              <td class="ca-pill">${p.ca}/${p.pa}</td>
-              <td>${esc(p.bestRole)} ${p.rolePct}%</td>
-              <td><span class="pr-pill">${p.prPct}%</span></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>` : ''}
-    `;
+        <div class="panel-h"><span>${t('squad')} (${squad.length})</span></div>
+        <table class="grid"><thead><tr><th>${t('colPlayer')}</th><th>${t('colPos')}</th><th>${t('colAge')}</th><th>CA</th><th>PA</th><th>${t('colRole')}</th><th>${t('colPr')}</th></tr></thead>
+        <tbody>${squad.map(p => `<tr onclick="openProfile('Player','${p.addr}')"><td class="td-name">${esc(p.name)}</td><td>${esc(p.pos)}</td><td>${p.age||'-'}</td><td class="td-ca">${p.ca}</td><td class="td-pa">${p.pa}</td><td>${esc(p.bestRole)} ${p.rolePct}%</td><td class="td-ca">${p.prPct}%</td></tr>`).join('')}</tbody></table>
+      </div>` : ''}`;
     return;
   }
 
-  // Staff & Competition
-  const isComp = data.type === 'Competition';
-  dp.innerHTML = `
-    <div class="hero-card">
-      <div class="hero-top">
-        <div class="hero-id">
-          <div class="avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">${esc(initials(name))}</div>
-          <div>
-            <div class="hero-name">${esc(name)}</div>
-            <div class="hero-meta"><span>${esc(fmap['Club'] || data.type)}</span>${fmap['CA'] ? ` · <span>CA ${esc(fmap['CA'])} / PA ${esc(fmap['PA'])}</span>` : ''}</div>
-          </div>
-        </div>
+  pv.innerHTML = `
+    <div class="p-hero">
+      <div class="p-hero-top">
+        <div class="p-hero-id"><div class="avatar">${esc(initials(name))}</div><div><div class="p-hero-name">${esc(name)}</div><div class="p-hero-meta">${esc(fmap['Club'] || data.type)}</div></div></div>
       </div>
-      ${isComp ? `<div class="action-bar"><button class="btn gold" onclick="runQuick('Competition','${data.addr}','world_no1','${esc(name)}')">${t('worldNo1')}</button></div>` : ''}
+      ${data.type==='Competition' ? `<div class="p-actions"><button class="btn gold" onclick="runQuick('Competition','${data.addr}','world_no1','${esc(name)}')">🏆 ${lang==='tr'?'Dünya #1 Ligi Yap (Rep 200)':'World #1 League (Rep 200)'}</button></div>` : ''}
     </div>
     <div class="panel">
-      <div class="panel-title"><span>${t('overview')}</span></div>
-      <div class="field-grid">
-        ${fields.filter(f => f.name !== 'Name').map(f => `<div class="field-item">
-          <label>${esc(f.name)}</label>
-          <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
-            onchange="writeField('${data.type}','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
-        </div>`).join('')}
+      <div class="panel-h"><span>${t('overview')}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px">
+        ${fields.filter(x => x.name !== 'Name').map(x => `<div class="kv-edit"><label>${esc(x.name)}</label><input value="${esc(x.value)}" ${!x.writable?'readonly':''} onchange="writeField('${data.type}','${data.addr}','${esc(x.name)}',this.value,'${esc(name)}')" /></div>`).join('')}
       </div>
     </div>`;
 }
 
 document.addEventListener('keydown', e => {
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
-    if (document.activeElement?.tagName !== 'INPUT') { e.preventDefault(); doUndo(); }
-  }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey && document.activeElement?.tagName !== 'INPUT') { e.preventDefault(); doUndo(); }
+  if (e.key === 'Escape') { closeSettings(); }
 });
 
 setTheme(theme);

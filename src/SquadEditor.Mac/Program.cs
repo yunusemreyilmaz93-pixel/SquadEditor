@@ -69,7 +69,10 @@ internal static class Program
 		var window = new PhotinoWindow()
 			.SetTitle("SquadEditor v1.6.0 — FM27")
 			.SetUseOsDefaultSize(false)
-			.SetSize(1340, 860)
+			.SetSize(1200, 760)
+			.SetMinSize(960, 620)
+			.SetResizable(true)
+			.SetMaximized(true)
 			.Center()
 			.SetDevToolsEnabled(false)
 			.Load(url);
@@ -435,14 +438,30 @@ internal static class Program
 
 					if (body.Action == "toggle_freeze")
 					{
-						if (_session.Freezer.IsFrozen(addr)) _session.Freezer.Unfreeze(addr);
-						else _session.FreezeEntity(addr, body.Label ?? addr.ToString("X"), def);
+						if (sess.Freezer.IsFrozen(addr)) sess.Freezer.Unfreeze(addr);
+						else sess.FreezeEntity(addr, body.Label ?? addr.ToString("X"), def);
 					}
 					else
 					{
-						using (_session.History.BeginBatch($"{body.Label}: {body.Action}"))
+						using (sess.History.BeginBatch($"{body.Label}: {body.Action}"))
 						{
 							if (body.Action == "max_fitness") { Set("Condition", "100"); Set("Match Sharpness", "100"); Set("Morale", "20"); Set("Happiness", "100"); }
+							else if (body.Action == "max_pa") { Set("PA", "200"); }
+							else if (body.Action == "world_class") { Set("CA", "190"); Set("PA", "200"); }
+							else if (body.Action == "max_personality")
+							{
+								foreach (string fn in new[] { "Professionalism", "Ambition", "Determination", "Pressure", "Loyalty", "Sportsmanship", "Temperament" }) Set(fn, "20");
+							}
+							else if (body.Action == "boost_all_2")
+							{
+								foreach (var fd in def.Fields.Where(f => f.IsWritable && (f.GroupKey == "Technical" || f.GroupKey == "Mental" || f.GroupKey == "Physical" || f.GroupKey == "Goalkeeping")))
+								{
+									if (int.TryParse(SafeRead(sess, addr, fd), out int cur) && cur >= 1 && cur < 20)
+									{
+										try { sess.WriteField(addr, fd, Math.Min(20, cur + 2).ToString(), body.Label); } catch { }
+									}
+								}
+							}
 							else if (body.Action == "bal_50") AddInt("Balance", 50_000_000);
 							else if (body.Action == "tb_50") AddInt("Transfer Budget", 50_000_000);
 							else if (body.Action == "rich_club") { Set("Balance", "500000000"); Set("Transfer Budget", "200000000"); Set("Wage Budget", "10000000"); }
@@ -453,7 +472,7 @@ internal static class Program
 							else if (body.Action == "world_no1") { Set("Reputation", "200"); Set("Reputation (10000)", "10000"); }
 						}
 					}
-					WriteJson(ctx, new { ok = true, frozen = _session.Freezer.IsFrozen(addr), undoCount = _session.History.Batches.Count });
+					WriteJson(ctx, new { ok = true, frozen = sess.Freezer.IsFrozen(addr), undoCount = sess.History.Batches.Count });
 				}
 				return;
 			}
