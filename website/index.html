@@ -1310,7 +1310,7 @@
       }
     };
 
-    let lang = localStorage.getItem("se_lang") || "tr";
+    let lang = localStorage.getItem("se_lang") || ((navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en");
     let theme = localStorage.getItem("se_site_theme") || "light";
     let slideIdx = 0;
     let paused = false;
