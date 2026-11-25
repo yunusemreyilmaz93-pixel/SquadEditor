@@ -207,6 +207,43 @@
     .btn-outline:hover { background: var(--surface-soft); }
     .btn-sm { padding: 7px 14px; font-size: 13px; }
     .btn-lg { padding: 13px 24px; font-size: 15px; border-radius: 10px; }
+    .btn-os {
+      display: inline-flex;
+      align-items: center;
+      gap: 13px;
+      padding: 12px 22px;
+      border-radius: 12px;
+      text-align: left;
+      min-width: 232px;
+      line-height: 1.2;
+    }
+    .btn-os svg.os-ic {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+    .btn-os .os-txt {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .btn-os .os-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .btn-os .os-sub {
+      font-size: 11.5px;
+      font-weight: 500;
+      opacity: 0.72;
+    }
+    .dl-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
 
     /* Hero */
     .hero {
@@ -846,15 +883,20 @@
             Oyun açıkken oyuncuları, personelleri, kulüpleri ve finansı anında düzenleyebilir; gerçek regenleri ve 5 yıldızlı antrenörleri zahmetsizce bulabilirsiniz.
           </p>
           <div class="hero-actions">
-            <a id="heroDl" href="#download" class="btn btn-primary btn-lg">
-              <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span data-i18n="hero.dl">Windows için Ücretsiz İndir</span>
+            <a id="heroDl" href="#download" class="btn btn-primary btn-os">
+              <svg class="os-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3.5h9.2v8.1H2V3.5zm10.8 0H22v8.1h-9.2V3.5zM2 12.9h9.2V21H2v-8.1zm10.8 0H22V21h-9.2v-8.1z"/></svg>
+              <span class="os-txt">
+                <span class="os-title" data-i18n="hero.dl">Windows için İndir</span>
+                <span class="os-sub" data-i18n="hero.dlSub">Windows 10/11 (64-bit) · 2.2 MB</span>
+              </span>
             </a>
-            <a id="heroDlMac" href="https://github.com/yunusemreyilmaz93-pixel/SquadEditor/releases/latest/download/SquadEditor-macOS-arm64.zip" target="_blank" rel="noopener" class="btn btn-outline btn-lg">
-              <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span data-i18n="hero.dlMac">macOS (Apple Silicon)</span>
+            <a id="heroDlMac" href="https://github.com/yunusemreyilmaz93-pixel/SquadEditor/releases/latest/download/SquadEditor-macOS-arm64.zip" target="_blank" rel="noopener" class="btn btn-outline btn-os">
+              <svg class="os-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>
+              <span class="os-txt">
+                <span class="os-title" data-i18n="hero.dlMac">macOS için İndir</span>
+                <span class="os-sub" data-i18n="hero.dlMacSub">Apple Silicon (M1–M4) · .zip</span>
+              </span>
             </a>
-            <a href="#features" class="btn btn-outline btn-lg" data-i18n="hero.explore">Tüm Özelliklere Bak</a>
           </div>
           <p class="hero-note" data-i18n="hero.note">Kurulum gerektirmez, tek dosya olarak çalışır.</p>
           <div class="hero-trust">
@@ -1130,10 +1172,22 @@
             <p data-i18n="cta.p">Windows için tek dosya, kurulum gerektirmez ve tamamen ücretsiz.</p>
             <p class="dl-meta" id="dlMeta">Sürüm v1.6.0 · FM27 27.0.1 – 27.1.1 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)</p>
           </div>
-          <a id="bottomDl" href="#download" class="btn btn-primary btn-lg">
-            <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span data-i18n="cta.btn">Squadeditor İndir (Windows)</span>
-          </a>
+          <div class="dl-btns">
+            <a id="bottomDl" href="#download" class="btn btn-primary btn-os">
+              <svg class="os-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3.5h9.2v8.1H2V3.5zm10.8 0H22v8.1h-9.2V3.5zM2 12.9h9.2V21H2v-8.1zm10.8 0H22V21h-9.2v-8.1z"/></svg>
+              <span class="os-txt">
+                <span class="os-title" data-i18n="hero.dl">Windows için İndir</span>
+                <span class="os-sub" data-i18n="hero.dlSub">Windows 10/11 (64-bit) · 2.2 MB</span>
+              </span>
+            </a>
+            <a id="bottomDlMac" href="https://github.com/yunusemreyilmaz93-pixel/SquadEditor/releases/latest/download/SquadEditor-macOS-arm64.zip" target="_blank" rel="noopener" class="btn btn-outline btn-os">
+              <svg class="os-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>
+              <span class="os-txt">
+                <span class="os-title" data-i18n="hero.dlMac">macOS için İndir</span>
+                <span class="os-sub" data-i18n="hero.dlMacSub">Apple Silicon (M1–M4) · .zip</span>
+              </span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -1219,7 +1273,7 @@
         "hero.kicker": "Football Manager 27 · Ücretsiz Masaüstü Aracı",
         "hero.title": "FM27 için hızlı ve ücretsiz gerçek zamanlı editör ve scout.",
         "hero.lead": "Oyun açıkken oyuncuları, personelleri, kulüpleri, sponsorları ve takım uyumunu anında düzenleyin; PR %, PA Zirve Önizleme, gerçek regen ve 5★ antrenör taramasıyla iki aracı tek 2.3 MB uygulamada kullanın.",
-        "hero.dl": "Windows için Ücretsiz İndir", "hero.dlMac": "macOS (Apple Silicon)", "hero.explore": "Tüm Özelliklere Bak",
+        "hero.dl": "Windows için İndir", "hero.dlSub": "Windows 10/11 (64-bit) · 2.2 MB", "hero.dlMac": "macOS için İndir", "hero.dlMacSub": "Apple Silicon (M1–M4) · .zip", "hero.explore": "Tüm Özelliklere Bak",
         "hero.note": "Kurulum gerektirmez, sadece ~2.3 MB tek dosya.",
         "trust.source": "Kaynak Kodu (GitHub)", "trust.smartscreen": "İlk açılışta SmartScreen uyarısı normaldir",
         "zoom.hint": "Büyüt",
@@ -1274,7 +1328,7 @@
         "hero.kicker": "Football Manager 27 · Free Desktop Tool",
         "hero.title": "A fast, free real-time editor and scout for FM27.",
         "hero.lead": "Edit players, staff, clubs, sponsors and team cohesion live while FM27 runs — and scout with PR %, Peak PA Preview, true newgens and a real 5★ coach calculator, all in a single 2.3 MB app.",
-        "hero.dl": "Download Free for Windows", "hero.dlMac": "macOS (Apple Silicon)", "hero.explore": "Explore All Features",
+        "hero.dl": "Download for Windows", "hero.dlSub": "Windows 10/11 (64-bit) · 2.2 MB", "hero.dlMac": "Download for macOS", "hero.dlMacSub": "Apple Silicon (M1–M4) · .zip", "hero.explore": "Explore All Features",
         "hero.note": "No installer needed, just a ~2.3 MB single file.",
         "trust.source": "Source Code (GitHub)", "trust.smartscreen": "SmartScreen notice on first run is normal",
         "zoom.hint": "Zoom",
@@ -1429,6 +1483,10 @@
       a.href = SITE_CONFIG.downloadUrl;
       if (SITE_CONFIG.downloadUrl.startsWith("http")) { a.target = "_blank"; a.rel = "noopener"; }
       a.addEventListener("click", () => trackHit("dl"));
+    });
+    ["heroDlMac", "bottomDlMac"].forEach(id => {
+      const a = document.getElementById(id);
+      if (a) a.addEventListener("click", () => trackHit("dl"));
     });
     document.getElementById("aboutGh").href = SITE_CONFIG.repoUrl;
     document.getElementById("aboutGh").addEventListener("click", () => trackHit("gh"));
