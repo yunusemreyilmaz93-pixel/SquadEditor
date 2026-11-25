@@ -1,0 +1,270 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="clr-namespace:SquadEditor.App.Ui"
+                    x:Class="SquadEditor.App.Ui.Theme">
+
+  <!-- Palette -->
+  <SolidColorBrush x:Key="Bg" Color="#0D1119"/>
+  <SolidColorBrush x:Key="Chrome" Color="#111723"/>
+  <SolidColorBrush x:Key="Panel" Color="#141B28"/>
+  <SolidColorBrush x:Key="Card" Color="#182030"/>
+  <SolidColorBrush x:Key="CardHover" Color="#1E2840"/>
+  <SolidColorBrush x:Key="Field" Color="#0F1521"/>
+  <SolidColorBrush x:Key="Stroke" Color="#243049"/>
+  <SolidColorBrush x:Key="StrokeSoft" Color="#1C2538"/>
+  <SolidColorBrush x:Key="Text" Color="#E8ECF4"/>
+  <SolidColorBrush x:Key="Muted" Color="#8C97AD"/>
+  <SolidColorBrush x:Key="Faint" Color="#5A6580"/>
+  <SolidColorBrush x:Key="Accent" Color="#4F8CFF"/>
+  <SolidColorBrush x:Key="AccentSoft" Color="#1F3A6E"/>
+  <SolidColorBrush x:Key="Danger" Color="#F2555A"/>
+  <SolidColorBrush x:Key="Positive" Color="#3DD68C"/>
+  <SolidColorBrush x:Key="Selection" Color="#22345A"/>
+  <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+    <GradientStop Color="#1C3F86" Offset="0"/>
+    <GradientStop Color="#16284F" Offset="0.55"/>
+    <GradientStop Color="#121A2B" Offset="1"/>
+  </LinearGradientBrush>
+
+  <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI, -apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue, sans-serif</FontFamily>
+  <FontFamily x:Key="DisplayFont">Segoe UI Variable Display, Segoe UI, -apple-system, BlinkMacSystemFont, SF Pro Display, Helvetica Neue, sans-serif</FontFamily>
+
+  <!-- Custom ControlThemes: zero ugly OS/Fluent default grey button highlights! -->
+  <ControlTheme x:Key="{x:Type Button}" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Background" Value="{DynamicResource Card}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource Stroke}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="10,5"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="b"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="5"
+                Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource CardHover}"/>
+    </Style>
+    <Style Selector="^:pressed /template/ Border#b">
+      <Setter Property="Opacity" Value="0.88"/>
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <Setter Property="Background" Value="{DynamicResource Accent}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+      <Setter Property="Opacity" Value="0.9"/>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource CardHover}"/>
+    </Style>
+  </ControlTheme>
+
+  <ControlTheme x:Key="LinkButton" TargetType="Button">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Foreground" Value="#CFE0FF"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ContentPresenter Content="{TemplateBinding Content}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"/>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- Left menu NavItem -->
+  <ControlTheme x:Key="NavItem" TargetType="RadioButton">
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="b" Background="Transparent" CornerRadius="5" Padding="10,7" Margin="6,1">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource Card}"/>
+    </Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    </Style>
+    <Style Selector="^:checked /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource Selection}"/>
+    </Style>
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- Segmented toggle -->
+  <ControlTheme x:Key="Segment" TargetType="RadioButton">
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="b" Background="Transparent" CornerRadius="4" Padding="9,4" Margin="1">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource CardHover}"/>
+    </Style>
+    <Style Selector="^:checked /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+    </Style>
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- Default CheckBox as FM Pill Switch (exact match to WPF Theme.xaml lines 433-457) -->
+  <ControlTheme x:Key="{x:Type CheckBox}" TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <StackPanel Orientation="Horizontal" Background="Transparent">
+          <Border x:Name="track" Width="38" Height="22" CornerRadius="11"
+                  Background="{DynamicResource Field}"
+                  BorderBrush="{DynamicResource Stroke}"
+                  BorderThickness="1">
+            <Ellipse x:Name="knob" Width="14" Height="14"
+                     Fill="{DynamicResource Muted}"
+                     HorizontalAlignment="Left"
+                     VerticalAlignment="Center"
+                     Margin="3,0,0,0"/>
+          </Border>
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"/>
+        </StackPanel>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:checked /template/ Border#track">
+      <Setter Property="Background" Value="{DynamicResource Accent}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+    </Style>
+    <Style Selector="^:checked /template/ Ellipse#knob">
+      <Setter Property="Fill" Value="White"/>
+      <Setter Property="HorizontalAlignment" Value="Right"/>
+      <Setter Property="Margin" Value="0,0,3,0"/>
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- Filter toggle chip -->
+  <ControlTheme x:Key="FilterChip" TargetType="CheckBox">
+    <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border x:Name="b"
+                Background="{DynamicResource Panel}"
+                BorderBrush="{DynamicResource Stroke}"
+                BorderThickness="1"
+                CornerRadius="5"
+                Padding="10,4">
+          <ContentPresenter Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="Center"/>
+        </Border>
+      </ControlTemplate>
+    </Setter>
+    <Style Selector="^:pointerover /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource CardHover}"/>
+    </Style>
+    <Style Selector="^:pointerover">
+      <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    </Style>
+    <Style Selector="^:checked /template/ Border#b">
+      <Setter Property="Background" Value="{DynamicResource AccentSoft}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}"/>
+    </Style>
+    <Style Selector="^:checked">
+      <Setter Property="Foreground" Value="{DynamicResource Text}"/>
+    </Style>
+    <Style Selector="^:disabled">
+      <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+  </ControlTheme>
+
+  <!-- Value converters -->
+  <ui:MoneyText x:Key="MoneyText"/>
+  <ui:DateText x:Key="DateText"/>
+  <ui:ImageLookup x:Key="ImageLookup"/>
+  <ui:AttributeBrush x:Key="AttributeBrush"/>
+
+  <!-- Grid cells -->
+  <DataTemplate x:Key="PlayerNameCell">
+    <StackPanel Orientation="Horizontal" Margin="10,0">
+      <Border Width="26" Height="26" CornerRadius="13" Background="{DynamicResource Panel}" ClipToBounds="True" Margin="0,0,10,0">
+        <Image Source="{Binding Uid, Converter={StaticResource ImageLookup}, ConverterParameter=person}" Stretch="UniformToFill"/>
+      </Border>
+      <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+    </StackPanel>
+  </DataTemplate>
+  <DataTemplate x:Key="PlayerClubCell">
+    <StackPanel Orientation="Horizontal" Margin="10,0">
+      <Image Width="20" Height="20" Margin="0,0,8,0" Source="{Binding ClubUid, Converter={StaticResource ImageLookup}, ConverterParameter=club}"/>
+      <TextBlock Text="{Binding Club}" VerticalAlignment="Center"/>
+    </StackPanel>
+  </DataTemplate>
+  <DataTemplate x:Key="ClubNameCell">
+    <StackPanel Orientation="Horizontal" Margin="10,0">
+      <Image Width="24" Height="24" Margin="0,0,10,0" Source="{Binding Uid, Converter={StaticResource ImageLookup}, ConverterParameter=club}"/>
+      <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+    </StackPanel>
+  </DataTemplate>
+  <DataTemplate x:Key="CACell">
+    <TextBlock Text="{Binding CA}" Margin="10,0" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{Binding CA, Converter={StaticResource AttributeBrush}, ConverterParameter=ability}"/>
+  </DataTemplate>
+  <DataTemplate x:Key="PACell">
+    <TextBlock Text="{Binding PA}" Margin="10,0" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{Binding PA, Converter={StaticResource AttributeBrush}, ConverterParameter=ability}"/>
+  </DataTemplate>
+</ResourceDictionary>

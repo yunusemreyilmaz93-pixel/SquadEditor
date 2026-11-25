@@ -1,0 +1,161 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:SquadEditor.App.Ui"
+        x:Class="SquadEditor.App.Ui.EditorWindow"
+        Title="SquadEditor"
+        Icon="avares://SquadEditor/Assets/app.ico"
+        Width="1480" Height="900"
+        MinWidth="1024" MinHeight="640"
+        CanResize="True"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Bg}"
+        Foreground="{DynamicResource Text}"
+        FontFamily="{StaticResource UiFont}"
+        FontSize="13">
+  <LayoutTransformControl x:Name="ZoomRoot">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="48"/>
+        <RowDefinition Height="34"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="26"/>
+      </Grid.RowDefinitions>
+
+      <!-- Top bar -->
+      <Border Background="{DynamicResource Chrome}" BorderBrush="{DynamicResource StrokeSoft}" BorderThickness="0,0,0,1">
+        <Grid Margin="14,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Image Source="avares://SquadEditor/Assets/logo.png" Width="28" Height="28" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+            <TextBlock Text="SquadEditor" FontSize="14" FontWeight="SemiBold" Margin="9,0,0,0" VerticalAlignment="Center"/>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid Width="450" VerticalAlignment="Center">
+              <TextBox x:Name="TopSearch" Classes="SearchBox" Height="32" MinHeight="32"
+                       TextChanged="TopSearch_TextChanged"/>
+              <TextBlock Text="⌕" FontSize="15" Foreground="{DynamicResource Muted}" Margin="10,0,0,1" VerticalAlignment="Center" IsHitTestVisible="False"/>
+              <TextBlock x:Name="TopSearchHint" Text="Oyuncu, kulüp, ülke veya lig ara…" Foreground="{DynamicResource Faint}" FontSize="12.5" Margin="32,0,58,0" VerticalAlignment="Center" IsHitTestVisible="False" TextTrimming="CharacterEllipsis"/>
+              <Border x:Name="TopSearchShortcut" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" Padding="5,1" CornerRadius="4" Background="{DynamicResource Field}" BorderBrush="{DynamicResource StrokeSoft}" BorderThickness="1" IsHitTestVisible="False">
+                <TextBlock x:Name="TopSearchShortcutText" Text="Ctrl+F" FontSize="10.5" Foreground="{DynamicResource Faint}" FontFamily="Consolas"/>
+              </Border>
+              <Button x:Name="TopSearchClear" Content="✕" Theme="{StaticResource GhostButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0" Padding="6,2" FontSize="11" Foreground="{DynamicResource Muted}" IsVisible="False" Click="TopSearchClear_Click"/>
+              <Popup x:Name="SearchPopup" PlacementTarget="{Binding #TopSearch}" Placement="Bottom" IsLightDismissEnabled="True"
+                     Width="450" VerticalOffset="4">
+                <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1" CornerRadius="6" Padding="4">
+                  <ListBox x:Name="SearchResults" Background="Transparent" BorderThickness="0" MaxHeight="460"
+                           ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                      <DataTemplate x:DataType="ui:SearchHit">
+                        <Grid>
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                          </Grid.ColumnDefinitions>
+                          <Border Width="32" Height="32" CornerRadius="{Binding Corner}" Background="{DynamicResource AccentSoft}" ClipToBounds="True" HorizontalAlignment="Left">
+                            <Grid>
+                              <TextBlock Text="{Binding Initials}" Foreground="{DynamicResource Text}" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                              <Image Source="{Binding Image}" Stretch="UniformToFill"/>
+                            </Grid>
+                          </Border>
+                          <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Text}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource Muted}" FontSize="11.5" TextTrimming="CharacterEllipsis"/>
+                          </StackPanel>
+                          <TextBlock Grid.Column="2" Text="{Binding Badge}" Foreground="{Binding BadgeBrush}" FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,4,0"/>
+                        </Grid>
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
+                  </ListBox>
+                </Border>
+              </Popup>
+            </Grid>
+            <Button x:Name="CommandButton" Theme="{StaticResource GhostButton}" Margin="6,0,0,0" Padding="8,4" Height="32" Click="CommandButton_Click">
+              <Border Padding="5,1" CornerRadius="4" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1">
+                <TextBlock x:Name="CommandShortcutText" Text="⌘ Ctrl+K" FontSize="11" Foreground="{DynamicResource Muted}" FontFamily="Consolas"/>
+              </Border>
+            </Button>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+            <Border x:Name="StatusPill" CornerRadius="5" Padding="10,4" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Stroke}" BorderThickness="1">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="{DynamicResource Faint}" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                <TextBlock x:Name="StatusText" Text="Bağlı değil" FontSize="12" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+            <Border x:Name="ReadOnlyBadge" CornerRadius="5" Padding="8,4" Margin="8,0,0,0" Background="{DynamicResource AccentSoft}" IsVisible="False">
+              <TextBlock Text="🔒 Salt okunur" FontSize="11.5" VerticalAlignment="Center"/>
+            </Border>
+            <Button x:Name="FrozenButton" Theme="{StaticResource GhostButton}" Margin="8,0,0,0" Padding="8,4" Click="Frozen_Click" IsVisible="False">
+              <TextBlock x:Name="FrozenText" Text="❄ 0" FontSize="12" Foreground="{DynamicResource Accent}" FontWeight="SemiBold"/>
+            </Button>
+            <Button x:Name="BackupButton" Theme="{StaticResource GhostButton}" Margin="6,0,0,0" Padding="8,4" Click="Backup_Click">
+              <TextBlock x:Name="BackupText" Text="💾 Yedek" FontSize="12"/>
+            </Button>
+            <Button x:Name="HistoryButton" Theme="{StaticResource GhostButton}" Margin="4,0,0,0" Padding="8,4" Click="History_Click" IsVisible="False">
+              <TextBlock x:Name="HistoryText" Text="📋 0" FontSize="12"/>
+            </Button>
+            <Button x:Name="ReloadButton" Theme="{StaticResource GhostButton}" Margin="4,0,0,0" Padding="8,4" Click="Reload_Click" IsVisible="False">
+              <TextBlock Text="↻" FontSize="15"/>
+            </Button>
+            <Button x:Name="UndoButton" Theme="{StaticResource GhostButton}" Margin="4,0,0,0" Padding="8,4" Click="Undo_Click">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="↶" FontSize="14" Margin="0,0,5,0"/>
+                <TextBlock x:Name="UndoText" Text="Geri al" FontSize="12"/>
+              </StackPanel>
+            </Button>
+            <Button x:Name="SettingsButton" Theme="{StaticResource GhostButton}" Margin="2,0,0,0" Padding="8,4" Click="Settings_Click">
+              <TextBlock Text="⚙" FontSize="15"/>
+            </Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Open pages -->
+      <Border Grid.Row="1" Background="{DynamicResource Chrome}" BorderBrush="{DynamicResource StrokeSoft}" BorderThickness="0,0,0,1">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="TabStrip" Orientation="Horizontal" Margin="12,0"/>
+        </ScrollViewer>
+      </Border>
+
+      <ContentControl x:Name="Host" Grid.Row="2"/>
+
+      <!-- Floating Toast / Snackbar notification -->
+      <Border x:Name="ToastBanner" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+              Margin="0,0,18,16" Padding="14,9" CornerRadius="8" IsVisible="False" MaxWidth="520"
+              Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Accent}" BorderThickness="1"
+              BoxShadow="0 4 18 0 #73000000">
+        <DockPanel>
+          <Button x:Name="ToastUndoBtn" DockPanel.Dock="Right" Content="↶ Geri Al" Theme="{StaticResource GhostButton}"
+                  Foreground="{DynamicResource Accent}" FontWeight="SemiBold" FontSize="12" Padding="8,2" Margin="10,0,0,0" Click="Undo_Click"/>
+          <TextBlock x:Name="ToastText" Foreground="{DynamicResource Text}" FontSize="12.5" VerticalAlignment="Center" TextWrapping="Wrap"/>
+        </DockPanel>
+      </Border>
+
+      <!-- Waiting / loading screen -->
+      <Grid x:Name="Overlay" Grid.Row="1" Grid.RowSpan="2" Background="{DynamicResource Bg}">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+          <Image Source="avares://SquadEditor/Assets/logo.png" Width="72" Height="72" RenderOptions.BitmapInterpolationMode="HighQuality" HorizontalAlignment="Center"/>
+          <TextBlock x:Name="OverlayTitle" Text="Football Manager bekleniyor" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,20,0,8"/>
+          <TextBlock x:Name="OverlayText" Text="Oyunu aç ve kaydını yükle. SquadEditor kendiliğinden bağlanır." Foreground="{DynamicResource Muted}" TextWrapping="Wrap" TextAlignment="Center"/>
+          <Button x:Name="ConnectButton" Theme="{StaticResource AccentButton}" Content="Bağlan" HorizontalAlignment="Center" Margin="0,20,0,0" Padding="22,8" Click="Connect_Click" IsVisible="False"/>
+          <ProgressBar x:Name="OverlayProgress" IsIndeterminate="True" Height="3" Margin="60,22,60,0" Background="{DynamicResource Panel}" Foreground="{DynamicResource Accent}" BorderThickness="0"/>
+        </StackPanel>
+      </Grid>
+
+      <!-- Status bar -->
+      <Border Grid.Row="3" Background="{DynamicResource Chrome}" BorderBrush="{DynamicResource StrokeSoft}" BorderThickness="0,1,0,0">
+        <DockPanel Margin="14,0">
+          <TextBlock x:Name="Counts" DockPanel.Dock="Right" Foreground="{DynamicResource Faint}" FontSize="11.5" VerticalAlignment="Center"/>
+          <TextBlock x:Name="Message" Foreground="{DynamicResource Muted}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </LayoutTransformControl>
+</Window>

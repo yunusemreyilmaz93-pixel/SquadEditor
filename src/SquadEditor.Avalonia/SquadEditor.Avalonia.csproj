@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SquadEditor</AssemblyName>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <RootNamespace />
+    <ApplicationIcon>..\SquadEditor.App\Assets\app.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <Version>1.6.0</Version>
+    <Company>SquadIndex</Company>
+    <Product>SquadEditor</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Win32" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Native" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SquadEditor.Core\SquadEditor.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\SquadEditor.App\Lang\*.json" LogicalName="SquadEditor.App.Lang.%(Filename).json" />
+    <EmbeddedResource Include="..\..\layouts\*.json" LogicalName="SquadEditor.App.Layouts.%(Filename).json" />
+    <AvaloniaResource Include="..\SquadEditor.App\Assets\logo.png" Link="Assets\logo.png" />
+    <AvaloniaResource Include="..\SquadEditor.App\Assets\app.ico" Link="Assets\app.ico" />
+  </ItemGroup>
+</Project>

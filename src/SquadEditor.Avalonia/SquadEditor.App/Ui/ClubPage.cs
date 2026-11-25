@@ -1,0 +1,2532 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using Avalonia;
+using Avalonia.Collections;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
+using Avalonia.Data;
+using Avalonia.Data.Converters;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
+using SquadEditor.Core.Editing;
+using SquadEditor.Core.Layout;
+
+namespace SquadEditor.App.Ui;
+
+public sealed class ClubPage : UserControl, IPage
+{
+	private readonly GameData _data;
+	private readonly INavigator _nav;
+	private readonly ClubRow _club;
+	private readonly List<EditField> _fields;
+	private readonly DockPanel _root = new DockPanel();
+	private Border _header;
+	private string? _team;
+	private Control? _squadView;
+	private string? _squadSortMember;
+	private ListSortDirection? _squadSortDir;
+
+	public ClubPage(GameData data, ClubRow club, INavigator nav)
+	{
+		_data = data;
+		_nav = nav;
+		_club = club;
+		string lang = Loc.Instance.Language;
+		_fields = data.ClubDef.Fields.Where(f => f.GroupKey != "Internal")
+			.Select(f => new EditField(data, club.Address, f, f.Name == "Balance" ? Build.T("Bakiye", "Balance") : data.Layout.Text(lang, f.Name))).ToList();
+		Loaded += (_, _) => FieldBox.EntityLabel = club.Name;
+		EditField.Written += OnWritten;
+		Unloaded += (_, _) => EditField.Written -= OnWritten;
+		Loaded += (_, _) => { EditField.Written -= OnWritten; EditField.Written += OnWritten; };
+
+		_header = BuildHeader();
+		DockPanel.SetDock(_header, Dock.Top);
+		_root.Children.Add(_header);
+		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
+		Build.NavItem(menu, Build.T("Kadro", "Squad"), () => content.Content = _squadView ??= Squad(), isChecked: true);
+		Build.NavItem(menu, Build.T("En İyi 11", "Best XI"), () => content.Content = ClubBestXi.BuildView(_data, _club, _nav));
+		Build.NavItem(menu, Build.T("Personel", "Staff"), () => content.Content = StaffList());
+		Build.NavItem(menu, Build.T("Finans", "Finances"), () => content.Content = Finances());
+		Build.NavItem(menu, Build.T("İlişkiler", "Relationships"), () => content.Content = ClubRelationships.BuildTab(_data, _club, _nav));
+		Build.NavItem(menu, Build.T("Bilgi ve tesisler", "Info & facilities"), () => content.Content = Info());
+		_root.Children.Add(body);
+		Content = _root;
+		Background = Build.Res("Bg");
+	}
+
+	public uint Uid => _club.Uid;
+	public string Key => "club:" + _club.Address;
+	public string Title => _club.Name;
+	public IImage? Icon => ImageLookup.Graphics.Club(_club.Uid);
+
+	public void RefreshValues()
+	{
+		foreach (EditField f in _fields)
+		{
+			f.Refresh();
+		}
+	}
+
+	internal static Window? OwnerOf(Control c) => TopLevel.GetTopLevel(c) as Window
+		?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+
+	private EditField F(string name) => _fields.First(f => f.Key == name);
+
+	private void OnWritten(object? sender, EditField field)
+	{
+		if (field.Entity == _club.Address)
+		{
+			Border fresh = BuildHeader();
+			DockPanel.SetDock(fresh, Dock.Top);
+			_root.Children.Remove(_header);
+			_root.Children.Insert(0, fresh);
+			_header = fresh;
+		}
+	}
+
+	private Border BuildHeader()
+	{
+		var line1 = Build.Text(string.Join("  ·  ", new[] { _club.FullName, _club.Nation }.Where(s => s.Length > 0)), 13, new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xFF, 0xFF)));
+		line1.Margin = new Thickness(0, 4, 0, 0);
+		var line2 = Build.Text(_club.League, 14, Brushes.White, FontWeight.SemiBold);
+		line2.Margin = new Thickness(0, 6, 0, 0);
+		var pills = new List<Control>
+		{
+			Build.Pill(_club.SquadSize.ToString(), Build.T("Oyuncu", "Players")),
+			Build.Pill(_club.AverageCA.ToString("0"), Build.T("Ortalama CA", "Average CA"), Colors.Attribute((int)Math.Round(_club.AverageCA / 10.0))),
+		};
+		EditField balance = F("Balance"), budget = F("Transfer Budget");
+		if (balance.Value.Length > 0)
+		{
+			pills.Add(Build.Pill(Money.Format(balance.Number, false), Build.T("Bakiye", "Balance"), balance.Number < 0 ? Build.Res("Danger") : null));
+		}
+		if (budget.Value.Length > 0)
+		{
+			pills.Add(Build.Pill(Money.Format(budget.Number, false), Build.T("Transfer bütçesi", "Transfer budget")));
+		}
+		return Build.Header(Build.Avatar(Icon, _club.Name, 74, round: false), _club.Name, line1, line2, pills);
+	}
+
+	private Control Squad()
+	{
+		var all = _data.Squads[_club.Address].ToList();
+		var teams = all.Where(p => p.Team.Length > 0).GroupBy(p => p.Team)
+			.OrderByDescending(g => g.Average(p => p.CA)).Select(g => g.Key).ToList();
+		var host = new ContentControl();
+		DataGrid? currentGrid = null;
+		var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+		void Show(string? team)
+		{
+			_team = team;
+			var rows = (team == null ? all : all.Where(p => p.Team == team)).OrderByDescending(p => p.CA);
+			currentGrid = PlayerGrid(_data, rows, _nav, showClub: false, showTeam: team == null);
+			currentGrid.Sorting += (_, e) =>
+			{
+				string? path = e.Column.SortMemberPath;
+				if (!string.IsNullOrEmpty(path))
+				{
+					var view = currentGrid.ItemsSource as DataGridCollectionView;
+					var existing = view?.SortDescriptions.FirstOrDefault(sd => sd.PropertyPath == path);
+					var nextDir = existing?.Direction == ListSortDirection.Ascending
+						? ListSortDirection.Descending
+						: ListSortDirection.Ascending;
+					_squadSortMember = path;
+					_squadSortDir = nextDir;
+				}
+			};
+			if (!string.IsNullOrEmpty(_squadSortMember) && _squadSortDir.HasValue && currentGrid.ItemsSource is DataGridCollectionView dv)
+			{
+				dv.SortDescriptions.Clear();
+				dv.SortDescriptions.Add(DataGridSortDescription.FromPath(_squadSortMember, _squadSortDir.Value));
+			}
+			host.Content = new Border { Classes = { "CardBorder" }, Padding = new Thickness(4), Child = currentGrid };
+		}
+		var everyone = new RadioButton { Content = Build.F("Tümü ({0})", "All ({0})", all.Count), Theme = Build.StyleOf("Segment"), GroupName = "teams" + _club.Address };
+		everyone.IsCheckedChanged += (_, _) => { if (everyone.IsChecked == true) Show(null); };
+		bar.Children.Add(everyone);
+		foreach (string team in teams)
+		{
+			int count = all.Count(p => p.Team == team);
+			var button = new RadioButton { Content = $"{team} ({count})", Theme = Build.StyleOf("Segment"), GroupName = "teams" + _club.Address };
+			string tName = team;
+			button.IsCheckedChanged += (_, _) => { if (button.IsChecked == true) Show(tName); };
+			bar.Children.Add(button);
+		}
+		string selAllHint = PlatformPaths.IsMac ? "⌘A" : "Ctrl+A";
+		var hint = Build.Text(Build.T($"{selAllHint}: tümünü seç · Çift tık: aç · Sağ tık: toplu düzenle", $"{selAllHint}: select all · Double-click: open · Right-click: bulk edit"), 11.5, Build.Res("Faint"));
+		hint.Margin = new Thickness(12, 0, 0, 0);
+		bar.Children.Add(hint);
+
+		var quickBar = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+		var prepare = new Button
+		{
+			Content = Icons.Label(IconKind.Zap, Build.T("Tüm Kadroyu Maça Hazırla", "Prepare Squad for Match"), 13.5),
+			Theme = Build.StyleOf("AccentButton"),
+			Padding = new Thickness(10, 4, 10, 4),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		ToolTip.SetTip(prepare, Build.T($"Kadroda görünen tüm oyuncuların sakatlıklarını iyileştirir, cezalarını kaldırır; kondisyon, maç formu, moral ve mutluluklarını %100 yapar ({PlatformPaths.UndoHint} geri alır)",
+			$"Heals injuries, lifts bans, and maxes condition, sharpness, morale & contract happiness for all players in the current view ({PlatformPaths.UndoHint} undoes it)"));
+		prepare.Click += (_, _) =>
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).ToList();
+			if (rows.Count == 0)
+			{
+				return;
+			}
+			int healed = 0, lifted = 0, boosted = 0;
+			using (_data.Session.History.BeginBatch(Build.F("{0}: Kadroyu maça hazırla", "{0}: Prepare squad", _club.Name)))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					if (Medical.Heal(_data, r.Address, r.Name)) healed++;
+					if (Medical.LiftBans(_data, r.Address, r.Name)) lifted++;
+					r.Status = Medical.Status(_data.Memory, r.Address, _data.GameDate);
+					r.Morale = 20;
+				}
+				var actions = new[]
+				{
+					new PresetAction { Field = "Condition", Value = "max" },
+					new PresetAction { Field = "Match Sharpness", Value = "max" },
+					new PresetAction { Field = "Morale", Value = "max" },
+					new PresetAction { Field = "Contract Happiness", Value = "max" }
+				};
+				var targets = rows.Select(r => new BulkTarget(r.Address, r.Name)).ToList();
+				foreach (var t in targets)
+				{
+					foreach (var a in actions)
+					{
+						var fd = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == a.Field && f.IsWritable && f.IsNumeric);
+						if (fd != null && fd.Max.HasValue)
+						{
+							try
+							{
+								_data.Session.WriteField(t.Address, fd, fd.Max.Value.ToString(CultureInfo.InvariantCulture), t.Label);
+								boosted++;
+							}
+							catch (Exception)
+							{
+							}
+						}
+					}
+					var jaded = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Jadedness" && f.IsWritable);
+					if (jaded != null)
+					{
+						try { _data.Session.WriteField(t.Address, jaded, "-500", t.Label); } catch (Exception) { }
+					}
+				}
+			}
+			if (currentGrid?.ItemsSource is DataGridCollectionView v) v.Refresh();
+			_nav.SetStatus(Build.F("✓ {0} oyuncu maça hazırlandı ({1} sakatlık, {2} ceza, kondisyon/moral/mutluluk fullendi · {3} alan). {4} geri alır.", "✓ {0} players prepared ({1} healed, {2} bans lifted, fitness/morale/happiness maxed · {3} fields). {4} undoes it.", rows.Count, healed, lifted, boosted, PlatformPaths.UndoHint));
+		};
+		quickBar.Children.Add(prepare);
+		var cohesionBtn = new Button
+		{
+			Content = Icons.Label(IconKind.Users, Build.T("Uyum & Taktik %100", "Max Cohesion & Tactics"), 13.5),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		ToolTip.SetTip(cohesionBtn, Build.T($"Kadroda görünen tüm oyuncuların Takım Uyumunu (100) ve 6 taktik alan + diziliş yatkınlığını %100 yapar ({PlatformPaths.UndoHint} geri alır)",
+			$"Maxes Team Cohesion (100) and Tactical Familiarity (100% across all tactical areas & formations) for the current squad ({PlatformPaths.UndoHint} undoes)"));
+		cohesionBtn.Click += (_, _) =>
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).ToList();
+			if (rows.Count == 0) return;
+			var (coh, tac) = TeamCohesion.MaxSquad(_data, _club, rows);
+			_nav.SetStatus(Build.F("✓ {0}: {1} oyuncunun takım uyumu, {2} oyuncunun taktik yatkınlığı %100 yapıldı. {3} geri alır.",
+				"✓ {0}: Maxed team cohesion for {1} players and tactical familiarity for {2} players. {3} undoes it.",
+				_club.Name, coh, tac, PlatformPaths.UndoHint));
+		};
+		quickBar.Children.Add(cohesionBtn);
+		var snapBtn = new Button
+		{
+			Content = Icons.Label(IconKind.Camera, Build.T("Gelişim", "Progress"), 13.5),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12
+		};
+		ToolTip.SetTip(snapBtn, Build.T("Kadro fotoğrafı çek ve sezon boyunca oyuncuların CA, değer ve özellik gelişimini takip et", "Take a squad snapshot and track CA, value & attribute progression across the season"));
+		snapBtn.Click += (_, _) => SquadSnapshot.OpenTracker(_data, _club, _nav);
+		quickBar.Children.Add(snapBtn);
+		var contractsBtn = new Button
+		{
+			Content = Build.T("📝 Toplu Sözleşme ▾", "📝 Bulk Contracts ▾"),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		ToolTip.SetTip(contractsBtn, Build.T("Kadroda görünen tüm oyuncuların sözleşmelerini topluca uzat (+1/+3/+4/+5 yıl) veya feshet", "Bulk extend (+1/+3/+4/+5y) or terminate contracts for all players in the current view"));
+		async System.Threading.Tasks.Task BulkContractActionAsync(int? addYears, bool terminate)
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).Where(p => p.ContractDate != null).ToList();
+			if (rows.Count == 0) return;
+			string desc = terminate
+				? Build.F("{1} ({0} oyuncu) tüm sözleşmeler yarın bitecek şekilde feshedilsin mi? ({2} geri alır)", "Terminate contracts for {0} players at {1} (expire tomorrow)? ({2} undoes it)", rows.Count, _club.Name, PlatformPaths.UndoHint)
+				: Build.F("{1} ({0} oyuncu) tüm sözleşmeler +{2} yıl uzatılsın mı? ({3} geri alır)", "Extend contracts for {0} players at {1} by +{2} year(s)? ({3} undoes it)", rows.Count, _club.Name, addYears, PlatformPaths.UndoHint);
+			if (AppSettings.Current.ConfirmBulkEdits && !await MsgBox.AskAsync(OwnerOf(this), desc, "SquadEditor"))
+			{
+				return;
+			}
+			var ceField = _data.PlayerDef.Fields.First(f => f.Name == "Contract Expires");
+			int done = 0;
+			string batchLabel = terminate
+				? Build.F("{0}: Toplu sözleşme feshi", "{0}: Terminate squad contracts", _club.Name)
+				: Build.F("{0}: Toplu sözleşme +{1} yıl", "{0}: Extend squad contracts +{1}y", _club.Name, addYears);
+			using (_data.Session.History.BeginBatch(batchLabel))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					DateTime next = terminate ? _data.GameDate.AddDays(1) : r.ContractDate!.Value.AddYears(addYears!.Value);
+					string txt = next.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+					try
+					{
+						_data.Session.WriteField(r.Address, ceField, txt, r.Name);
+						r.ContractDate = next;
+						r.ContractEnd = Dates.Show(txt);
+						done++;
+					}
+					catch (Exception)
+					{
+					}
+				}
+			}
+			if (currentGrid?.ItemsSource is DataGridCollectionView v) v.Refresh();
+			_nav.SetStatus(terminate
+				? Build.F("✓ {0}: {1} oyuncunun sözleşmesi yarın bitecek şekilde feshedildi. {2} geri alır.", "✓ {0}: {1} contracts set to expire tomorrow. {2} undoes it.", _club.Name, done, PlatformPaths.UndoHint)
+				: Build.F("✓ {0}: {1} oyuncunun sözleşmesi +{2} yıl uzatıldı. {3} geri alır.", "✓ {0}: {1} contracts extended by +{2}y. {3} undoes it.", _club.Name, done, addYears, PlatformPaths.UndoHint));
+		}
+		contractsBtn.Click += (_, _) =>
+		{
+			var menu = new ContextMenu();
+			foreach (int y in new[] { 1, 3, 4, 5 })
+			{
+				int years = y;
+				var mi = new MenuItem { Header = Build.F("📝 Tüm Kadro Sözleşme +{0} Yıl", "📝 Extend Squad Contracts +{0}y", years) };
+				mi.Click += async (_, _) => await BulkContractActionAsync(years, terminate: false);
+				menu.Items.Add(mi);
+			}
+			menu.Items.Add(new Separator());
+			var term = new MenuItem { Header = Build.T("✂ Tüm Kadro Sözleşmelerini Feshet (Yarın Bitir)", "✂ Terminate Squad Contracts (Expire Tomorrow)") };
+			term.Click += async (_, _) => await BulkContractActionAsync(null, terminate: true);
+			menu.Items.Add(term);
+			menu.Open(contractsBtn);
+		};
+		quickBar.Children.Add(contractsBtn);
+		var destroy = new Button
+		{
+			Content = Build.T("💀 Takımı Yık", "💀 Destroy Team"),
+			Padding = new Thickness(9, 4, 9, 4),
+			Margin = new Thickness(6, 0, 0, 0),
+			FontSize = 12,
+			IsEnabled = !AppSettings.Current.ReadOnlyMode
+		};
+		ToolTip.SetTip(destroy, Build.T($"FMRTE klasiği: tüm kadronun kondisyon ve moralini 1 yapar, yorgunluğu artırır (rakip takımlar için · {PlatformPaths.UndoHint} geri alır)",
+			$"FMRTE classic: drops condition & morale to 1 and spikes jadedness for the current squad (for rivals · {PlatformPaths.UndoHint} undoes it)"));
+		destroy.Click += async (_, _) =>
+		{
+			var rows = (_team == null ? all : all.Where(p => p.Team == _team)).ToList();
+			if (rows.Count == 0) return;
+			if (AppSettings.Current.ConfirmBulkEdits && !await MsgBox.AskAsync(OwnerOf(this),
+				Build.F("{0} ({1} oyuncu) kondisyon ve morali sıfırlansın mı? {2} geri alır.", "Destroy team {0} ({1} players: min condition/morale, high jadedness)? {2} undoes it.", _club.Name, rows.Count, PlatformPaths.UndoHint),
+				"SquadEditor"))
+			{
+				return;
+			}
+			int written = 0;
+			using (_data.Session.History.BeginBatch(Build.F("{0}: Takımı yık", "{0}: Destroy team", _club.Name)))
+			{
+				var targets = new (string Field, string Value)[] { ("Condition", "1"), ("Match Sharpness", "1"), ("Morale", "1"), ("Jadedness", "800") };
+				foreach (PlayerRow r in rows)
+				{
+					foreach (var (fn, val) in targets)
+					{
+						var fd = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == fn && f.IsWritable && f.IsNumeric);
+						if (fd != null)
+						{
+							try { _data.Session.WriteField(r.Address, fd, val, r.Name); written++; } catch (Exception) { }
+						}
+					}
+				}
+			}
+			_nav.SetStatus(Build.F("💀 {0}: {1} oyuncu yıpratıldı ({2} değer). {3} geri alır.", "💀 {0}: {1} players destroyed ({2} values). {3} undoes it.", _club.Name, rows.Count, written, PlatformPaths.UndoHint));
+		};
+		quickBar.Children.Add(destroy);
+		var topBar = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+		DockPanel.SetDock(quickBar, Dock.Right);
+		topBar.Children.Add(quickBar);
+		bar.Margin = new Thickness(0);
+		topBar.Children.Add(bar);
+
+		var dock = new DockPanel();
+		DockPanel.SetDock(topBar, Dock.Top);
+		dock.Children.Add(topBar);
+		dock.Children.Add(host);
+		string? first = _team ?? teams.FirstOrDefault();
+		RadioButton? pick = bar.Children.OfType<RadioButton>().FirstOrDefault(r => first != null && (r.Content as string ?? "").StartsWith(first + " ("));
+		(pick ?? everyone).IsChecked = true;
+		return dock;
+	}
+
+	private Control StaffList()
+	{
+		var staff = _data.StaffByClub[_club.Address].OrderBy(s => s.Job).ThenBy(s => s.Name);
+		return new Border { Classes = { "CardBorder" }, Padding = new Thickness(4), Child = StaffGrid(_data, staff, _nav, showClub: false) };
+	}
+
+	private Control Finances()
+	{
+		var host = new ContentControl();
+		void BuildFinances()
+		{
+			var outer = new StackPanel { MaxWidth = 1120, HorizontalAlignment = HorizontalAlignment.Left };
+			var squad = _data.Squads[_club.Address].ToList();
+			long totalWages = squad.Sum(p => p.Wage);
+			long totalValue = squad.Sum(p => p.Value);
+			long balanceVal = F("Balance").Number;
+			long transferVal = F("Transfer Budget").Number;
+			long wageBudget = F("Wage Budget").Number;
+			double usage = wageBudget > 0 ? (double)totalWages / wageBudget * 100.0 : 0;
+			var sponsorDeals = ClubSponsors.ReadAll(_data, _club.Address);
+			long sponsorAnnual = sponsorDeals.Where(d => !d.IsExpired(_data.GameDate)).Sum(d => d.PerSeasonGbp);
+
+			var kpiGrid = new UniformGrid { Columns = 4, Margin = new Thickness(0, 0, 0, 10) };
+			Border KpiCard(IconKind ic, string title, string value, string sub, IBrush accent, double? meterPct = null)
+			{
+				var sp = new StackPanel();
+				var head = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
+				var g = Icons.Glyph(ic, 14, accent);
+				g.Margin = new Thickness(0, 0, 6, 0);
+				head.Children.Add(g);
+				head.Children.Add(Build.Text(title, 11.5, Build.Res("Muted"), FontWeight.SemiBold));
+				sp.Children.Add(head);
+				sp.Children.Add(Build.Text(value, 19, Build.Res("Text"), FontWeight.Bold));
+				var subTxt = Build.Text(sub, 11, Build.Res("Faint"));
+				subTxt.Margin = new Thickness(0, 2, 0, 0);
+				sp.Children.Add(subTxt);
+				if (meterPct.HasValue)
+				{
+					double pct = Math.Clamp(meterPct.Value / 100.0, 0, 1);
+					var track = new Grid { Height = 5, Margin = new Thickness(0, 8, 0, 0), ClipToBounds = true };
+					track.Children.Add(new Border { Background = Build.Res("Field"), CornerRadius = new CornerRadius(2.5) });
+					var bar = new Border { Background = accent, CornerRadius = new CornerRadius(2.5), HorizontalAlignment = HorizontalAlignment.Left };
+					track.SizeChanged += (_, e) => bar.Width = e.NewSize.Width * pct;
+					track.Children.Add(bar);
+					sp.Children.Add(track);
+				}
+				return new Border
+				{
+					Classes = { "CardBorder" },
+					BorderBrush = Build.Res("StrokeSoft"),
+					Padding = new Thickness(14, 12, 14, 12),
+					Margin = new Thickness(5, 0, 5, 0),
+					Child = sp
+				};
+			}
+
+			kpiGrid.Children.Add(KpiCard(IconKind.Wallet, Build.T("Kulüp Bakiyesi", "Club Balance"), Money.Format(balanceVal, false),
+				balanceVal >= 0 ? Build.T("Finansal durum sağlıklı", "Healthy balance") : Build.T("Ekside", "In debt"),
+				balanceVal >= 0 ? Build.Res("Positive") : Build.Res("Danger")));
+			kpiGrid.Children.Add(KpiCard(IconKind.Coins, Build.T("Transfer Bütçesi", "Transfer Budget"), Money.Format(transferVal, false),
+				Build.F("Transfer geliri: %{0}", "Transfer revenue: {0}%", F("Transfer Revenue %").Number),
+				Build.Res("Accent")));
+			kpiGrid.Children.Add(KpiCard(IconKind.Users, Build.T("Maaş Kullanımı", "Wage Usage"), wageBudget > 0 ? $"%{usage:0.0}" : "—",
+				$"{Money.Format(totalWages, true)} / {Money.Format(wageBudget, true)}",
+				usage > 100 ? Build.Res("Danger") : Build.Res("Positive"), usage));
+			kpiGrid.Children.Add(KpiCard(IconKind.Briefcase, Build.T("Yıllık Sponsor", "Annual Sponsors"), Money.Format(sponsorAnnual, false),
+				Build.F("{0} aktif anlaşma", "{0} active deals", sponsorDeals.Count(d => !d.IsExpired(_data.GameDate))),
+				Build.Res("Positive")));
+			outer.Children.Add(kpiGrid);
+
+			var grid = new Grid();
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 430 });
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.12, GridUnitType.Star), MinWidth = 430 });
+
+			var left = new StackPanel();
+			var note = Build.Text(Build.F("Tutarlar {0} olarak gösterilir, maaşlar {1} bazında. Ayarlardan değiştirebilirsin.", "Amounts are shown in {0}, wages per {1}. Change this in Settings.", Money.Current.Code, Money.WageSuffix.TrimStart('/')), 11.5, Build.Res("Faint"));
+			note.Margin = new Thickness(14, 4, 14, 10);
+			note.TextWrapping = TextWrapping.Wrap;
+			var rows = Build.Rows(_fields.Where(f => f.Def.GroupKey == "Finances"));
+			rows.Children.Add(note);
+			left.Children.Add(Build.Card(Build.T("Finans Detayları", "Financial Details"), rows));
+
+			var summary = new StackPanel { Margin = new Thickness(14, 4, 14, 12) };
+			void StatLine(string label, string val, IBrush? brush = null)
+			{
+				var d = new DockPanel { Margin = new Thickness(0, 4, 0, 4) };
+				var v = Build.Text(val, 13, brush ?? Build.Res("Text"), FontWeight.SemiBold);
+				DockPanel.SetDock(v, Dock.Right);
+				d.Children.Add(v);
+				d.Children.Add(Build.Text(label, 12.5, Build.Res("Muted")));
+				summary.Children.Add(d);
+			}
+			StatLine(Build.T("Toplam Kadro Değeri", "Total Squad Value"), Money.Format(totalValue, false));
+			StatLine(Build.T("Mevcut Kadro Maaş Yükü", "Current Squad Wage Bill"), Money.Format(totalWages, true));
+			StatLine(Build.T("Maaş Bütçesi Kullanımı", "Wage Budget Usage"), wageBudget > 0 ? $"%{usage:0.0}" : "—", usage > 100 ? Build.Res("Danger") : Build.Res("Positive"));
+			StatLine(Build.T("Sözleşmesi 1 Yıl İçinde Biten", "Expiring Within 1 Year"), squad.Count(p => p.ContractDate is { } cd && cd <= _data.GameDate.AddYears(1)).ToString());
+			left.Children.Add(Build.Card(Build.T("Kadro Finans Özeti", "Squad Financial Summary"), summary));
+
+			var right = new StackPanel();
+			var quick = new UniformGrid { Columns = 2, Margin = new Thickness(10, 4, 10, 10) };
+			bool canWrite = !AppSettings.Current.ReadOnlyMode;
+			void QuickBtn(IconKind ic, string label, Action act, bool accentStyle = false)
+			{
+				var b = new Button
+				{
+					Content = Icons.Label(ic, label, 13.5),
+					Margin = new Thickness(4),
+					Padding = new Thickness(10, 7, 10, 7),
+					FontSize = 12,
+					HorizontalContentAlignment = HorizontalAlignment.Left,
+					IsEnabled = canWrite
+				};
+				if (accentStyle) b.Theme = Build.StyleOf("AccentButton");
+				b.Click += (_, _) =>
+				{
+					act();
+					RefreshValues();
+					OnWritten(null, F("Balance"));
+					BuildFinances();
+				};
+				quick.Children.Add(b);
+			}
+			void AddMoney(string fieldName, long deltaGbp, string label)
+			{
+				EditField ef = F(fieldName);
+				long next = Math.Clamp(ef.Number + deltaGbp, (long)(ef.Def.Min ?? -2_000_000_000), (long)(ef.Def.Max ?? 2_000_000_000));
+				_data.Session.WriteField(_club.Address, ef.Def, next.ToString(CultureInfo.InvariantCulture), _club.Name);
+				_nav.SetStatus(Build.F("✓ {0}: {1} uygulandı. {2} geri alır.", "✓ {0}: {1} applied. {2} undoes it.", _club.Name, label, PlatformPaths.UndoHint));
+			}
+			QuickBtn(IconKind.Plus, Build.T("+10M Bakiye", "+10M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(10_000_000, false)), "+10M"));
+			QuickBtn(IconKind.Plus, Build.T("+50M Bakiye", "+50M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M"));
+			QuickBtn(IconKind.Plus, Build.T("+100M Bakiye", "+100M Balance"), () => AddMoney("Balance", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M"));
+			QuickBtn(IconKind.Coins, Build.T("+50M Transfer Bütçesi", "+50M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(50_000_000, false)), "+50M Transfer"));
+			QuickBtn(IconKind.TrendingUp, Build.T("Maaş Bütçesini 2x Yap", "Double Wage Budget"), () =>
+			{
+				EditField wb = F("Wage Budget"), swb = F("Spending Wage Budget");
+				long next = Math.Clamp(Math.Max(wb.Number, 100_000) * 2L, 0, (long)(wb.Def.Max ?? 200_000_000));
+				using (_data.Session.History.BeginBatch(Build.F("{0}: Maaş bütçesi 2x", "{0}: Double wage budget", _club.Name)))
+				{
+					_data.Session.WriteField(_club.Address, wb.Def, next.ToString(CultureInfo.InvariantCulture), _club.Name);
+					_data.Session.WriteField(_club.Address, swb.Def, next.ToString(CultureInfo.InvariantCulture), _club.Name);
+				}
+				_nav.SetStatus(Build.F("✓ {0} maaş bütçesi iki katına çıkarıldı.", "✓ {0} wage budget doubled.", _club.Name));
+			});
+			QuickBtn(IconKind.Coins, Build.T("+100M Transfer Bütçesi", "+100M Transfer Budget"), () => AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(100_000_000, false)), "+100M Transfer"));
+			QuickBtn(IconKind.Award, Build.T("Zengin Patron (+500M / +200M)", "Rich Owner (+500M / +200M)"), () =>
+			{
+				using (_data.Session.History.BeginBatch(Build.F("{0}: Zengin patron", "{0}: Rich owner", _club.Name)))
+				{
+					AddMoney("Balance", (long)Math.Round(Money.FromDisplay(500_000_000, false)), "+500M");
+					AddMoney("Transfer Budget", (long)Math.Round(Money.FromDisplay(200_000_000, false)), "+200M");
+				}
+			}, accentStyle: true);
+			QuickBtn(IconKind.Percent, Build.T("Transfer Geliri %100", "Transfer Revenue 100%"), () =>
+			{
+				EditField tr = F("Transfer Revenue %");
+				_data.Session.WriteField(_club.Address, tr.Def, "100", _club.Name);
+				_nav.SetStatus(Build.F("✓ {0} transfer gelir yüzdesi %100 yapıldı.", "✓ {0} transfer revenue set to 100%.", _club.Name));
+			});
+			right.Children.Add(Build.Card(Build.T("Hızlı Finans İşlemleri", "Quick Finance Actions"), quick));
+			right.Children.Add(ClubSponsors.BuildCard(_data, _club, _nav));
+
+			Grid.SetColumn(right, 1);
+			grid.Children.Add(left);
+			grid.Children.Add(right);
+			outer.Children.Add(grid);
+			host.Content = Build.Scroll(outer);
+		}
+		BuildFinances();
+		return host;
+	}
+
+	private Control Info()
+	{
+		var host = new ContentControl();
+		void RenderInfo()
+		{
+			StackPanel MeterRows(IEnumerable<EditField> fields)
+			{
+				var stack = new StackPanel { Margin = new Thickness(0, 2, 0, 8) };
+				foreach (EditField f in fields)
+				{
+					EditField cur = f;
+					var g = new Grid { Height = AppSettings.Current.Compact ? 28 : 34, Margin = new Thickness(8, 0, 8, 0) };
+					g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+					g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
+					g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(52) });
+
+					var lbl = Build.Text(cur.Label, 13, Build.Res("Muted"));
+					lbl.Margin = new Thickness(6, 0, 8, 0);
+					g.Children.Add(lbl);
+
+					var track = new Grid { Height = 6, Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center, ClipToBounds = true };
+					track.Children.Add(new Border { Background = Build.Res("Field"), CornerRadius = new CornerRadius(3) });
+					var fill = new Border { CornerRadius = new CornerRadius(3), HorizontalAlignment = HorizontalAlignment.Left };
+					void SyncBar(double w)
+					{
+						int v = Math.Clamp(cur.Number, 0, 20);
+						fill.Background = Colors.Attribute(v);
+						fill.Width = w * (v / 20.0);
+					}
+					track.SizeChanged += (_, e) => SyncBar(e.NewSize.Width);
+					cur.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(EditField.Value)) SyncBar(track.Bounds.Width); };
+					track.Children.Add(fill);
+					Grid.SetColumn(track, 1);
+					g.Children.Add(track);
+
+					var box = new TextBox
+					{
+						Width = 44,
+						Height = 25,
+						MinHeight = 25,
+						HorizontalAlignment = HorizontalAlignment.Right,
+						HorizontalContentAlignment = HorizontalAlignment.Center,
+						VerticalContentAlignment = VerticalAlignment.Center,
+						FontWeight = FontWeight.Bold,
+						Padding = new Thickness(4, 1, 4, 1)
+					};
+					box.Bind(TemplatedControl.ForegroundProperty, new Binding(nameof(EditField.ValueBrush)) { Source = cur });
+					FieldBox.SetField(box, cur);
+					Grid.SetColumn(box, 2);
+					g.Children.Add(box);
+
+					var wrap = new Border { CornerRadius = new CornerRadius(4), Background = Brushes.Transparent, Child = g };
+					wrap.PointerEntered += (_, _) => wrap.Background = Build.Res("CardHover");
+					wrap.PointerExited += (_, _) => wrap.Background = Brushes.Transparent;
+					stack.Children.Add(wrap);
+				}
+				return stack;
+			}
+
+			var grid = new Grid { MaxWidth = 1080, HorizontalAlignment = HorizontalAlignment.Left };
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
+			grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 420 });
+			var left = new StackPanel();
+			left.Children.Add(Build.Card(Build.T("Genel", "General"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "General"))));
+			left.Children.Add(Build.Card(Build.T("Taraftarlar (1-20)", "Supporters (1-20)"), MeterRows(_fields.Where(f => f.Def.GroupKey == "Supporters"))));
+			var right = new StackPanel();
+			var facQuick = new Button
+			{
+				Content = Icons.Label(IconKind.TrendingUp, Build.T("Tüm Tesisleri 20 Yap", "Max All Facilities (20)"), 13),
+				Theme = Build.StyleOf("AccentButton"),
+				Padding = new Thickness(9, 3, 9, 3),
+				FontSize = 11.5,
+				IsEnabled = !AppSettings.Current.ReadOnlyMode
+			};
+			ToolTip.SetTip(facQuick, Build.T($"Antrenman, Altyapı, Gençlik ve Stadyum Zeminini maksimuma çıkarır ({PlatformPaths.UndoHint} geri alır)", $"Maxes Training, Youth, Junior Coaching, Recruitment & Pitch Condition ({PlatformPaths.UndoHint} undoes)"));
+			facQuick.Click += (_, _) =>
+			{
+				using (_data.Session.History.BeginBatch(Build.F("{0}: Tesisleri fulle", "{0}: Max facilities", _club.Name)))
+				{
+					foreach (EditField ef in _fields.Where(f => f.Def.GroupKey == "Facilities" && f.Def.IsWritable))
+					{
+						if (ef.Def.Max is double mv)
+						{
+							try { _data.Session.WriteField(_club.Address, ef.Def, mv.ToString(CultureInfo.InvariantCulture), _club.Name); } catch { }
+						}
+					}
+					var pitch = _fields.FirstOrDefault(f => f.Key == "Pitch Condition" && f.Def.IsWritable);
+					if (pitch?.Def.Max is double pm)
+					{
+						try { _data.Session.WriteField(_club.Address, pitch.Def, pm.ToString(CultureInfo.InvariantCulture), _club.Name); } catch { }
+					}
+				}
+				RefreshValues();
+				RenderInfo();
+				_nav.SetStatus(Build.F("✓ {0}: Tüm tesisler ve saha zemini maksimuma çıkarıldı. {1} geri alır.", "✓ {0}: All facilities & pitch condition maxed. {1} undoes it.", _club.Name, PlatformPaths.UndoHint));
+			};
+			right.Children.Add(Build.Card(Build.T("Tesisler (1-20)", "Facilities (1-20)"), MeterRows(_fields.Where(f => f.Def.GroupKey == "Facilities")), facQuick));
+			right.Children.Add(Build.Card(Build.T("Stadyum", "Stadium"), Build.Rows(_fields.Where(f => f.Def.GroupKey == "Stadium"))));
+			Grid.SetColumn(right, 1);
+			grid.Children.Add(left);
+			grid.Children.Add(right);
+			host.Content = Build.Scroll(grid);
+		}
+		RenderInfo();
+		return host;
+	}
+
+	/// <summary>Sortable player table shared by squads and the player browser. Multi-select + right-click applies presets.</summary>
+	public static DataGrid PlayerGrid(GameData data, IEnumerable<PlayerRow> players, INavigator nav, bool showClub, bool showTeam = false)
+	{
+		var shortlist = new HashSet<uint>(AppSettings.Current.GetShortlist(data.SaveKey));
+		var list = players.ToList();
+		foreach (PlayerRow p in list) p.IsShortlisted = shortlist.Contains(p.Uid);
+		var view = new DataGridCollectionView(list);
+		var grid = new DataGrid { ItemsSource = view, RowHeight = AppSettings.Current.Compact ? 27 : 34 };
+
+		var starBrushConv = new ShortlistStarBrushConverter();
+		var starCol = new DataGridTemplateColumn
+		{
+			Header = "★",
+			Width = new DataGridLength(32),
+			SortMemberPath = "IsShortlisted",
+			CellTemplate = new FuncDataTemplate<PlayerRow>((row, _) =>
+			{
+				var b = new Button
+				{
+					Background = Brushes.Transparent,
+					BorderThickness = new Thickness(0),
+					Padding = new Thickness(0),
+					FontSize = 14.0,
+					Cursor = new Cursor(StandardCursorType.Hand),
+					HorizontalAlignment = HorizontalAlignment.Center,
+					VerticalAlignment = VerticalAlignment.Center
+				};
+				if (row != null)
+				{
+					b.Content = row.ShortlistStar;
+					b.Foreground = (IBrush?)starBrushConv.Convert(row.IsShortlisted, typeof(IBrush), null, CultureInfo.InvariantCulture) ?? Brushes.Gray;
+					b.Click += (_, ev) =>
+					{
+						var cur = new HashSet<uint>(AppSettings.Current.GetShortlist(data.SaveKey));
+						if (cur.Contains(row.Uid))
+						{
+							cur.Remove(row.Uid);
+							row.IsShortlisted = false;
+							nav.SetStatus(Build.F("{0} kısa listeden çıkarıldı.", "{0} removed from shortlist.", row.Name));
+						}
+						else
+						{
+							cur.Add(row.Uid);
+							row.IsShortlisted = true;
+							nav.SetStatus(Build.F("★ {0} kısa listeye eklendi.", "★ {0} added to shortlist.", row.Name));
+						}
+						b.Content = row.ShortlistStar;
+						b.Foreground = (IBrush?)starBrushConv.Convert(row.IsShortlisted, typeof(IBrush), null, CultureInfo.InvariantCulture) ?? Brushes.Gray;
+						AppSettings.Current.SetShortlist(data.SaveKey, cur.ToList());
+						AppSettings.Current.Save();
+						view.Refresh();
+						ev.Handled = true;
+					};
+				}
+				return b;
+			})
+		};
+		grid.Columns.Add(starCol);
+
+		grid.Columns.Add(Build.TemplateColumn(Build.T("Oyuncu", "Player"), "PlayerNameCell", "Name", 240));
+		var posCol = Build.TextColumn(Build.T("Mevki", "Position"), "Positions", 105);
+		posCol.SortMemberPath = "PositionOrder";
+		grid.Columns.Add(posCol);
+		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 50));
+		var status = Build.TextColumn(Build.T("Durum", "Status"), "Status", 120);
+		status.Foreground = Build.Res("Danger");
+		grid.Columns.Add(status);
+		if (showClub)
+		{
+			grid.Columns.Add(Build.TemplateColumn(Build.T("Kulüp", "Club"), "PlayerClubCell", "Club", 190));
+		}
+		if (showTeam)
+		{
+			grid.Columns.Add(Build.TextColumn(Build.T("Takım", "Team"), "Team", 120));
+		}
+		grid.Columns.Add(Build.TextColumn(Build.T("Uyruk", "Nation"), "Nation", 120));
+		grid.Columns.Add(Build.TemplateColumn("CA", "CACell", "CA", 52));
+		grid.Columns.Add(Build.TemplateColumn("PA", "PACell", "PA", 52));
+		HashSet<string> extras = new HashSet<string>(AppSettings.Current.ExtraColumns);
+		if (extras.Contains("Growth")) grid.Columns.Add(Build.TextColumn("PA-CA", "Growth", 54));
+		if (extras.Contains("Role"))
+		{
+			var col = Build.TextColumn(Build.T("En İyi Rol", "Best Role"), "RoleDisplay", 86);
+			col.SortMemberPath = "BestRating";
+			grid.Columns.Add(col);
+		}
+		if (extras.Contains("PR") || extras.Contains("Role"))
+		{
+			var col = Build.TextColumn("PR %", "PotentialDisplay", 58);
+			col.SortMemberPath = "PotentialRating";
+			grid.Columns.Add(col);
+		}
+		if (extras.Contains("Pro")) grid.Columns.Add(Build.TextColumn(Build.T("Prof.", "Pro"), "Professionalism", 48));
+		if (extras.Contains("Cons")) grid.Columns.Add(Build.TextColumn(Build.T("İstik.", "Cons"), "Consistency", 48));
+		if (extras.Contains("Imp")) grid.Columns.Add(Build.TextColumn(Build.T("Ön.Maç", "Imp.M"), "ImportantMatches", 56));
+		if (extras.Contains("Inj")) grid.Columns.Add(Build.TextColumn(Build.T("Sak.Eğ.", "Inj.P"), "InjuryProneness", 56));
+		if (extras.Contains("Det")) grid.Columns.Add(Build.TextColumn(Build.T("Karar.", "Det"), "Determination", 52));
+		grid.Columns.Add(MoneyColumn(Build.T("Değer", "Value"), "Value", false, 110));
+		grid.Columns.Add(MoneyColumn(Build.T("Maaş", "Wage"), "Wage", true, 130));
+		grid.Columns.Add(Build.TextColumn(Build.T("Sözleşme", "Contract"), "ContractEnd", 95));
+		grid.DoubleTapped += (_, _) =>
+		{
+			if (grid.SelectedItem is PlayerRow row)
+			{
+				nav.OpenPlayer(row.Address);
+			}
+		};
+		grid.AddHandler(InputElement.KeyDownEvent, (_, e) =>
+		{
+			if (e.Key == Avalonia.Input.Key.Enter && grid.SelectedItem is PlayerRow row)
+			{
+				nav.OpenPlayer(row.Address);
+				e.Handled = true;
+			}
+		}, RoutingStrategies.Tunnel);
+
+		var menu = PresetMenu(data, "Player", grid, () => grid.SelectedItems.OfType<PlayerRow>().Select(p => new BulkTarget(p.Address, p.Name)).ToList(), nav);
+		menu.Items.Add(new Separator());
+		void Action(string tr, string en, Func<PlayerRow, bool> act)
+		{
+			var item = new MenuItem { Header = Build.T(tr, en), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+			item.Click += (_, _) =>
+			{
+				var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+				int done = 0;
+				using (data.Session.History.BeginBatch(Build.T(tr, en)))
+				{
+					foreach (PlayerRow row in rows)
+					{
+						if (act(row))
+						{
+							done++;
+							row.Status = Medical.Status(data.Memory, row.Address, data.GameDate);
+						}
+					}
+				}
+				view.Refresh();
+				nav.SetStatus(Build.F("{2}: {1} oyuncu.", "{0}: {1} players.", en, done, tr));
+			};
+			menu.Items.Add(item);
+		}
+		Action("Seçilenleri iyileştir", "Heal selected", r => Medical.Heal(data, r.Address, r.Name));
+		Action("Seçilenlerin cezasını kaldır", "Lift bans of selected", r => Medical.LiftBans(data, r.Address, r.Name));
+		menu.Items.Add(new Separator());
+		var freezeSel = new MenuItem { Header = Build.T("❄ Seçilenleri dondur", "❄ Freeze selected"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		freezeSel.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			int done = 0;
+			foreach (PlayerRow row in rows)
+			{
+				if (data.Session.FreezeEntity(row.Address, row.Name, data.PlayerDef, PlayerPage.FreezeGroups) > 0)
+				{
+					done++;
+				}
+			}
+			nav.SetStatus(Build.F("Donduruldu: {0} oyuncu.", "Frozen: {0} players.", done));
+		};
+		menu.Items.Add(freezeSel);
+		var unfreezeSel = new MenuItem { Header = Build.T("Seçilenlerin dondurmasını kaldır", "Unfreeze selected") };
+		unfreezeSel.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			int done = 0;
+			foreach (PlayerRow row in rows)
+			{
+				if (data.Session.Freezer.IsFrozen(row.Address))
+				{
+					data.Session.Freezer.Unfreeze(row.Address);
+					done++;
+				}
+			}
+			nav.SetStatus(Build.F("Dondurma kaldırıldı: {0} oyuncu.", "Unfrozen: {0} players.", done));
+		};
+		menu.Items.Add(unfreezeSel);
+		menu.Items.Add(new Separator());
+		var massEdit = new MenuItem { Header = Build.T("✎ Toplu düzenle…", "✎ Mass edit…"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		massEdit.Click += (_, _) =>
+		{
+			var targets = grid.SelectedItems.OfType<PlayerRow>().Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			if (targets.Count == 0) return;
+			var dlg = new MassEditWindow(data, data.PlayerDef, targets, nav);
+			Window? owner = OwnerOf(grid);
+			if (owner is { IsVisible: true }) _ = dlg.ShowDialog(owner);
+			else dlg.Show();
+		};
+		menu.Items.Add(massEdit);
+		var healSel = new MenuItem { Header = Build.T("Sakatlıkları iyileştir", "Heal injuries"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		healSel.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			if (rows.Count == 0) return;
+			int healed = 0;
+			using (data.Session.History.BeginBatch(Build.T("Seçili sakatlıkları iyileştir", "Heal selected injuries")))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					try { if (Medical.Heal(data, r.Address, r.Name)) healed++; } catch { }
+				}
+			}
+			nav.SetStatus(Build.F("✓ {0} oyuncunun sakatlığı iyileştirildi. {1} geri alır.", "✓ Healed injuries for {0} players. {1} undoes it.", healed, PlatformPaths.UndoHint));
+		};
+		menu.Items.Add(healSel);
+		var cohSel = new MenuItem { Header = Build.T("Takım uyumunu %100 yap", "Max team cohesion"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		cohSel.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			if (rows.Count == 0) return;
+			int done = 0;
+			using (data.Session.History.BeginBatch(Build.T("Seçili takım uyumu %100", "Max selected team cohesion")))
+			{
+				foreach (PlayerRow r in rows)
+				{
+					try
+					{
+						bool ok = r.ClubAddress != 0 && TeamCohesion.MaxPlayerCohesion(data, r.Address, r.ClubAddress, r.Name);
+						int tac = TeamCohesion.MaxPlayerTacticalFamiliarity(data, r.Address, r.Name);
+						if (ok || tac > 0) done++;
+					}
+					catch { }
+				}
+			}
+			nav.SetStatus(Build.F("✓ {0} oyuncunun uyumu %100 yapıldı. {1} geri alır.", "✓ Maxed cohesion for {0} players. {1} undoes it.", done, PlatformPaths.UndoHint));
+		};
+		menu.Items.Add(cohSel);
+		var compareTwo = new MenuItem { Header = Build.T("⚖ Seçilen 2 oyuncuyu karşılaştır", "⚖ Compare 2 selected players") };
+		compareTwo.Click += (_, _) =>
+		{
+			var sel = grid.SelectedItems.OfType<PlayerRow>().Take(2).ToList();
+			if (sel.Count == 2)
+			{
+				var cw = new PlayerCompareWindow(data, sel[0], sel[1], nav);
+				Window? owner = OwnerOf(grid);
+				if (owner is { IsVisible: true }) _ = cw.ShowDialog(owner);
+				else cw.Show();
+			}
+			else
+			{
+				nav.SetStatus(Build.T("Karşılaştırmak için Ctrl ile 2 oyuncu seç.", "Hold Ctrl/Cmd and select 2 players to compare."));
+			}
+		};
+		menu.Items.Add(compareTwo);
+		var cloneSel = new MenuItem { Header = Build.T("⧉ Özellikleri klonla (ilk seçilenden diğerlerine)", "⧉ Clone attributes (first selected to others)"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		cloneSel.Click += async (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().ToList();
+			if (rows.Count < 2)
+			{
+				nav.SetStatus(Build.T("Klonlamak için en az 2 oyuncu seç (önce kaynak oyuncuyu seç).", "Select at least 2 players to clone (select the source player first)."));
+				return;
+			}
+			PlayerRow src = rows[0];
+			var targets = rows.Skip(1).Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			if (AppSettings.Current.ConfirmBulkEdits && !await MsgBox.AskAsync(OwnerOf(grid),
+				Build.F("{0} oyuncusunun özellikleri {1} oyuncuya kopyalansın mı? {2} geri alır.", "Clone {0}'s attributes to {1} players? {2} undoes it.", src.Name, targets.Count, PlatformPaths.UndoHint),
+				"SquadEditor"))
+			{
+				return;
+			}
+			BulkResult res = BulkEdit.Clone(data.Session, data.PlayerDef, src.Address, PlayerPage.FreezeGroups, targets, Build.F("Klonla: {0}", "Clone: {0}", src.Name));
+			nav.SetStatus(Build.F("✓ {0} → {1} oyuncu klonlandı ({2} değer). {3} geri alır.", "✓ Cloned {0} → {1} players ({2} values). {3} undoes it.", src.Name, targets.Count, res.Written, PlatformPaths.UndoHint));
+		};
+		menu.Items.Add(cloneSel);
+		menu.Items.Add(new Separator());
+		var shortlistAdd = new MenuItem { Header = Build.T("★ Kısa listeye ekle / çıkar", "★ Toggle shortlist") };
+		shortlistAdd.Click += (_, _) =>
+		{
+			var rows = grid.SelectedItems.OfType<PlayerRow>().Where(r => r.Uid > 0).ToList();
+			if (rows.Count == 0) return;
+			var set = new HashSet<uint>(AppSettings.Current.GetShortlist(data.SaveKey));
+			bool allIn = rows.All(r => set.Contains(r.Uid));
+			foreach (PlayerRow r in rows)
+			{
+				if (allIn) set.Remove(r.Uid); else set.Add(r.Uid);
+				r.IsShortlisted = !allIn;
+			}
+			AppSettings.Current.SetShortlist(data.SaveKey, set.ToList());
+			AppSettings.Current.Save();
+			view.Refresh();
+			nav.SetStatus(allIn
+				? Build.F("★ {0} oyuncu kısa listeden çıkarıldı.", "★ Removed {0} players from shortlist.", rows.Count)
+				: Build.F("★ {0} oyuncu kısa listeye eklendi (toplam {1}).", "★ Added {0} players to shortlist ({1} total).", rows.Count, set.Count));
+		};
+		menu.Items.Add(shortlistAdd);
+		grid.ContextMenu = menu;
+		return grid;
+	}
+
+	public static DataGrid StaffGrid(GameData data, IEnumerable<StaffRow> staff, INavigator nav, bool showClub)
+	{
+		var view = new DataGridCollectionView(staff.ToList());
+		var grid = new DataGrid { ItemsSource = view, RowHeight = AppSettings.Current.Compact ? 27 : 34 };
+		grid.Columns.Add(Build.TemplateColumn(Build.T("Personel", "Staff"), "PlayerNameCell", "Name", 240));
+		grid.Columns.Add(Build.TextColumn(Build.T("Görev", "Job"), "Job", 175));
+		grid.Columns.Add(Build.TextColumn(Build.T("Yaş", "Age"), "Age", 48));
+		if (showClub)
+		{
+			grid.Columns.Add(Build.TemplateColumn(Build.T("Kulüp", "Club"), "PlayerClubCell", "Club", 180));
+		}
+		grid.Columns.Add(Build.TextColumn(Build.T("Uyruk", "Nation"), "Nation", 120));
+		grid.Columns.Add(Build.TemplateColumn("CA", "CACell", "CA", 52));
+		grid.Columns.Add(Build.TemplateColumn("PA", "PACell", "PA", 52));
+		grid.Columns.Add(Build.TextColumn(Build.T("★ Yıldız", "★ Stars"), "BestStarsText", 68));
+		grid.Columns.Add(MoneyColumn(Build.T("Maaş", "Wage"), "Wage", true, 125));
+		grid.Columns.Add(Build.TextColumn(Build.T("Sözleşme", "Contract"), "ContractEnd", 95));
+		grid.DoubleTapped += (_, _) =>
+		{
+			if (grid.SelectedItem is StaffRow row)
+			{
+				nav.OpenStaff(row.Address);
+			}
+		};
+		grid.AddHandler(InputElement.KeyDownEvent, (_, e) =>
+		{
+			if (e.Key == Avalonia.Input.Key.Enter && grid.SelectedItem is StaffRow row)
+			{
+				nav.OpenStaff(row.Address);
+				e.Handled = true;
+			}
+		}, RoutingStrategies.Tunnel);
+		var menu = new ContextMenu();
+		var freezeStaff = new MenuItem { Header = Build.T("❄ Seçilenleri dondur", "❄ Freeze selected"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		freezeStaff.Click += (_, _) =>
+		{
+			int done = grid.SelectedItems.OfType<StaffRow>().Count(r => data.Session.FreezeEntity(r.Address, r.Name, data.StaffDef, StaffPage.StaffFreezeGroups) > 0);
+			nav.SetStatus(Build.F("Donduruldu: {0} personel.", "Frozen: {0} staff.", done));
+		};
+		var unfreezeStaff = new MenuItem { Header = Build.T("Seçilenlerin dondurmasını kaldır", "Unfreeze selected") };
+		unfreezeStaff.Click += (_, _) =>
+		{
+			int done = 0;
+			foreach (StaffRow r in grid.SelectedItems.OfType<StaffRow>())
+			{
+				if (data.Session.Freezer.IsFrozen(r.Address))
+				{
+					data.Session.Freezer.Unfreeze(r.Address);
+					done++;
+				}
+			}
+			nav.SetStatus(Build.F("Dondurma kaldırıldı: {0} personel.", "Unfrozen: {0} staff.", done));
+		};
+		var massStaff = new MenuItem { Header = Build.T("✎ Toplu düzenle…", "✎ Mass edit…"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		massStaff.Click += (_, _) =>
+		{
+			var targets = grid.SelectedItems.OfType<StaffRow>().Select(s => new BulkTarget(s.Address, s.Name)).ToList();
+			if (targets.Count > 0)
+			{
+				var dlg = new MassEditWindow(data, data.StaffDef, targets, nav);
+				Window? owner = OwnerOf(grid);
+				if (owner is { IsVisible: true }) _ = dlg.ShowDialog(owner);
+				else dlg.Show();
+			}
+		};
+		var moveStaff = new MenuItem { Header = Build.T("⇄ Kulübe taşı / İşe al…", "⇄ Move / Hire to club…"), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		moveStaff.Click += async (_, _) =>
+		{
+			if (grid.SelectedItem is StaffRow row)
+			{
+				var dialog = MoveWindow.ForStaff(data, row.Address, row.Name);
+				Window? owner = OwnerOf(grid);
+				bool ok = owner is { IsVisible: true } && (await dialog.ShowDialog<bool?>(owner)) == true;
+				if (ok && dialog.Done is { } done)
+				{
+					data.StaffMoved(row.Address, done.NewClub);
+					view.Refresh();
+					nav.SetStatus(done.Summary + Build.T($" {PlatformPaths.UndoHint} geri alır.", $" {PlatformPaths.UndoHint} undoes it."));
+				}
+			}
+		};
+		menu.Items.Add(moveStaff);
+		menu.Items.Add(new Separator());
+		menu.Items.Add(freezeStaff);
+		menu.Items.Add(unfreezeStaff);
+		menu.Items.Add(new Separator());
+		menu.Items.Add(massStaff);
+		grid.ContextMenu = menu;
+		return grid;
+	}
+
+	public static DataGrid ClubGrid(IEnumerable<ClubRow> clubs, INavigator nav)
+	{
+		var grid = new DataGrid { ItemsSource = clubs.ToList(), RowHeight = AppSettings.Current.Compact ? 27 : 34 };
+		grid.Columns.Add(Build.TemplateColumn(Build.T("Kulüp", "Club"), "ClubNameCell", "Name", 280));
+		grid.Columns.Add(Build.TextColumn(Build.T("Lig", "League"), "League", 220));
+		grid.Columns.Add(Build.TextColumn(Build.T("Ülke", "Nation"), "Nation", 150));
+		grid.Columns.Add(Build.TextColumn(Build.T("Oyuncu", "Players"), "SquadSize", 80));
+		grid.Columns.Add(Build.TextColumn(Build.T("Ort. CA", "Avg CA"), "AverageCA", 80, "0"));
+		grid.Columns.Add(Build.TextColumn(Build.T("En iyi CA", "Best CA"), "BestCA", 90));
+		grid.DoubleTapped += (_, _) =>
+		{
+			if (grid.SelectedItem is ClubRow row)
+			{
+				nav.OpenClub(row.Address);
+			}
+		};
+		grid.AddHandler(InputElement.KeyDownEvent, (_, e) =>
+		{
+			if (e.Key == Avalonia.Input.Key.Enter && grid.SelectedItem is ClubRow row)
+			{
+				nav.OpenClub(row.Address);
+				e.Handled = true;
+			}
+		}, RoutingStrategies.Tunnel);
+		return grid;
+	}
+
+	private static DataGridTextColumn MoneyColumn(string header, string path, bool wage, double width)
+	{
+		return new DataGridTextColumn
+		{
+			Header = header,
+			Binding = new Binding(path) { Converter = (IValueConverter)Application.Current!.FindResource("MoneyText")!, ConverterParameter = wage ? "wage" : "value" },
+			SortMemberPath = path,
+			Width = new DataGridLength(width)
+		};
+	}
+
+	private static ContextMenu PresetMenu(GameData data, string entity, Control ownerCtrl, Func<List<BulkTarget>> targets, INavigator nav)
+	{
+		var menu = new ContextMenu();
+		string lang = Loc.Instance.Language;
+		foreach (var preset in data.Layout.Presets.Where(p => p.Entity == entity))
+		{
+			var item = new MenuItem { Header = data.Layout.Text(lang, preset.Name) };
+			if (preset.Description != null) ToolTip.SetTip(item, data.Layout.Text(lang, preset.Description));
+			item.IsEnabled = !AppSettings.Current.ReadOnlyMode;
+			item.Click += async (_, _) =>
+			{
+				List<BulkTarget> list = targets();
+				if (list.Count == 0)
+				{
+					return;
+				}
+				if (list.Count > 1 && AppSettings.Current.ConfirmBulkEdits && !await MsgBox.AskAsync(OwnerOf(ownerCtrl),
+					Build.F("\"{2}\" {1} oyuncuya uygulansın mı? {3} ile geri alabilirsin.", "Apply \"{0}\" to {1} players? {3} undoes it.", preset.Name, list.Count, data.Layout.Text(lang, preset.Name), PlatformPaths.UndoHint),
+					"SquadEditor"))
+				{
+					return;
+				}
+				BulkResult result = BulkEdit.ApplyPreset(data.Session, data.Layout.GetEntity(entity), preset, list, data.Layout.Text(lang, preset.Name));
+				nav.SetStatus(Build.T($"{data.Layout.Text(lang, preset.Name)}: {list.Count} kayıt, {result.Written} değer yazıldı" + (result.Failed > 0 ? $", {result.Failed} hata" : "") + ".",
+					$"{preset.Name}: {list.Count} records, {result.Written} values written" + (result.Failed > 0 ? $", {result.Failed} failed" : "") + "."));
+			};
+			menu.Items.Add(item);
+		}
+		return menu;
+	}
+}
+
+/// <summary>Staff member page: personal details and contract.</summary>
+public sealed class StaffPage : UserControl, IPage
+{
+	public static readonly HashSet<string> StaffFreezeGroups = new HashSet<string>
+	{
+		"Coaching", "Medical", "Mental", "Knowledge", "Personality"
+	};
+
+	private readonly Dictionary<string, EditField> _f;
+	private readonly GameData _data;
+	private readonly INavigator _nav;
+	private readonly DockPanel _root = new DockPanel();
+	private Border _header;
+
+	public StaffPage(GameData data, StaffRow row, INavigator nav)
+	{
+		_data = data;
+		_nav = nav;
+		string lang = Loc.Instance.Language;
+		Row = row;
+		var staffDef = row.IsHuman ? data.HumanDef : data.StaffDef;
+		_f = staffDef.Fields.Where(f => f.GroupKey != "Internal" && f.Concat.Count == 0)
+			.ToDictionary(f => f.Name, f => new EditField(data, row.Address, f, data.Layout.Text(lang, f.Name)));
+		Loaded += (_, _) => FieldBox.EntityLabel = Row.Name;
+
+		_header = BuildHeader();
+		DockPanel.SetDock(_header, Dock.Top);
+		_root.Children.Add(_header);
+		Border ribbon = new Border
+		{
+			Background = Build.Res("Chrome"),
+			BorderBrush = Build.Res("StrokeSoft"),
+			BorderThickness = new Thickness(0, 0, 0, 1),
+			Padding = new Thickness(16, 6, 16, 6),
+			Child = BuildActionsRibbon()
+		};
+		DockPanel.SetDock(ribbon, Dock.Top);
+		_root.Children.Add(ribbon);
+		Grid body = Build.PageBody(out StackPanel menu, out ContentControl content);
+		Build.NavItem(menu, Build.T("Genel Bakış", "Overview"), () => content.Content = Overview(), isChecked: true);
+		_root.Children.Add(body);
+		Content = _root;
+		Background = Build.Res("Bg");
+	}
+
+	private Border BuildHeader()
+	{
+		var line1 = Build.Text(string.Join("  ·  ", new[] { Row.Job, Row.Nation, Row.Age > 0 ? Build.F("{0} yaşında", "{0} years old", Row.Age) : "" }.Where(s => s.Length > 0)), 13, new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xFF, 0xFF)));
+		line1.Margin = new Thickness(0, 4, 0, 0);
+		var line2 = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0) };
+		if (_data.ClubsByAddress.TryGetValue(Row.ClubAddress, out ClubRow? club))
+		{
+			if (ImageLookup.Graphics.Club(club.Uid) is { } logo)
+			{
+				line2.Children.Add(new Image { Source = logo, Width = 20, Height = 20, Margin = new Thickness(0, 0, 8, 0) });
+			}
+			var link = new Button { Content = club.Name, Theme = Build.StyleOf("LinkButton"), FontSize = 14, FontWeight = FontWeight.SemiBold };
+			link.Click += (_, _) => _nav.OpenClub(club.Address);
+			line2.Children.Add(link);
+		}
+		else
+		{
+			line2.Children.Add(Build.Text(Build.T("Kulüpsüz", "Unemployed"), 13, Build.Res("Muted")));
+		}
+		var pills = new List<Control>();
+		if (_f.TryGetValue("CA", out EditField? ca) && _f.TryGetValue("PA", out EditField? pa))
+		{
+			pills.Add(Build.Pill($"{ca.Number} / {pa.Number}", "CA / PA", Colors.Attribute((int)Math.Round(ca.Number / 10.0))));
+		}
+		if (Row.Wage > 0)
+		{
+			pills.Add(Build.Pill(Money.Format(Row.Wage, true), Build.T("Maaş", "Wage")));
+		}
+		if (Row.ContractEnd.Length > 0)
+		{
+			pills.Add(Build.Pill(Dates.Show(Row.ContractEnd), Build.T("Sözleşme bitişi", "Contract ends")));
+		}
+		return Build.Header(Build.Avatar(Icon, Row.Name, 74, round: true), Row.Name, line1, line2, pills);
+	}
+
+	private void RebuildHeader()
+	{
+		Border fresh = BuildHeader();
+		DockPanel.SetDock(fresh, Dock.Top);
+		_root.Children.Remove(_header);
+		_root.Children.Insert(0, fresh);
+		_header = fresh;
+	}
+
+	public StaffRow Row { get; }
+	public string Key => "staff:" + Row.Address;
+	public string Title => Row.Name;
+	public IImage? Icon => ImageLookup.Graphics.Person(Row.Uid);
+
+	public void RefreshValues()
+	{
+		foreach (EditField f in _f.Values)
+		{
+			f.Refresh();
+		}
+	}
+
+	private Control Overview()
+	{
+		var grid = new Grid();
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 340 });
+		grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 300 });
+		IEnumerable<EditField> Group(string g) => _f.Values.Where(f => f.Def.GroupKey == g).OrderBy(f => f.Label, StringComparer.Create(SquadEditor.Core.CoreText.Culture, true));
+		IEnumerable<EditField> Named(params string[] names) => names.Where(_f.ContainsKey).Select(n => _f[n]);
+		var c0 = new StackPanel();
+		c0.Children.Add(Build.Card(Build.T("Antrenörlük", "Coaching"), Build.Rows(Group("Coaching"))));
+		c0.Children.Add(Build.Card(Build.T("Medikal", "Medical"), Build.Rows(Group("Medical"))));
+		var c1 = new StackPanel();
+		c1.Children.Add(Build.Card(Build.T("Zihinsel", "Mental"), Build.Rows(Group("Mental"))));
+		c1.Children.Add(Build.Card(Build.T("Bilgi seviyesi", "Knowledge"), Build.Rows(Group("Knowledge"))));
+		c1.Children.Add(Build.Card(Build.T("Kişilik", "Personality"), Build.Rows(Group("Personality"))));
+		var c2 = new StackPanel();
+		c2.Children.Add(StaffStars.BuildCard(Row));
+		c2.Children.Add(Build.Card(Build.T("Yetenek ve itibar", "Ability & reputation"), Build.Rows(Named("CA", "PA", "Home Reputation", "Current Reputation", "World Reputation"))));
+		c2.Children.Add(Build.Card(Build.T("Sözleşme", "Contract"), Build.Rows(Named("Club", "Job", "Wage", "Contract Expires"))));
+		c2.Children.Add(Build.Card(Build.T("Kişisel bilgiler", "Personal details"), Build.Rows(Named("First Name", "Last Name", "Common Name", "Unique ID", "Date of Birth", "Nation", "City of Birth"))));
+		Grid.SetColumn(c1, 1);
+		Grid.SetColumn(c2, 2);
+		grid.Children.Add(c0);
+		grid.Children.Add(c1);
+		grid.Children.Add(c2);
+		return Build.Scroll(grid);
+	}
+
+	private Control BuildActionsRibbon()
+	{
+		var actions = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+		bool canWrite = !AppSettings.Current.ReadOnlyMode;
+		var freeze = new Button { Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0) };
+		void UpdateFreeze()
+		{
+			bool frozen = _data.Session.Freezer.IsFrozen(Row.Address);
+			freeze.Content = frozen ? Build.T("❄ Donduruldu", "❄ Frozen") : Build.T("❄ Dondur", "❄ Freeze");
+			freeze.IsEnabled = canWrite || frozen;
+			freeze.Theme = frozen ? Build.StyleOf("AccentButton") : Build.DefaultButtonStyle();
+		}
+		UpdateFreeze();
+		freeze.Click += (_, _) =>
+		{
+			if (_data.Session.Freezer.IsFrozen(Row.Address))
+			{
+				_data.Session.Freezer.Unfreeze(Row.Address);
+				_nav.SetStatus(Build.F("{0} artık dondurulmuş değil.", "{0} unfrozen.", Row.Name));
+			}
+			else
+			{
+				int count = _data.Session.FreezeEntity(Row.Address, Row.Name, Row.IsHuman ? _data.HumanDef : _data.StaffDef, StaffFreezeGroups);
+				_nav.SetStatus(Build.F("{0} donduruldu ({1} alan kilitlendi).", "{0} frozen ({1} fields locked).", Row.Name, count));
+			}
+			UpdateFreeze();
+		};
+		Button ExtendBtn(int years)
+		{
+			var btn = new Button
+			{
+				Content = Build.F("📝 +{0} Yıl", "📝 +{0}y", years),
+				Padding = new Thickness(9, 4, 9, 4),
+				Margin = new Thickness(0, 0, 6, 0),
+				IsEnabled = canWrite && _f.TryGetValue("Contract Expires", out EditField? ce) && GameData.ParseDate(ce.Value) != null
+			};
+			ToolTip.SetTip(btn, Build.F("Sözleşme bitişini {0} yıl uzat", "Extend contract expiry by {0} year(s)", years));
+			btn.Click += (_, _) =>
+			{
+				if (_f.TryGetValue("Contract Expires", out EditField? ce) && GameData.ParseDate(ce.Value) is { } cur)
+				{
+					DateTime next = cur.AddYears(years);
+					_data.Session.WriteField(Row.Address, ce.Def, next.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture), Row.Name);
+					RefreshValues();
+					Row.ContractEnd = next.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+					RebuildHeader();
+					_nav.SetStatus(Build.F("✓ {0} sözleşmesi {1} tarihine uzatıldı.", "✓ {0}'s contract extended to {1}.", Row.Name, Dates.Show(Row.ContractEnd)));
+				}
+			};
+			return btn;
+		}
+		var rename = new Button { Content = Build.T("Adı değiştir", "Rename"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
+		rename.Click += async (_, _) =>
+		{
+			var dialog = new RenameWindow(_data, Row.Address, Row.Name);
+			Window? owner = ClubPage.OwnerOf(this);
+			if (owner is { IsVisible: true } && (await dialog.ShowDialog<bool?>(owner)) == true)
+			{
+				RefreshValues();
+				_data.Renamed(Row.Address, _data.Read(Row.Address, _data.StaffDef, "Name"));
+				RebuildHeader();
+				_nav.SetStatus(Build.T($"Ad değiştirildi. {PlatformPaths.UndoHint} geri alır.", $"Renamed. {PlatformPaths.UndoHint} undoes it."));
+			}
+		};
+		var move = new Button { Content = Build.T("Kulübe taşı / İşe al", "Move / Hire"), Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 6, 0), IsEnabled = canWrite };
+		move.Click += async (_, _) =>
+		{
+			var dialog = MoveWindow.ForStaff(_data, Row.Address, Row.Name);
+			Window? owner = ClubPage.OwnerOf(this);
+			if (owner is { IsVisible: true } && (await dialog.ShowDialog<bool?>(owner)) == true && dialog.Done is { } done)
+			{
+				_data.StaffMoved(Row.Address, done.NewClub);
+				RefreshValues();
+				RebuildHeader();
+				_nav.SetStatus(done.Summary + Build.T($" {PlatformPaths.UndoHint} geri alır.", $" {PlatformPaths.UndoHint} undoes it."));
+			}
+		};
+		actions.Children.Add(freeze);
+		actions.Children.Add(ExtendBtn(1));
+		actions.Children.Add(ExtendBtn(3));
+		actions.Children.Add(rename);
+		actions.Children.Add(move);
+		return actions;
+	}
+}
+
+/// <summary>Start page: browse, filter and scout every player, club, staff member and frozen entity of the save.</summary>
+public sealed class HomePage : UserControl, IPage
+{
+	private static readonly string[] Positions = { "", "GK", "DC", "DL", "DR", "WBL", "WBR", "DM", "MC", "ML", "MR", "AMC", "AML", "AMR", "ST" };
+
+	private readonly GameData _data;
+	private readonly INavigator _nav;
+	private readonly TextBox _search;
+	private readonly Border _filterBar;
+	private readonly Border _staffFilterBar;
+	private readonly ComboBox _pos, _region;
+	private readonly EditableCombo _nation, _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM;
+	private readonly CheckBox _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _regenOnly, _shortlistOnly, _previewToggle;
+	private readonly Button _advFilterBtn;
+	private readonly ScoutFilter _scoutFilter = new ScoutFilter();
+	private readonly ComboBox _staffJob;
+	private readonly TextBox _staffCaMin, _staffPaMin;
+	private readonly CheckBox _staffFreeOnly, _staffNoMgr;
+	private readonly Button _staffAdvBtn;
+	private readonly StaffFilter _staffFilter = new StaffFilter();
+	private readonly TextBlock _matchCount;
+	private readonly TextBlock _staffMatchCount;
+	private readonly RadioButton _frozenTab;
+	private readonly ContentControl _host = new ContentControl();
+	private readonly Border _previewCard = new Border { Width = 282, Margin = new Thickness(10, 0, 0, 12), IsVisible = false };
+	private readonly ContentControl _previewContent = new ContentControl();
+	private readonly WrapPanel _activeChips = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 0, 0), IsVisible = false };
+	private readonly DispatcherTimer _debounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
+	private List<PlayerRow> _lastPlayers = new List<PlayerRow>();
+	private string _mode = "players";
+
+	public HomePage(GameData data, INavigator nav)
+	{
+		_data = data;
+		_nav = nav;
+		var root = new DockPanel { Margin = new Thickness(16, 12, 16, 0) };
+
+		var top = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+		var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+		title.Children.Add(Build.Text(Build.T("Veritabanı", "Database"), 17, Build.Res("Text"), FontWeight.SemiBold));
+		title.Children.Add(Build.Text($"{data.Players.Count:N0} {Build.T("oyuncu", "players")}  ·  {data.Staff.Count:N0} {Build.T("personel", "staff")}  ·  {data.Clubs.Count:N0} {Build.T("kulüp", "clubs")}  ·  {data.GameDate:dd.MM.yyyy}", 12, Build.Res("Muted")));
+		DockPanel.SetDock(title, Dock.Left);
+		top.Children.Add(title);
+
+		var segments = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+		RadioButton? frozenBtn = null;
+		foreach (var (key, label) in new[]
+		{
+			("players", Build.T("Oyuncular", "Players")),
+			("staff", Build.T("Personel", "Staff")),
+			("clubs", Build.T("Kulüpler", "Clubs")),
+			("nations", Build.T("Ülkeler", "Nations")),
+			("comps", Build.T("Ligler", "Competitions")),
+			("frozen", Build.T("❄ Dondurulanlar", "❄ Frozen"))
+		})
+		{
+			string k = key;
+			var b = new RadioButton { Content = label, Theme = Build.StyleOf("Segment"), GroupName = "home", IsChecked = k == "players" };
+			b.IsCheckedChanged += (_, _) => { if (b.IsChecked == true) { _mode = k; Apply(); } };
+			segments.Children.Add(b);
+			if (k == "frozen")
+			{
+				frozenBtn = b;
+			}
+		}
+		_frozenTab = frozenBtn!;
+		_search = new TextBox { Classes = { "SearchBox" }, Width = 260, Height = 32, MinHeight = 32, Margin = new Thickness(10, 0, 0, 0) };
+		ToolTip.SetTip(_search, Build.T("İsim, kulüp veya ülke yaz (aksan fark etmez)", "Type name, club or nation (accents ignored)"));
+		_search.TextChanged += (_, _) => ScheduleApply();
+		_debounce.Tick += (_, _) => { _debounce.Stop(); Apply(); };
+		var searchHost = new Grid { VerticalAlignment = VerticalAlignment.Center };
+		searchHost.Children.Add(_search);
+		searchHost.Children.Add(new TextBlock { Text = "⌕", FontSize = 15, Foreground = Build.Res("Muted"), Margin = new Thickness(20, 0, 0, 1), VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false });
+		var right = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+		if (AppSettings.Current.LastClubUid > 0 && data.Clubs.FirstOrDefault(c => c.Uid == AppSettings.Current.LastClubUid) is { } lastClub)
+		{
+			var clubBtn = new Button
+			{
+				Margin = new Thickness(0, 0, 10, 0),
+				Padding = new Thickness(10, 5, 10, 5),
+				VerticalAlignment = VerticalAlignment.Center
+			};
+			ToolTip.SetTip(clubBtn, Build.T("Son açtığın kulübe hızlı git", "Jump to your last opened club"));
+			var cbRow = new StackPanel { Orientation = Orientation.Horizontal };
+			if (ImageLookup.Graphics.Club(lastClub.Uid) is { } logo)
+			{
+				cbRow.Children.Add(new Image { Source = logo, Width = 16, Height = 16, Margin = new Thickness(0, 0, 6, 0) });
+			}
+			cbRow.Children.Add(Build.Text(lastClub.Name, 12, Build.Res("Text"), FontWeight.SemiBold));
+			clubBtn.Content = cbRow;
+			clubBtn.Click += (_, _) => _nav.OpenClub(lastClub.Address);
+			right.Children.Add(clubBtn);
+		}
+		right.Children.Add(segments);
+		right.Children.Add(searchHost);
+		top.Children.Add(right);
+		DockPanel.SetDock(top, Dock.Top);
+		root.Children.Add(top);
+
+		TextBox NumBox(string tip, double w = 38)
+		{
+			var tb = new TextBox { Width = w, Height = 24, MinHeight = 24, FontSize = 12, Padding = new Thickness(3, 1, 3, 1), HorizontalContentAlignment = HorizontalAlignment.Center };
+			ToolTip.SetTip(tb, tip);
+			tb.TextChanged += (_, _) => ScheduleApply();
+			return tb;
+		}
+		TextBlock Lbl(string text) => new TextBlock { Text = text, Foreground = Build.Res("Muted"), FontSize = 11.5, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 4, 0) };
+
+		_pos = new ComboBox { Width = 84, Height = 28, MinHeight = 28, FontSize = 12.5, VerticalAlignment = VerticalAlignment.Center };
+		_pos.ItemsSource = Positions.Select(p => new KeyValuePair<string, string>(p, p.Length == 0 ? Build.T("Tümü", "All") : p)).ToList();
+		_pos.DisplayMemberBinding = new Binding("Value");
+		_pos.SelectedValueBinding = new Binding("Key");
+		_pos.SelectedValue = "";
+		_pos.SelectionChanged += (_, _) => Apply();
+
+		_region = new ComboBox { Width = 112, Height = 28, MinHeight = 28, FontSize = 12, VerticalAlignment = VerticalAlignment.Center };
+		ToolTip.SetTip(_region, Build.T("Bölgesel uyruk / yabancı kuralı filtresi", "Regional nationality filter"));
+		_region.ItemsSource = new[]
+		{
+			new KeyValuePair<string, string>("", Build.T("Tüm Bölgeler", "All Regions")),
+			new KeyValuePair<string, string>("TR", Build.T("🇹🇷 Türkiye", "🇹🇷 Türkiye")),
+			new KeyValuePair<string, string>("EU", Build.T("🇪🇺 AB (EU)", "🇪🇺 EU Nationals")),
+			new KeyValuePair<string, string>("SA", Build.T("🌎 Güney Amerika", "🌎 South America")),
+			new KeyValuePair<string, string>("BALKAN", Build.T("🌍 Balkanlar", "🌍 Balkans")),
+			new KeyValuePair<string, string>("AFRICA", Build.T("🌍 Afrika", "🌍 Africa"))
+		};
+		_region.DisplayMemberBinding = new Binding("Value");
+		_region.SelectedValueBinding = new Binding("Key");
+		_region.SelectedValue = "";
+		_region.SelectionChanged += (_, _) => Apply();
+
+		var playerNations = data.Players.Select(p => p.Nation).Where(n => n.Length > 0).Distinct().OrderBy(n => n).ToList();
+		_nation = new EditableCombo(128, 28, 12, filterOnType: true) { VerticalAlignment = VerticalAlignment.Center };
+		_nation.SetStrings(playerNations);
+		ToolTip.SetTip(_nation, Build.T("Oyuncu uyruğu seç veya yaz (örn. Türkiye, Brezilya, Fransa)", "Pick or type player nationality (e.g. Türkiye, Brazil, France)"));
+		_nation.SelectionChanged += (_, _) => ScheduleApply();
+		_nation.TextChanged += (_, _) => ScheduleApply();
+
+		EditableCombo RangeCombo(string tip, double w, IEnumerable<string> items)
+		{
+			var cb = new EditableCombo(w, 28, 12.5, filterOnType: false) { VerticalAlignment = VerticalAlignment.Center };
+			cb.SetStrings(items);
+			ToolTip.SetTip(cb, tip);
+			cb.SelectionChanged += (_, _) => ScheduleApply();
+			cb.TextChanged += (_, _) => ScheduleApply();
+			return cb;
+		}
+		var ages0to99 = Enumerable.Range(0, 100).Select(i => i.ToString()).ToList();
+		var ability0to200 = Enumerable.Range(0, 201).Select(i => i.ToString()).ToList();
+		var valuePresets = new[] { "0", "1", "2", "3", "5", "10", "15", "20", "25", "30", "40", "50", "75", "100", "150", "200", "300" };
+		_ageMin = RangeCombo(Build.T("En az yaş (0–99, seç veya yaz)", "Min age (0–99, pick or type)"), 66, ages0to99);
+		_ageMax = RangeCombo(Build.T("En fazla yaş (0–99, seç veya yaz)", "Max age (0–99, pick or type)"), 66, ages0to99);
+		_caMin = RangeCombo(Build.T("En az CA (0–200, seç veya yaz)", "Min CA (0–200, pick or type)"), 72, ability0to200);
+		_caMax = RangeCombo(Build.T("En fazla CA (0–200, seç veya yaz)", "Max CA (0–200, pick or type)"), 72, ability0to200);
+		_paMin = RangeCombo(Build.T("En az PA (0–200, seç veya yaz)", "Min PA (0–200, pick or type)"), 72, ability0to200);
+		_maxValM = RangeCombo(Build.F("En fazla değer — milyon {0} (seç veya yaz)", "Max value in million {0} (pick or type)", Money.Current.Symbol), 72, valuePresets);
+
+		_freeOnly = new CheckBox { Content = Build.T("Serbest", "Free"), Theme = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		_expiringOnly = new CheckBox { Content = Build.T("Sözl. ≤1y", "Exp. ≤1y"), Theme = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		ToolTip.SetTip(_expiringOnly, Build.T("Sözleşmesi 1 yıl içinde bitenler", "Contract expiring within 1 year"));
+		_injuredOnly = new CheckBox { Content = Build.T("Sakat/Cezalı", "Inj/Ban"), Theme = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		_wonderkid = new CheckBox { Content = Build.T("Wonderkid", "Wonderkid"), Theme = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		ToolTip.SetTip(_wonderkid, Build.T("Yaş ≤ 21 ve PA ≥ 150", "Age ≤ 21 and PA ≥ 150"));
+		_regenOnly = new CheckBox { Content = Build.T("🧬 Regen", "🧬 Newgen"), Theme = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		ToolTip.SetTip(_regenOnly, Build.T("Sadece oyunun ürettiği gerçek Regen / Newgen oyuncular (FM27 UID ≥ 2.002.000.000)", "Only genuine FM27 engine-generated Newgens / Regens (UID ≥ 2,002,000,000)"));
+		_shortlistOnly = new CheckBox { Content = Build.T("★ Kısa Liste", "★ Shortlist"), Theme = Build.StyleOf("FilterChip"), Margin = new Thickness(0, 0, 6, 0) };
+		ToolTip.SetTip(_shortlistOnly, Build.T("Oyuncu profilinde ☆ Kısa Listeye Ekle veya listede sağ tıkla yıldızladığın oyuncular", "Players starred from their profile or via right-click"));
+		_previewToggle = new CheckBox { Content = Build.T("◧ Önizleme", "◧ Preview"), Theme = Build.StyleOf("FilterChip"), IsChecked = true, Margin = new Thickness(4, 0, 0, 0) };
+		ToolTip.SetTip(_previewToggle, Build.T("Seçili oyuncunun sağda hızlı özet kartını göster/gizle", "Show/hide quick player preview drawer on the right"));
+		_previewToggle.IsCheckedChanged += (_, _) => UpdatePreviewVisibility();
+		foreach (CheckBox cb in new[] { _freeOnly, _expiringOnly, _injuredOnly, _wonderkid, _regenOnly, _shortlistOnly })
+		{
+			cb.IsCheckedChanged += (_, _) => Apply();
+		}
+
+		_advFilterBtn = new Button { Content = Build.T("🔍 Gelişmiş", "🔍 Advanced"), Padding = new Thickness(10, 4, 10, 4), FontSize = 12, Margin = new Thickness(4, 0, 6, 0) };
+		ToolTip.SetTip(_advFilterBtn, Build.T("Genie Scout filtreleri (PA-CA, Rol %, Profesyonellik, İstikrar, Sakatlık Eğilimi, Hız, Maaş…)", "Genie Scout filters (PA-CA, Role %, Professionalism, Consistency, Injury Proneness, Pace, Wage…)"));
+		_advFilterBtn.Click += async (_, _) =>
+		{
+			var win = new ScoutFilterWindow(_scoutFilter, _data.Players.Select(p => p.Nation));
+			Window? owner = ClubPage.OwnerOf(this);
+			if (owner is { IsVisible: true } && (await win.ShowDialog<bool?>(owner)) == true)
+			{
+				_advFilterBtn.Theme = _scoutFilter.IsActive ? Build.StyleOf("AccentButton") : Build.DefaultButtonStyle();
+				Apply();
+			}
+		};
+
+		var colBtn = new Button { Content = Build.T("Sütunlar", "Columns"), Theme = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0) };
+		ToolTip.SetTip(colBtn, Build.T("Tabloda gösterilecek Genie Scout sütunlarını seç", "Choose extra Genie Scout columns"));
+		colBtn.Click += (_, _) =>
+		{
+			var menu = new ContextMenu();
+			var opts = new[]
+			{
+				("Growth", Build.T("PA − CA (Gelişim Payı)", "PA − CA (Growth)")),
+				("Role", Build.T("En İyi Rol (%)", "Best Role (%)")),
+				("PR", Build.T("Potansiyel Reyting (PR %)", "Potential Rating (PR %)")),
+				("Pro", Build.T("Profesyonellik", "Professionalism")),
+				("Cons", Build.T("İstikrar", "Consistency")),
+				("Imp", Build.T("Önemli Maçlar", "Important Matches")),
+				("Inj", Build.T("Sakatlık Eğilimi", "Injury Proneness")),
+				("Det", Build.T("Kararlılık", "Determination"))
+			};
+			var active = new HashSet<string>(AppSettings.Current.ExtraColumns);
+			foreach (var (key, label) in opts)
+			{
+				string k = key;
+				var mi = new MenuItem { Header = label, ToggleType = MenuItemToggleType.CheckBox, IsChecked = active.Contains(k) };
+				mi.Click += (_, _) =>
+				{
+					var set = new HashSet<string>(AppSettings.Current.ExtraColumns);
+					if (mi.IsChecked) set.Add(k); else set.Remove(k);
+					AppSettings.Current.ExtraColumns = set.ToList();
+					AppSettings.Current.Save();
+					Apply();
+				};
+				menu.Items.Add(mi);
+			}
+			menu.Open(colBtn);
+		};
+
+		var presetsBtn = new Button
+		{
+			Content = Build.T("⚡ Şablonlar ▾", "⚡ Presets ▾"),
+			Padding = new Thickness(9, 4, 9, 4),
+			FontSize = 12,
+			Margin = new Thickness(0, 0, 6, 0)
+		};
+		ToolTip.SetTip(presetsBtn, Build.T("Tek tıkla hazır scout arama şablonlarını uygula", "Apply 1-click ready-made scout search presets"));
+		void ResetAllFilters()
+		{
+			_pos.SelectedValue = "";
+			_region.SelectedValue = "";
+			_nation.SelectedIndex = -1;
+			_nation.Text = "";
+			foreach (EditableCombo cb in new[] { _ageMin, _ageMax, _caMin, _caMax, _paMin, _maxValM })
+			{
+				cb.SelectedIndex = -1;
+				cb.Text = "";
+			}
+			_search.Text = "";
+			_freeOnly.IsChecked = _expiringOnly.IsChecked = _injuredOnly.IsChecked = _wonderkid.IsChecked = _regenOnly.IsChecked = _shortlistOnly.IsChecked = false;
+			_scoutFilter.Clear();
+			_advFilterBtn.Theme = Build.DefaultButtonStyle();
+		}
+		presetsBtn.Click += (_, _) =>
+		{
+			var menu = new ContextMenu();
+			void AddPreset(string tr, string en, Action setup)
+			{
+				var mi = new MenuItem { Header = Build.T(tr, en) };
+				mi.Click += (_, _) => { ResetAllFilters(); setup(); Apply(); };
+				menu.Items.Add(mi);
+			}
+			AddPreset("💎 Moneyball Cevher (Yaş ≤ 24 · ≤ 10M · PR ≥ 78% · Prof ≥ 12)", "💎 Moneyball Gems (Age ≤ 24 · ≤ 10M · PR ≥ 78% · Pro ≥ 12)", () => { _ageMax.Text = "24"; _maxValM.Text = "10"; _scoutFilter.MinPotentialRating = 78; _scoutFilter.MinPro = 12; _scoutFilter.MaxInj = 10; _advFilterBtn.Theme = Build.StyleOf("AccentButton"); });
+			AddPreset("⭐ Ucuz Wonderkidler (Yaş ≤ 20 · PA ≥ 155 · ≤ 15M)", "⭐ Bargain Wonderkids (Age ≤ 20 · PA ≥ 155 · ≤ 15M)", () => { _ageMax.Text = "20"; _paMin.Text = "155"; _maxValM.Text = "15"; });
+			AddPreset("⭐ Sözleşmesi Biten Yıldızlar (CA ≥ 145 · Sözl. ≤ 1y)", "⭐ Expiring Stars (CA ≥ 145 · Exp ≤ 1y)", () => { _caMin.Text = "145"; _expiringOnly.IsChecked = true; });
+			AddPreset("⭐ Yerli Genç Yetenekler (Türkiye · Yaş ≤ 21 · PA ≥ 135)", "⭐ Turkish Wonderkids (Türkiye · Age ≤ 21 · PA ≥ 135)", () => { _search.Text = "Türkiye"; _ageMax.Text = "21"; _paMin.Text = "135"; });
+			AddPreset("⭐ Genç Kaleciler (GK · Yaş ≤ 23 · PA ≥ 150)", "⭐ Young Goalkeepers (GK · Age ≤ 23 · PA ≥ 150)", () => { _pos.SelectedValue = "GK"; _ageMax.Text = "23"; _paMin.Text = "150"; });
+			AddPreset("⭐ Boştaki Yıldızlar (Serbest · CA ≥ 125)", "⭐ Best Free Agents (Free · CA ≥ 125)", () => { _freeOnly.IsChecked = true; _caMin.Text = "125"; });
+			AddPreset("🧬 En İyi Regenler (Newgen · PA ≥ 150)", "🧬 Best Newgens (Regen · PA ≥ 150)", () => { _regenOnly.IsChecked = true; _paMin.Text = "150"; });
+			var customList = AppSettings.Current.CustomScoutPresets;
+			if (customList.Count > 0)
+			{
+				menu.Items.Add(new Separator());
+				foreach (SavedScoutPreset sp in customList.ToList())
+				{
+					var mi = new MenuItem { Header = "★ " + sp.Name };
+					mi.Click += (_, _) => { ResetAllFilters(); ApplySavedPreset(sp); Apply(); };
+					menu.Items.Add(mi);
+				}
+				var delMenu = new MenuItem { Header = Build.T("Kayıtlı filtre sil…", "Delete saved filter…") };
+				foreach (SavedScoutPreset sp in customList.ToList())
+				{
+					var dmi = new MenuItem { Header = sp.Name };
+					dmi.Click += (_, _) =>
+					{
+						AppSettings.Current.CustomScoutPresets.Remove(sp);
+						AppSettings.Current.Save();
+						_nav.SetStatus(Build.F("Filtre silindi: {0}", "Deleted preset: {0}", sp.Name));
+					};
+					delMenu.Items.Add(dmi);
+				}
+				menu.Items.Add(delMenu);
+			}
+			menu.Items.Add(new Separator());
+			var savePresetMi = new MenuItem { Header = Build.T("Mevcut filtreyi kaydet…", "Save current filter…") };
+			savePresetMi.Click += async (_, _) => await SaveCurrentPresetAsync();
+			menu.Items.Add(savePresetMi);
+			menu.Open(presetsBtn);
+		};
+
+		var clear = new Button { Content = Build.T("Temizle", "Clear"), Theme = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(2, 0, 0, 0) };
+		clear.Click += (_, _) => { ResetAllFilters(); Apply(); };
+		var massActionsBtn = new Button { Content = Build.T("Toplu İşlem ▾", "Mass Actions ▾"), Theme = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0), IsEnabled = !AppSettings.Current.ReadOnlyMode };
+		ToolTip.SetTip(massActionsBtn, Build.T("Filtrelenmiş tüm oyunculara toplu işlem uygula", "Apply bulk actions to all filtered players"));
+		massActionsBtn.Click += (_, _) => OpenFilteredMassMenu(massActionsBtn);
+		var exportCsv = new Button { Content = Build.T("Dışa / İçe Aktar ▾", "Export / Import ▾"), Theme = Build.StyleOf("GhostButton"), Padding = new Thickness(8, 3, 8, 3), FontSize = 12, Margin = new Thickness(4, 0, 0, 0) };
+		ToolTip.SetTip(exportCsv, Build.T("CSV dışa aktar veya Kısa Liste (.json) dışa/içe aktar", "Export CSV or export/import Shortlist (.json)"));
+		exportCsv.Click += (_, _) =>
+		{
+			var em = new ContextMenu();
+			var mCsv = new MenuItem { Header = Build.T("Filtrelenmiş listeyi CSV olarak dışa aktar", "Export filtered players to CSV") };
+			mCsv.Click += async (_, _) => await ExportPlayersCsvAsync();
+			em.Items.Add(mCsv);
+			em.Items.Add(new Separator());
+			var mExpSl = new MenuItem { Header = Build.T("Kısa listeyi dışa aktar (.json)", "Export shortlist (.json)") };
+			mExpSl.Click += async (_, _) => await ExportShortlistJsonAsync();
+			em.Items.Add(mExpSl);
+			var mImpSl = new MenuItem { Header = Build.T("Kısa listeyi içe aktar (.json)", "Import shortlist (.json)") };
+			mImpSl.Click += async (_, _) => await ImportShortlistJsonAsync();
+			em.Items.Add(mImpSl);
+			em.Open(exportCsv);
+		};
+
+		_matchCount = Build.Text("", 12, Build.Res("Muted"));
+		_matchCount.Margin = new Thickness(10, 0, 4, 0);
+
+		var row1 = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
+		var posLbl = Lbl(Build.T("Mevki", "Pos"));
+		posLbl.Margin = new Thickness(0, 0, 5, 0);
+		row1.Children.Add(posLbl);
+		row1.Children.Add(_pos);
+		row1.Children.Add(Lbl(Build.T("Yaş", "Age")));
+		row1.Children.Add(_ageMin);
+		row1.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(3, 0, 3, 0) });
+		row1.Children.Add(_ageMax);
+		row1.Children.Add(Lbl("CA"));
+		row1.Children.Add(_caMin);
+		row1.Children.Add(new TextBlock { Text = "–", Foreground = Build.Res("Faint"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(3, 0, 3, 0) });
+		row1.Children.Add(_caMax);
+		row1.Children.Add(Lbl("PA ≥"));
+		row1.Children.Add(_paMin);
+		row1.Children.Add(Lbl(Build.F("Değer ≤M{0}", "Val ≤M{0}", Money.Current.Symbol)));
+		row1.Children.Add(_maxValM);
+		row1.Children.Add(Lbl(Build.T("Bölge", "Region")));
+		row1.Children.Add(_region);
+		row1.Children.Add(Lbl(Build.T("Uyruk", "Nation")));
+		row1.Children.Add(_nation);
+
+		var row2 = new DockPanel();
+		DockPanel.SetDock(_matchCount, Dock.Right);
+		DockPanel.SetDock(_previewToggle, Dock.Right);
+		DockPanel.SetDock(exportCsv, Dock.Right);
+		DockPanel.SetDock(massActionsBtn, Dock.Right);
+		DockPanel.SetDock(colBtn, Dock.Right);
+		row2.Children.Add(_matchCount);
+		row2.Children.Add(_previewToggle);
+		row2.Children.Add(exportCsv);
+		row2.Children.Add(massActionsBtn);
+		row2.Children.Add(colBtn);
+		var chips = new WrapPanel { Orientation = Orientation.Horizontal };
+		chips.Children.Add(presetsBtn);
+		chips.Children.Add(_freeOnly);
+		chips.Children.Add(_expiringOnly);
+		chips.Children.Add(_injuredOnly);
+		chips.Children.Add(_wonderkid);
+		chips.Children.Add(_regenOnly);
+		chips.Children.Add(_shortlistOnly);
+		chips.Children.Add(_advFilterBtn);
+		chips.Children.Add(clear);
+		row2.Children.Add(chips);
+
+		var filterStack = new StackPanel();
+		filterStack.Children.Add(row1);
+		filterStack.Children.Add(row2);
+		filterStack.Children.Add(_activeChips);
+
+		_filterBar = new Border
+		{
+			Background = Build.Res("Panel"),
+			BorderBrush = Build.Res("StrokeSoft"),
+			BorderThickness = new Thickness(1),
+			CornerRadius = new CornerRadius(6),
+			Padding = new Thickness(12, 8, 12, 8),
+			Margin = new Thickness(0, 0, 0, 10),
+			Child = filterStack
+		};
+		DockPanel.SetDock(_filterBar, Dock.Top);
+		root.Children.Add(_filterBar);
+
+		var jobs = new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("", Build.T("Tüm görevler", "All jobs")) };
+		jobs.AddRange(data.Staff.Select(s => s.Job).Where(j => j.Length > 0).Distinct().OrderBy(j => j).Select(j => new KeyValuePair<string, string>(j, j)));
+		_staffJob = new ComboBox
+		{
+			Width = 180,
+			Height = 24,
+			MinHeight = 24,
+			FontSize = 12,
+			ItemsSource = jobs,
+			DisplayMemberBinding = new Binding("Value"),
+			SelectedValueBinding = new Binding("Key"),
+			SelectedValue = ""
+		};
+		_staffJob.SelectionChanged += (_, _) => Apply();
+		_staffCaMin = NumBox(Build.T("En az CA", "Min CA"), 42);
+		_staffPaMin = NumBox(Build.T("En az PA", "Min PA"), 42);
+		_staffFreeOnly = new CheckBox { Content = Build.T("Boşta (Kulüpsüz)", "Unemployed"), Theme = Build.StyleOf("FilterChip"), Margin = new Thickness(10, 0, 0, 0) };
+		_staffFreeOnly.IsCheckedChanged += (_, _) => Apply();
+		_staffNoMgr = new CheckBox
+		{
+			Content = Build.T("TD Hariç", "No Managers"),
+			Theme = Build.StyleOf("FilterChip"),
+			Margin = new Thickness(6, 0, 0, 0)
+		};
+		ToolTip.SetTip(_staffNoMgr, Build.T("Hem görevdeki hem de boştaki Teknik Direktörleri gizle", "Hide both employed and unemployed Managers"));
+		_staffNoMgr.IsCheckedChanged += (_, _) => { _staffFilter.ExcludeManagers = _staffNoMgr.IsChecked == true; Apply(); };
+		_staffAdvBtn = new Button
+		{
+			Content = Build.T("🔍 Gelişmiş (Özellikler)", "🔍 Advanced (Attributes)"),
+			Padding = new Thickness(10, 4, 10, 4),
+			FontSize = 12,
+			Margin = new Thickness(8, 0, 0, 0)
+		};
+		ToolTip.SetTip(_staffAdvBtn, Build.T("Antrenörlük, Gözlemcilik, Medikal ve Zihinsel özelliklere göre personel filtrele", "Filter coaches, scouts and physios by 1–20 attributes"));
+		_staffAdvBtn.Click += async (_, _) =>
+		{
+			var win = new StaffFilterWindow(_staffFilter, _data.Staff.Select(s => s.Nation));
+			Window? owner = ClubPage.OwnerOf(this);
+			if (owner is { IsVisible: true } && (await win.ShowDialog<bool?>(owner)) == true)
+			{
+				_staffNoMgr.IsChecked = _staffFilter.ExcludeManagers;
+				_staffAdvBtn.Theme = _staffFilter.IsActive ? Build.StyleOf("AccentButton") : Build.DefaultButtonStyle();
+				Apply();
+			}
+		};
+		var clearStaff = new Button { Content = Build.T("Temizle", "Clear"), Theme = Build.StyleOf("GhostButton"), Padding = new Thickness(7, 2, 7, 2), FontSize = 11.5, Margin = new Thickness(8, 0, 0, 0) };
+		clearStaff.Click += (_, _) =>
+		{
+			_staffJob.SelectedValue = "";
+			_staffCaMin.Text = _staffPaMin.Text = "";
+			_staffFreeOnly.IsChecked = false;
+			_staffNoMgr.IsChecked = false;
+			_staffFilter.Clear();
+			_staffAdvBtn.Theme = Build.DefaultButtonStyle();
+			Apply();
+		};
+		_staffMatchCount = Build.Text("", 11.5, Build.Res("Faint"));
+
+		var staffDock = new DockPanel();
+		DockPanel.SetDock(_staffMatchCount, Dock.Right);
+		staffDock.Children.Add(_staffMatchCount);
+		var staffFilters = new WrapPanel { Orientation = Orientation.Horizontal };
+		var jobLbl = Lbl(Build.T("Görev", "Job"));
+		jobLbl.Margin = new Thickness(0, 0, 4, 0);
+		staffFilters.Children.Add(jobLbl);
+		staffFilters.Children.Add(_staffJob);
+		staffFilters.Children.Add(Lbl("CA ≥"));
+		staffFilters.Children.Add(_staffCaMin);
+		staffFilters.Children.Add(Lbl("PA ≥"));
+		staffFilters.Children.Add(_staffPaMin);
+		staffFilters.Children.Add(_staffFreeOnly);
+		staffFilters.Children.Add(_staffNoMgr);
+		staffFilters.Children.Add(_staffAdvBtn);
+		staffFilters.Children.Add(clearStaff);
+		staffDock.Children.Add(staffFilters);
+		_staffFilterBar = new Border
+		{
+			Background = Build.Res("Panel"),
+			BorderBrush = Build.Res("StrokeSoft"),
+			BorderThickness = new Thickness(1),
+			CornerRadius = new CornerRadius(5),
+			Padding = new Thickness(10, 6, 10, 6),
+			Margin = new Thickness(0, 0, 0, 10),
+			IsVisible = false,
+			Child = staffDock
+		};
+		DockPanel.SetDock(_staffFilterBar, Dock.Top);
+		root.Children.Add(_staffFilterBar);
+
+		_previewCard.Classes.Add("CardBorder");
+		_previewCard.Margin = new Thickness(10, 0, 0, 12);
+		_previewCard.Child = _previewContent;
+		var split = new Grid();
+		split.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+		split.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+		var tableBorder = new Border { Classes = { "CardBorder" }, Margin = new Thickness(0, 0, 0, 12), Padding = new Thickness(3), Child = _host };
+		Grid.SetColumn(tableBorder, 0);
+		Grid.SetColumn(_previewCard, 1);
+		split.Children.Add(tableBorder);
+		split.Children.Add(_previewCard);
+		root.Children.Add(split);
+		Content = root;
+		Background = Build.Res("Bg");
+		_data.Session.Freezer.Changed += OnFreezerChanged;
+		Unloaded += (_, _) => _data.Session.Freezer.Changed -= OnFreezerChanged;
+		Apply();
+	}
+
+	public string Key => "home";
+	public string Title => Build.T("Ana Sayfa", "Home");
+	public IImage? Icon => null;
+
+	public void RefreshValues()
+	{
+	}
+
+	public void ShowFrozen()
+	{
+		_frozenTab.IsChecked = true;
+		_mode = "frozen";
+		Apply();
+	}
+
+	private void OnFreezerChanged(object? sender, EventArgs e)
+	{
+		if (_mode == "frozen")
+		{
+			Dispatcher.UIThread.Post(Apply);
+		}
+	}
+
+	private void ScheduleApply()
+	{
+		_debounce.Stop();
+		_debounce.Start();
+	}
+
+	private static int? ParseInt(TextBox box) => int.TryParse((box.Text ?? "").Trim(), out int v) ? v : null;
+
+	private static int? ParseInt(EditableCombo box) => int.TryParse(box.Text.Trim(), out int v) ? v : null;
+
+	private static double? ParseDouble(EditableCombo box) => double.TryParse(box.Text.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double v) ? v : null;
+
+	private void Apply()
+	{
+		_filterBar.IsVisible = _mode == "players";
+		_staffFilterBar.IsVisible = _mode == "staff";
+		string q = GameData.Normalize((_search.Text ?? "").Trim());
+		switch (_mode)
+		{
+		case "clubs":
+			_host.Content = ClubPage.ClubGrid(_data.Clubs.Where(c => c.SquadSize > 0 && (q.Length == 0 || c.Search.Contains(q))).OrderByDescending(c => c.AverageCA), _nav);
+			break;
+		case "nations":
+			_host.Content = NationPage.Grid(_data.Nations.Where(n => q.Length == 0 || n.Search.Contains(q)).OrderByDescending(n => n.YouthRating), _nav);
+			break;
+		case "comps":
+			_host.Content = CompPage.Grid(_data.Competitions.Where(c => q.Length == 0 || c.Search.Contains(q)).OrderByDescending(c => c.Reputation), _nav);
+			break;
+		case "staff":
+		{
+			string job = _staffJob.SelectedValue as string ?? "";
+			int? caMin = ParseInt(_staffCaMin), paMin = ParseInt(_staffPaMin);
+			bool freeOnly = _staffFreeOnly.IsChecked == true;
+			IEnumerable<StaffRow> sq = _data.Staff;
+			if (q.Length > 0) sq = sq.Where(s => s.Search.Contains(q));
+			if (job.Length > 0) sq = sq.Where(s => s.Job == job);
+			if (caMin.HasValue) sq = sq.Where(s => s.CA >= caMin.Value);
+			if (paMin.HasValue) sq = sq.Where(s => s.PA >= paMin.Value);
+			if (freeOnly) sq = sq.Where(s => s.ClubAddress == 0);
+			if (_staffFilter.IsActive)
+			{
+				long? maxStaffWage = _staffFilter.MaxWageDisplay.HasValue ? (long)Math.Round(Money.FromDisplay(_staffFilter.MaxWageDisplay.Value, true)) : null;
+				sq = sq.Where(s => _staffFilter.Matches(s, maxStaffWage));
+			}
+			List<StaffRow> list = sq.OrderByDescending(s => s.CA).ThenBy(s => s.Club.Length == 0).ToList();
+			_staffMatchCount.Text = $"{list.Count:N0} / {_data.Staff.Count:N0}";
+			_host.Content = ClubPage.StaffGrid(_data, list, _nav, showClub: true);
+			break;
+		}
+		case "frozen":
+			_host.Content = FrozenView(q);
+			break;
+		default:
+		{
+			string pos = _pos.SelectedValue as string ?? "";
+			string region = _region.SelectedValue as string ?? "";
+			string nation = _nation.Text.Trim();
+			int? ageMin = ParseInt(_ageMin), ageMax = ParseInt(_ageMax), caMin = ParseInt(_caMin), caMax = ParseInt(_caMax), paMin = ParseInt(_paMin);
+			double? maxValM = ParseDouble(_maxValM);
+			long? maxValGbp = maxValM.HasValue ? (long)Math.Round(Money.FromDisplay(maxValM.Value * 1_000_000.0, false)) : null;
+			bool freeOnly = _freeOnly.IsChecked == true;
+			bool expiringOnly = _expiringOnly.IsChecked == true;
+			bool injuredOnly = _injuredOnly.IsChecked == true;
+			bool wonderkid = _wonderkid.IsChecked == true;
+			bool regenOnly = _regenOnly.IsChecked == true;
+			bool shortlistOnly = _shortlistOnly.IsChecked == true;
+			HashSet<uint>? shortlist = shortlistOnly ? new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey)) : null;
+			long? maxWageGbp = _scoutFilter.MaxWageDisplay.HasValue ? (long)Math.Round(Money.FromDisplay(_scoutFilter.MaxWageDisplay.Value, true)) : null;
+			long? maxAskingGbp = _scoutFilter.MaxAskingPriceM.HasValue ? (long)Math.Round(Money.FromDisplay(_scoutFilter.MaxAskingPriceM.Value * 1_000_000.0, false)) : null;
+			DateTime expireCutoff = _data.GameDate.AddYears(1);
+			IEnumerable<PlayerRow> query = _data.Players;
+			if (q.Length > 0) query = query.Where(p => p.Search.Contains(q));
+			if (pos.Length > 0) query = query.Where(p => p.Positions.Split(' ', '/', ',').Any(tok => tok == pos));
+			if (region.Length > 0) query = query.Where(p => MatchesRegion(p.Nation, region));
+			if (nation.Length > 0)
+			{
+				string normNat = GameData.Normalize(nation);
+				query = query.Where(p => GameData.Normalize(p.Nation).Contains(normNat));
+			}
+			if (ageMin.HasValue) query = query.Where(p => p.Age >= ageMin.Value);
+			if (ageMax.HasValue) query = query.Where(p => p.Age > 0 && p.Age <= ageMax.Value);
+			if (caMin.HasValue) query = query.Where(p => p.CA >= caMin.Value);
+			if (caMax.HasValue) query = query.Where(p => p.CA <= caMax.Value);
+			if (paMin.HasValue) query = query.Where(p => p.PA >= paMin.Value);
+			if (maxValGbp.HasValue) query = query.Where(p => p.Value <= maxValGbp.Value);
+			if (freeOnly) query = query.Where(p => p.ClubAddress == 0);
+			if (expiringOnly) query = query.Where(p => p.ClubAddress != 0 && p.ContractDate is { } cd && cd <= expireCutoff);
+			if (injuredOnly) query = query.Where(p => p.Status.Length > 0);
+			if (wonderkid) query = query.Where(p => p.Age > 0 && p.Age <= 21 && p.PA >= 150);
+			if (regenOnly) query = query.Where(p => p.IsRegen);
+			if (shortlist != null) query = query.Where(p => shortlist.Contains(p.Uid));
+			if (_scoutFilter.IsActive) query = query.Where(p => _scoutFilter.Matches(p, maxWageGbp, maxAskingGbp));
+			_lastPlayers = query.OrderByDescending(p => p.CA).ToList();
+			_matchCount.Text = $"{_lastPlayers.Count:N0} / {_data.Players.Count:N0}";
+			RebuildActiveChips(pos, region, nation, ageMin, ageMax, caMin, caMax, paMin, maxValM, freeOnly, expiringOnly, injuredOnly, wonderkid, regenOnly, shortlistOnly);
+			var pg = ClubPage.PlayerGrid(_data, _lastPlayers, _nav, showClub: true);
+			pg.SelectionChanged += (_, _) =>
+			{
+				if (pg.SelectedItem is PlayerRow sel) ShowPreview(sel, pg);
+			};
+			_host.Content = pg;
+			UpdatePreviewVisibility();
+			if (_lastPlayers.Count > 0) ShowPreview(_lastPlayers[0], pg);
+			break;
+		}
+		}
+		UpdatePreviewVisibility();
+	}
+
+	private static readonly Dictionary<string, string[]> RegionNations = new()
+	{
+		["TR"] = new[] { "turkiye", "turkey" },
+		["EU"] = new[] { "almanya", "germany", "fransa", "france", "ispanya", "spain", "italya", "italy", "hollanda", "netherlands", "portekiz", "portugal", "belcika", "belgium", "avusturya", "austria", "hirvatistan", "croatia", "polonya", "poland", "danimarka", "denmark", "isvec", "sweden", "cekya", "czech", "macaristan", "hungary", "yunanistan", "greece", "romanya", "romania", "bulgaristan", "bulgaria", "slovenya", "slovenia", "slovakya", "slovakia", "finlandiya", "finland", "irlanda", "ireland" },
+		["SA"] = new[] { "brezilya", "brazil", "arjantin", "argentina", "uruguay", "kolombiya", "colombia", "sili", "chile", "ekvador", "ecuador", "paraguay", "peru", "venezuela", "bolivya", "bolivia" },
+		["BALKAN"] = new[] { "sirbistan", "serbia", "hirvatistan", "croatia", "bosna", "bosnia", "karadag", "montenegro", "arnavutluk", "albania", "kosova", "kosovo", "kuzey makedonya", "north macedonia", "yunanistan", "greece", "bulgaristan", "bulgaria", "slovenya", "slovenia", "romanya", "romania" },
+		["AFRICA"] = new[] { "nijerya", "nigeria", "fas", "morocco", "senegal", "fildisi", "ivory", "gana", "ghana", "kamerun", "cameroon", "misir", "egypt", "cezayir", "algeria", "mali", "tunus", "tunisia", "gine", "guinea", "burkina", "kongo", "congo", "guney afrika", "south africa" }
+	};
+
+	private static bool MatchesRegion(string nation, string region)
+	{
+		if (!RegionNations.TryGetValue(region, out string[]? keys) || nation.Length == 0) return false;
+		string norm = GameData.Normalize(nation);
+		return keys.Any(k => norm.Contains(k));
+	}
+
+	private void UpdatePreviewVisibility()
+	{
+		_previewCard.IsVisible = _mode == "players" && _previewToggle.IsChecked == true;
+	}
+
+	private void RebuildActiveChips(string pos, string region, string nation, int? ageMin, int? ageMax, int? caMin, int? caMax, int? paMin, double? maxValM,
+		bool freeOnly, bool expiringOnly, bool injuredOnly, bool wonderkid, bool regenOnly, bool shortlistOnly)
+	{
+		_activeChips.Children.Clear();
+		void Chip(string text, Action remove)
+		{
+			var btn = new Button
+			{
+				Content = text + "  ✕",
+				Background = Build.Res("AccentSoft"),
+				BorderBrush = Build.Res("Accent"),
+				Foreground = Build.Res("Text"),
+				FontSize = 11,
+				Padding = new Thickness(8, 2, 8, 2),
+				Margin = new Thickness(0, 0, 5, 2)
+			};
+			btn.Click += (_, _) => { remove(); Apply(); };
+			_activeChips.Children.Add(btn);
+		}
+		if (pos.Length > 0) Chip(Build.F("Mevki: {0}", "Pos: {0}", pos), () => _pos.SelectedValue = "");
+		if (region.Length > 0) Chip(Build.F("Bölge: {0}", "Region: {0}", region), () => _region.SelectedValue = "");
+		if (nation.Length > 0) Chip(Build.F("Uyruk: {0}", "Nation: {0}", nation), () => { _nation.SelectedIndex = -1; _nation.Text = ""; });
+		if (ageMin.HasValue) Chip(Build.F("Yaş ≥ {0}", "Age ≥ {0}", ageMin), () => { _ageMin.SelectedIndex = -1; _ageMin.Text = ""; });
+		if (ageMax.HasValue) Chip(Build.F("Yaş ≤ {0}", "Age ≤ {0}", ageMax), () => { _ageMax.SelectedIndex = -1; _ageMax.Text = ""; });
+		if (caMin.HasValue) Chip($"CA ≥ {caMin}", () => { _caMin.SelectedIndex = -1; _caMin.Text = ""; });
+		if (caMax.HasValue) Chip($"CA ≤ {caMax}", () => { _caMax.SelectedIndex = -1; _caMax.Text = ""; });
+		if (paMin.HasValue) Chip($"PA ≥ {paMin}", () => { _paMin.SelectedIndex = -1; _paMin.Text = ""; });
+		if (maxValM.HasValue) Chip($"≤ {maxValM:0.#}M{Money.Current.Symbol}", () => { _maxValM.SelectedIndex = -1; _maxValM.Text = ""; });
+		if (freeOnly) Chip(Build.T("Serbest", "Free"), () => _freeOnly.IsChecked = false);
+		if (expiringOnly) Chip(Build.T("Sözl. ≤1y", "Exp. ≤1y"), () => _expiringOnly.IsChecked = false);
+		if (injuredOnly) Chip(Build.T("Sakat/Cezalı", "Inj/Ban"), () => _injuredOnly.IsChecked = false);
+		if (wonderkid) Chip("Wonderkid", () => _wonderkid.IsChecked = false);
+		if (regenOnly) Chip(Build.T("🧬 Regen", "🧬 Newgen"), () => _regenOnly.IsChecked = false);
+		if (shortlistOnly) Chip(Build.T("★ Kısa Liste", "★ Shortlist"), () => _shortlistOnly.IsChecked = false);
+		if (_scoutFilter.IsActive) Chip(Build.T("🔍 Gelişmiş", "🔍 Advanced"), () => { _scoutFilter.Clear(); _advFilterBtn.Theme = Build.DefaultButtonStyle(); });
+		_activeChips.IsVisible = _activeChips.Children.Count > 0;
+	}
+
+	private void ShowPreview(PlayerRow p, DataGrid grid)
+	{
+		var stack = new StackPanel { Margin = new Thickness(12, 12, 12, 12) };
+		var head = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 10) };
+		var av = Build.Avatar(ImageLookup.Graphics.Person(p.Uid), p.Name, 52, round: true);
+		av.Margin = new Thickness(0, 0, 10, 0);
+		head.Children.Add(av);
+		var hText = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+		hText.Children.Add(Build.Text(p.Name, 14.5, Build.Res("Text"), FontWeight.Bold));
+		hText.Children.Add(Build.Text($"{p.Positions} · {p.Age} {Build.T("yaş", "yo")}", 12, Build.Res("Muted")));
+		if (p.Club.Length > 0) hText.Children.Add(Build.Text(p.Club, 11.5, Build.Res("Accent"), FontWeight.SemiBold));
+		head.Children.Add(hText);
+		stack.Children.Add(head);
+
+		stack.Children.Add(PlayerVisuals.AbilityBar(p.CA, p.PA));
+
+		byte[] raw69 = new byte[69];
+		if (_data.Memory.TryRead(p.Address + FmOffsets.PlayerRaw69, raw69))
+		{
+			stack.Children.Add(PlayerVisuals.RadarChart(204, PlayerVisuals.ComputeRadar8(raw69)));
+			var top3 = ScoutRating.EvaluateTop3(raw69);
+			if (top3.Count > 0)
+			{
+				var roles = Build.Text(string.Join("  ·  ", top3.Select(r => $"{r.Role} {r.Rating:0.0}%")), 11.5, Build.Res("Muted"), FontWeight.SemiBold);
+				roles.HorizontalAlignment = HorizontalAlignment.Center;
+				roles.Margin = new Thickness(0, 4, 0, 8);
+				stack.Children.Add(roles);
+			}
+		}
+
+		void InfoLine(string k, string v)
+		{
+			var d = new DockPanel { Margin = new Thickness(0, 2, 0, 2) };
+			var vt = Build.Text(v, 12, Build.Res("Text"), FontWeight.SemiBold);
+			DockPanel.SetDock(vt, Dock.Right);
+			d.Children.Add(vt);
+			d.Children.Add(Build.Text(k, 11.5, Build.Res("Muted")));
+			stack.Children.Add(d);
+		}
+		InfoLine(Build.T("Değer", "Value"), Money.Format(p.Value, false));
+		InfoLine(Build.T("Maaş", "Wage"), Money.Format(p.Wage, true));
+		InfoLine(Build.T("Sözleşme", "Contract"), p.ContractEnd.Length > 0 ? p.ContractEnd : "—");
+		InfoLine(Build.T("Profesyonellik / İstikrar", "Pro / Consistency"), $"{p.Professionalism} / {p.Consistency}");
+
+		var btns = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
+		var openBtn = new Button
+		{
+			Content = Build.T("Profili Aç", "Open Profile"),
+			Theme = Build.StyleOf("AccentButton"),
+			HorizontalAlignment = HorizontalAlignment.Stretch,
+			Margin = new Thickness(0, 0, 0, 6)
+		};
+		openBtn.Click += (_, _) => _nav.OpenPlayer(p.Address);
+		btns.Children.Add(openBtn);
+		var subBtns = new UniformGrid { Columns = 2 };
+		var starBtn = new Button
+		{
+			Content = p.IsShortlisted ? Build.T("★ Listede", "★ Listed") : Build.T("☆ Kısa Liste", "☆ Shortlist"),
+			Margin = new Thickness(0, 0, 3, 0),
+			FontSize = 11.5
+		};
+		starBtn.Click += (_, _) =>
+		{
+			var cur = new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey));
+			if (cur.Contains(p.Uid)) { cur.Remove(p.Uid); p.IsShortlisted = false; }
+			else { cur.Add(p.Uid); p.IsShortlisted = true; }
+			AppSettings.Current.SetShortlist(_data.SaveKey, cur.ToList());
+			AppSettings.Current.Save();
+			if (grid.ItemsSource is DataGridCollectionView v) v.Refresh();
+			ShowPreview(p, grid);
+		};
+		var cmpBtn = new Button { Content = Build.T("⚖ Karşılaştır", "⚖ Compare"), Margin = new Thickness(3, 0, 0, 0), FontSize = 11.5 };
+		cmpBtn.Click += (_, _) =>
+		{
+			var dlg = new Window
+			{
+				Title = Build.F("{0} ile karşılaştırılacak oyuncuyu seç", "Pick player to compare with {0}", p.Name),
+				Width = 460,
+				Height = 440,
+				WindowStartupLocation = WindowStartupLocation.CenterOwner,
+				Background = Build.Res("Bg"),
+				Foreground = Build.Res("Text"),
+				FontFamily = Build.Font("UiFont")
+			};
+			WindowHelper.ApplyChrome(dlg);
+			var dock = new DockPanel { Margin = new Thickness(14) };
+			var sBox = new TextBox { Height = 30, Margin = new Thickness(0, 0, 0, 8) };
+			ToolTip.SetTip(sBox, Build.T("Oyuncu adı yaz…", "Type player name…"));
+			DockPanel.SetDock(sBox, Dock.Top);
+			var lBox = new ListBox
+			{
+				Background = Build.Res("Panel"),
+				BorderBrush = Build.Res("StrokeSoft"),
+				BorderThickness = new Thickness(1),
+				DisplayMemberBinding = new Binding("Value")
+			};
+			void RefreshList()
+			{
+				string q2 = GameData.Normalize((sBox.Text ?? "").Trim());
+				lBox.ItemsSource = _data.Players
+					.Where(x => x.Address != p.Address && (q2.Length == 0 || x.Search.Contains(q2)))
+					.OrderByDescending(x => x.CA)
+					.Take(80)
+					.Select(x => new KeyValuePair<PlayerRow, string>(x, $"{x.Name}  ·  {x.Positions}  ·  CA {x.CA}  ({x.Club})"))
+					.ToList();
+			}
+			sBox.TextChanged += (_, _) => RefreshList();
+			lBox.DoubleTapped += (_, _) =>
+			{
+				if (lBox.SelectedItem is KeyValuePair<PlayerRow, string> kv)
+				{
+					dlg.Close();
+					var cw = new PlayerCompareWindow(_data, p, kv.Key, _nav);
+					Window? owner = ClubPage.OwnerOf(this);
+					if (owner is { IsVisible: true }) _ = cw.ShowDialog(owner);
+					else cw.Show();
+				}
+			};
+			RefreshList();
+			dock.Children.Add(sBox);
+			dock.Children.Add(lBox);
+			dlg.Content = dock;
+			Window? mainOwner = ClubPage.OwnerOf(this);
+			if (mainOwner is { IsVisible: true }) _ = dlg.ShowDialog(mainOwner);
+			else dlg.Show();
+		};
+		subBtns.Children.Add(starBtn);
+		subBtns.Children.Add(cmpBtn);
+		btns.Children.Add(subBtns);
+		stack.Children.Add(btns);
+
+		_previewContent.Content = Build.Scroll(stack);
+	}
+
+	private async System.Threading.Tasks.Task ExportPlayersCsvAsync()
+	{
+		if (_lastPlayers.Count == 0)
+		{
+			return;
+		}
+		Window? owner = ClubPage.OwnerOf(this);
+		if (owner == null) return;
+		var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		{
+			Title = Build.T("CSV Dışa Aktar", "Export CSV"),
+			DefaultExtension = "csv",
+			SuggestedFileName = $"squadeditor_scout_{_data.GameDate:yyyyMMdd}.csv",
+			FileTypeChoices = new[] { new FilePickerFileType("CSV") { Patterns = new[] { "*.csv" } } }
+		});
+		if (file == null) return;
+		static string Esc(string s) => "\"" + s.Replace("\"", "\"\"") + "\"";
+		var lines = new List<string>(_lastPlayers.Count + 1)
+		{
+			$"UID,Name,Positions,Age,Club,Nation,CA,PA,PA-CA,BestRole,BestRating,Pro,Consistency,ImportantMatches,InjuryProneness,Determination,Value ({Money.Current.Code}),Wage ({Money.Current.Code}{Money.WageSuffix}),ContractEnd,Status"
+		};
+		foreach (PlayerRow p in _lastPlayers)
+		{
+			lines.Add($"{p.Uid},{Esc(p.Name)},{Esc(p.Positions)},{p.Age},{Esc(p.Club)},{Esc(p.Nation)},{p.CA},{p.PA},{p.Growth},{Esc(p.BestRole)},{p.BestRating.ToString("0.0", CultureInfo.InvariantCulture)},{p.Professionalism},{p.Consistency},{p.ImportantMatches},{p.InjuryProneness},{p.Determination},{Esc(Money.Format(p.Value, false))},{Esc(Money.Format(p.Wage, true))},{Esc(p.ContractEnd)},{Esc(p.Status)}");
+		}
+		await using var fs = await file.OpenWriteAsync();
+		await using var sw = new StreamWriter(fs, Encoding.UTF8);
+		foreach (string line in lines) await sw.WriteLineAsync(line);
+		_nav.SetStatus(Build.F("✓ {0:N0} oyuncu dışa aktarıldı: {1}", "✓ Exported {0:N0} players to {1}", _lastPlayers.Count, file.Name));
+	}
+
+	private async System.Threading.Tasks.Task SaveCurrentPresetAsync()
+	{
+		var dlg = new Window
+		{
+			Title = Build.T("Özel Filtre Kaydet", "Save Custom Filter"),
+			Width = 360,
+			SizeToContent = SizeToContent.Height,
+			CanResize = false,
+			WindowStartupLocation = WindowStartupLocation.CenterOwner,
+			Background = Build.Res("Bg"),
+			Foreground = Build.Res("Text"),
+			FontFamily = Build.Font("UiFont")
+		};
+		WindowHelper.ApplyChrome(dlg);
+		var sp = new StackPanel { Margin = new Thickness(16) };
+		sp.Children.Add(Build.Text(Build.T("Filtre adı", "Filter name"), 12.5, Build.Res("Muted")));
+		var box = new TextBox { Height = 30, Margin = new Thickness(0, 6, 0, 12) };
+		sp.Children.Add(box);
+		var btns = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+		var cancel = new Button { Content = Build.T("Vazgeç", "Cancel"), IsCancel = true, Margin = new Thickness(0, 0, 8, 0) };
+		cancel.Click += (_, _) => dlg.Close(false);
+		var ok = new Button { Content = Build.T("Kaydet", "Save"), Theme = Build.StyleOf("AccentButton"), IsDefault = true };
+		ok.Click += (_, _) =>
+		{
+			string name = (box.Text ?? "").Trim();
+			if (name.Length == 0) return;
+			AppSettings.Current.CustomScoutPresets.RemoveAll(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+			AppSettings.Current.CustomScoutPresets.Add(new SavedScoutPreset
+			{
+				Name = name,
+				Pos = _pos.SelectedValue as string ?? "",
+				Region = _region.SelectedValue as string ?? "",
+				Nation = _nation.SelectedValue as string ?? _nation.Text.Trim(),
+				AgeMin = _ageMin.Text,
+				AgeMax = _ageMax.Text,
+				CaMin = _caMin.Text,
+				CaMax = _caMax.Text,
+				PaMin = _paMin.Text,
+				MaxValM = _maxValM.Text,
+				Query = _search.Text ?? "",
+				FreeOnly = _freeOnly.IsChecked == true,
+				ExpiringOnly = _expiringOnly.IsChecked == true,
+				InjuredOnly = _injuredOnly.IsChecked == true,
+				Wonderkid = _wonderkid.IsChecked == true,
+				RegenOnly = _regenOnly.IsChecked == true,
+				FilterNation = _scoutFilter.Nation,
+				BestRole = _scoutFilter.BestRole,
+				MinGrowth = _scoutFilter.MinGrowth,
+				MinRating = _scoutFilter.MinRating,
+				MinPotentialRating = _scoutFilter.MinPotentialRating,
+				MaxWageDisplay = _scoutFilter.MaxWageDisplay,
+				MaxAskingPriceM = _scoutFilter.MaxAskingPriceM,
+				BothFeetOnly = _scoutFilter.BothFeetOnly,
+				MinPro = _scoutFilter.MinPro,
+				MinCons = _scoutFilter.MinCons,
+				MinImp = _scoutFilter.MinImp,
+				MaxInj = _scoutFilter.MaxInj,
+				MinDet = _scoutFilter.MinDet,
+				MinPace = _scoutFilter.MinPace,
+				MinFin = _scoutFilter.MinFin,
+				MinPas = _scoutFilter.MinPas
+			});
+			AppSettings.Current.Save();
+			_nav.SetStatus(Build.F("✓ Özel filtre kaydedildi: {0}", "✓ Saved custom filter: {0}", name));
+			dlg.Close(true);
+		};
+		btns.Children.Add(cancel);
+		btns.Children.Add(ok);
+		sp.Children.Add(btns);
+		dlg.Content = sp;
+		dlg.Loaded += (_, _) => box.Focus();
+		Window? owner = ClubPage.OwnerOf(this);
+		if (owner is { IsVisible: true }) await dlg.ShowDialog<bool?>(owner);
+		else dlg.Show();
+	}
+
+	private void ApplySavedPreset(SavedScoutPreset sp)
+	{
+		if (!string.IsNullOrEmpty(sp.Pos)) _pos.SelectedValue = sp.Pos;
+		if (!string.IsNullOrEmpty(sp.Region)) _region.SelectedValue = sp.Region;
+		if (!string.IsNullOrEmpty(sp.Nation)) _nation.Text = sp.Nation;
+		_ageMin.Text = sp.AgeMin ?? "";
+		_ageMax.Text = sp.AgeMax ?? "";
+		_caMin.Text = sp.CaMin ?? "";
+		_caMax.Text = sp.CaMax ?? "";
+		_paMin.Text = sp.PaMin ?? "";
+		_maxValM.Text = sp.MaxValM ?? "";
+		_search.Text = sp.Query ?? "";
+		_freeOnly.IsChecked = sp.FreeOnly;
+		_expiringOnly.IsChecked = sp.ExpiringOnly;
+		_injuredOnly.IsChecked = sp.InjuredOnly;
+		_wonderkid.IsChecked = sp.Wonderkid;
+		_regenOnly.IsChecked = sp.RegenOnly;
+		_scoutFilter.Nation = sp.FilterNation;
+		_scoutFilter.BestRole = sp.BestRole;
+		_scoutFilter.MinGrowth = sp.MinGrowth;
+		_scoutFilter.MinRating = sp.MinRating;
+		_scoutFilter.MinPotentialRating = sp.MinPotentialRating;
+		_scoutFilter.MaxWageDisplay = sp.MaxWageDisplay;
+		_scoutFilter.MaxAskingPriceM = sp.MaxAskingPriceM;
+		_scoutFilter.BothFeetOnly = sp.BothFeetOnly;
+		_scoutFilter.MinPro = sp.MinPro;
+		_scoutFilter.MinCons = sp.MinCons;
+		_scoutFilter.MinImp = sp.MinImp;
+		_scoutFilter.MaxInj = sp.MaxInj;
+		_scoutFilter.MinDet = sp.MinDet;
+		_scoutFilter.MinPace = sp.MinPace;
+		_scoutFilter.MinFin = sp.MinFin;
+		_scoutFilter.MinPas = sp.MinPas;
+		_advFilterBtn.Theme = _scoutFilter.IsActive ? Build.StyleOf("AccentButton") : Build.DefaultButtonStyle();
+	}
+
+	private void OpenFilteredMassMenu(Button anchor)
+	{
+		if (_lastPlayers.Count == 0)
+		{
+			_nav.SetStatus(Build.T("Önce en az 1 oyuncu filtrele.", "Filter at least 1 player first."));
+			return;
+		}
+		var list = _lastPlayers.Take(5000).ToList();
+		var m = new ContextMenu();
+		void Item(string tr, string en, Action act)
+		{
+			var mi = new MenuItem { Header = Build.T(tr, en) };
+			mi.Click += (_, _) => act();
+			m.Items.Add(mi);
+		}
+		Item($"Tüm sakatlıkları iyileştir ({list.Count:N0} oyuncu)", $"Heal all injuries ({list.Count:N0} players)", () =>
+		{
+			int healed = 0;
+			using (_data.Session.History.BeginBatch(Build.T("Filtreli sakatlıkları iyileştir", "Heal filtered injuries")))
+			{
+				foreach (PlayerRow p in list)
+				{
+					try { if (Medical.Heal(_data, p.Address, p.Name)) healed++; } catch { }
+				}
+			}
+			_nav.SetStatus(Build.F("✓ {0:N0} sakat oyuncu iyileştirildi. {1} geri alır.", "✓ Healed {0:N0} injured players. {1} undoes it.", healed, PlatformPaths.UndoHint));
+		});
+		var maxFitMi = new MenuItem { Header = Build.T($"Kondisyon, moral ve mutluluk %100 ({list.Count:N0} oyuncu)", $"Max fitness, morale & happiness ({list.Count:N0} players)") };
+		maxFitMi.Click += async (_, _) =>
+		{
+			if (AppSettings.Current.ConfirmBulkEdits && list.Count > 50 && !await MsgBox.AskAsync(ClubPage.OwnerOf(this),
+				Build.F("{0:N0} oyuncunun kondisyon, moral ve mutluluğu %100 yapılsın mı? {1} geri alır.", "Max fitness, morale & happiness for {0:N0} players? {1} undoes it.", list.Count, PlatformPaths.UndoHint),
+				"SquadEditor")) return;
+			var targets = list.Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			var cond = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Condition");
+			var sharp = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Match Sharpness");
+			var morale = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Morale");
+			var happy = _data.PlayerDef.Fields.FirstOrDefault(f => f.Name == "Happiness");
+			using (_data.Session.History.BeginBatch(Build.T("Filtreli kondisyon/moral %100", "Filtered max fitness/morale")))
+			{
+				foreach (FieldDef? fd in new[] { cond, sharp, morale, happy })
+				{
+					if (fd == null || !fd.Max.HasValue) continue;
+					foreach (BulkTarget t in targets)
+					{
+						try { _data.Session.WriteField(t.Address, fd, fd.Max.Value.ToString(CultureInfo.InvariantCulture), t.Label); } catch { }
+					}
+				}
+			}
+			_nav.SetStatus(Build.F("✓ {0:N0} oyuncunun kondisyon, moral ve mutluluğu %100 yapıldı. {1} geri alır.", "✓ Maxed fitness, morale & happiness for {0:N0} players. {1} undoes it.", list.Count, PlatformPaths.UndoHint));
+		};
+		m.Items.Add(maxFitMi);
+		Item($"Takım uyumunu %100 yap ({list.Count:N0} oyuncu)", $"Max team cohesion ({list.Count:N0} players)", () =>
+		{
+			int done = 0;
+			using (_data.Session.History.BeginBatch(Build.T("Filtreli takım uyumu %100", "Filtered max cohesion")))
+			{
+				foreach (PlayerRow p in list)
+				{
+					try
+					{
+						bool ok = p.ClubAddress != 0 && TeamCohesion.MaxPlayerCohesion(_data, p.Address, p.ClubAddress, p.Name);
+						int tac = TeamCohesion.MaxPlayerTacticalFamiliarity(_data, p.Address, p.Name);
+						if (ok || tac > 0) done++;
+					}
+					catch { }
+				}
+			}
+			_nav.SetStatus(Build.F("✓ {0:N0} oyuncunun takım uyumu %100 yapıldı. {1} geri alır.", "✓ Maxed team cohesion for {0:N0} players. {1} undoes it.", done, PlatformPaths.UndoHint));
+		});
+		m.Items.Add(new Separator());
+		Item($"Özel alanı toplu düzenle… ({list.Count:N0} oyuncu)", $"Mass edit custom field… ({list.Count:N0} players)", () =>
+		{
+			var targets = list.Select(p => new BulkTarget(p.Address, p.Name)).ToList();
+			var dlg = new MassEditWindow(_data, _data.PlayerDef, targets, _nav);
+			Window? owner = ClubPage.OwnerOf(this);
+			if (owner is { IsVisible: true }) _ = dlg.ShowDialog(owner);
+			else dlg.Show();
+		});
+		Item($"Tümünü kısa listeye ekle ({list.Count:N0} oyuncu)", $"Add all to shortlist ({list.Count:N0} players)", () =>
+		{
+			var set = new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey));
+			int added = 0;
+			foreach (PlayerRow p in list)
+			{
+				if (p.Uid > 0 && set.Add(p.Uid)) { p.IsShortlisted = true; added++; }
+			}
+			AppSettings.Current.SetShortlist(_data.SaveKey, set.ToList());
+			AppSettings.Current.Save();
+			_nav.SetStatus(Build.F("★ {0:N0} oyuncu kısa listeye eklendi (toplam {1:N0}).", "★ Added {0:N0} players to shortlist ({1:N0} total).", added, set.Count));
+		});
+		m.Open(anchor);
+	}
+
+	private async System.Threading.Tasks.Task ExportShortlistJsonAsync()
+	{
+		var uids = AppSettings.Current.GetShortlist(_data.SaveKey);
+		if (uids.Count == 0)
+		{
+			_nav.SetStatus(Build.T("Kısa liste boş.", "Shortlist is empty."));
+			return;
+		}
+		Window? owner = ClubPage.OwnerOf(this);
+		if (owner == null) return;
+		var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+		{
+			Title = Build.T("Kısa Listeyi Dışa Aktar", "Export Shortlist"),
+			DefaultExtension = "json",
+			SuggestedFileName = $"squadeditor_shortlist_{_data.GameDate:yyyyMMdd}.json",
+			FileTypeChoices = new[] { new FilePickerFileType("JSON") { Patterns = new[] { "*.json" } } }
+		});
+		if (file == null) return;
+		var payload = new { format = "squadeditor-shortlist-v1", exported = DateTime.UtcNow.ToString("O"), uids };
+		await using var fs = await file.OpenWriteAsync();
+		await using var sw = new StreamWriter(fs, Encoding.UTF8);
+		await sw.WriteAsync(JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+		_nav.SetStatus(Build.F("✓ {0:N0} oyunculuk kısa liste dışa aktarıldı.", "✓ Exported shortlist ({0:N0} players).", uids.Count));
+	}
+
+	private async System.Threading.Tasks.Task ImportShortlistJsonAsync()
+	{
+		Window? owner = ClubPage.OwnerOf(this);
+		if (owner == null) return;
+		var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+		{
+			Title = Build.T("Kısa Liste Seç", "Import Shortlist"),
+			AllowMultiple = false,
+			FileTypeFilter = new[] { new FilePickerFileType("JSON") { Patterns = new[] { "*.json" } } }
+		});
+		if (files.Count == 0) return;
+		try
+		{
+			await using var fs = await files[0].OpenReadAsync();
+			using var doc = await JsonDocument.ParseAsync(fs);
+			var set = new HashSet<uint>(AppSettings.Current.GetShortlist(_data.SaveKey));
+			int added = 0;
+			if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("uids", out var arr) && arr.ValueKind == JsonValueKind.Array)
+			{
+				foreach (var el in arr.EnumerateArray())
+				{
+					if (el.TryGetUInt32(out uint u) && u > 0 && set.Add(u)) added++;
+				}
+			}
+			else if (doc.RootElement.ValueKind == JsonValueKind.Array)
+			{
+				foreach (var el in doc.RootElement.EnumerateArray())
+				{
+					if (el.TryGetUInt32(out uint u) && u > 0 && set.Add(u)) added++;
+				}
+			}
+			AppSettings.Current.SetShortlist(_data.SaveKey, set.ToList());
+			AppSettings.Current.Save();
+			Apply();
+			_nav.SetStatus(Build.F("✓ Kısa listeye {0:N0} oyuncu içe aktarıldı (toplam {1:N0}).", "✓ Imported {0:N0} players into shortlist ({1:N0} total).", added, set.Count));
+		}
+		catch (Exception ex)
+		{
+			_nav.SetStatus(Build.F("Kısa liste okunamadı: {0}", "Failed to read shortlist: {0}", ex.Message));
+		}
+	}
+
+	private Control FrozenView(string q)
+	{
+		var entities = _data.Session.Freezer.Entities
+			.Where(e => q.Length == 0 || GameData.Normalize(e.Label).Contains(q))
+			.ToList();
+		var panel = new DockPanel { Margin = new Thickness(12, 8, 12, 8) };
+		var bar = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+		var rightBtns = new StackPanel { Orientation = Orientation.Horizontal };
+		var allowInc = new CheckBox
+		{
+			Content = Build.T("Özellikler artabilir ama düşmesin", "Attributes can increase (never drop)"),
+			Theme = Build.StyleOf("FilterChip"),
+			IsChecked = _data.Session.Freezer.AllowIncrease,
+			Margin = new Thickness(0, 0, 8, 0)
+		};
+		allowInc.IsCheckedChanged += (_, _) =>
+		{
+			bool v = allowInc.IsChecked == true;
+			_data.Session.Freezer.AllowIncrease = AppSettings.Current.FreezeAllowIncrease = v;
+			AppSettings.Current.Save();
+		};
+		rightBtns.Children.Add(allowInc);
+		if (entities.Count > 0)
+		{
+			var clearAll = new Button { Content = Build.T("Tüm dondurmaları kaldır", "Unfreeze all") };
+			clearAll.Click += (_, _) =>
+			{
+				_data.Session.Freezer.Clear();
+				_nav.SetStatus(Build.T("Tüm dondurmalar kaldırıldı.", "All frozen records unfrozen."));
+			};
+			rightBtns.Children.Add(clearAll);
+		}
+		DockPanel.SetDock(rightBtns, Dock.Right);
+		bar.Children.Add(rightBtns);
+		bar.Children.Add(Build.Text(entities.Count == 0
+			? Build.T("Henüz dondurulmuş kayıt yok. Bir profil açıp \"❄ Dondur\" diyebilir ya da listede sağ tıkla seçilenleri dondurabilirsin.",
+				"No frozen records yet. Open a profile and click \"❄ Freeze\", or right-click a selection in any list.")
+			: Build.F("{0} kayıt dondurulmuş (kapanışta ve F5'te korunur).", "{0} records frozen (persisted across reloads and restarts).", entities.Count), 12.5, Build.Res("Muted")));
+		DockPanel.SetDock(bar, Dock.Top);
+		panel.Children.Add(bar);
+
+		var list = new StackPanel();
+		foreach (FrozenEntity entity in entities)
+		{
+			FrozenEntity current = entity;
+			var row = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+			var unfreeze = new Button { Content = Build.T("Kaldır", "Unfreeze"), Padding = new Thickness(10, 3, 10, 3), FontSize = 12 };
+			unfreeze.Click += (_, _) =>
+			{
+				_data.Session.Freezer.Unfreeze(current.Entity);
+				_nav.SetStatus(Build.F("{0} artık dondurulmuş değil.", "{0} unfrozen.", current.Label));
+			};
+			var open = new Button { Content = Build.T("Aç", "Open"), Theme = Build.StyleOf("GhostButton"), Padding = new Thickness(10, 3, 10, 3), FontSize = 12, Margin = new Thickness(0, 0, 6, 0) };
+			open.Click += (_, _) =>
+			{
+				if (_data.Staff.Any(s => s.Address == current.Entity))
+				{
+					_nav.OpenStaff(current.Entity);
+				}
+				else
+				{
+					_nav.OpenPlayer(current.Entity);
+				}
+			};
+			DockPanel.SetDock(unfreeze, Dock.Right);
+			DockPanel.SetDock(open, Dock.Right);
+			row.Children.Add(unfreeze);
+			row.Children.Add(open);
+			row.Children.Add(Build.Text($"{current.Label}   ·   {current.FieldCount} {Build.T("alan", "fields")}", 13));
+			list.Children.Add(new Border
+			{
+				Background = Build.Res("Panel"),
+				BorderBrush = Build.Res("StrokeSoft"),
+				BorderThickness = new Thickness(1),
+				CornerRadius = new CornerRadius(5),
+				Padding = new Thickness(12, 7, 10, 7),
+				Margin = new Thickness(0, 0, 0, 4),
+				Child = row
+			});
+		}
+		panel.Children.Add(Build.Scroll(list));
+		return panel;
+	}
+}
