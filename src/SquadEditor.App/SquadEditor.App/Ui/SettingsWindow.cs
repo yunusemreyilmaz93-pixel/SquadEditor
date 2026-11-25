@@ -27,7 +27,7 @@ public sealed class SettingsWindow : Window
 
 	private readonly AppSettings _s = AppSettings.Current;
 	private readonly ComboBox _theme = Combo(), _language = Combo(), _accent = Combo(), _scale = Combo();
-	private readonly ComboBox _currency = Combo(), _period = Combo(), _height = Combo(), _date = Combo(), _attributes = Combo(), _refresh = Combo();
+	private readonly ComboBox _currency = Combo(), _period = Combo(), _height = Combo(), _date = Combo(), _attributes = Combo(), _refresh = Combo(), _roleWeights = Combo();
 	private readonly CheckBox _compact = Check(), _readOnly = Check(), _confirm = Check(), _live = Check(), _auto = Check(), _tabs = Check();
 	private readonly TextBox _rate = new TextBox { Width = 120, Height = 30 };
 	private readonly TextBox _folder = new TextBox { Height = 32 };
@@ -80,6 +80,11 @@ public sealed class SettingsWindow : Window
 		Fill(_date, Dates.Formats.Select(f => (f, DateTime.Today.ToString(f, CultureInfo.InvariantCulture) + "   (" + f.ToLowerInvariant() + ")")).ToArray(), _s.DateFormat);
 		Fill(_attributes, new[] { ("20", Build.T("1-20 (oyundaki gibi)", "1-20 (like the game)")), ("100", Build.T("1-100 (oyunun iç değeri)", "1-100 (the game's internal value)")) }, _s.Attributes100 ? "100" : "20");
 		Fill(_refresh, new[] { 1000, 1500, 3000, 5000 }.Select(v => (v.ToString(), Build.F("{0:0.#} saniyede bir", "every {0:0.#} s", v / 1000.0))).ToArray(), _s.LiveRefreshMs.ToString());
+		Fill(_roleWeights, new[]
+		{
+			("classic", Build.T("Klasik FM Rol Ağırlıkları", "Classic FM Role Weights")),
+			("meta", Build.T("Maç Motoru Meta (Hız/İvme/Sıçrama)", "Match Engine Meta (Pace/Acc/Jump)"))
+		}, _s.RoleWeightMode);
 		_compact.IsChecked = _s.Compact;
 		_readOnly.IsChecked = _s.ReadOnlyMode;
 		_confirm.IsChecked = _s.ConfirmBulkEdits;
@@ -208,6 +213,7 @@ public sealed class SettingsWindow : Window
 		(Build.T("Özellik ölçeği", "Attribute scale"), _attributes, Build.T("1-100, oyunun sakladığı ince ayarlı değerdir (1-20'deki 15 = 71-75 arası).", "1-100 is the finer value the game stores (15 on 1-20 = 71-75).")));
 
 	private UIElement Editing() => Section(Build.T("Düzenleme", "Editing"), null,
+		(Build.T("Rol reyting ağırlıkları", "Role rating weights"), _roleWeights, Build.T("Klasik FM rol ağırlıkları veya gerçek maç motorunda en etkili özelliklere (Hız, İvme, Sıçrama, Çeviklik, Sezgi) odaklanan ME Meta ağırlıkları.", "Classic FM role weights, or Match Engine Meta weights prioritizing real ME impact (Pace, Acceleration, Jumping Reach, Agility, Anticipation).")),
 		(Build.T("Salt okunur mod", "Read-only mode"), _readOnly, Build.T("Sadece bakmak için: oyuna hiçbir şey yazılmaz.", "Look only: nothing is written to the game.")),
 		(Build.T("Toplu düzenlemede onay sor", "Confirm bulk edits"), _confirm, Build.T("Birden fazla oyuncuya ön ayar uygulamadan önce sorar.", "Asks before a preset is applied to several players.")),
 		(Build.T("Canlı yenileme", "Live refresh"), _live, Build.T("Açık sayfadaki değerler oyundaki değişiklikleri izler.", "Values on the open page follow changes made by the game.")),
@@ -261,7 +267,7 @@ public sealed class SettingsWindow : Window
 		// Brand & version header card
 		var head = new StackPanel { Margin = new Thickness(14, 6, 14, 12) };
 		var titleRow = new DockPanel();
-		var verText = Build.Text("v1.5.0 · MIT", 12, Build.Res("Muted"), FontWeights.SemiBold);
+		var verText = Build.Text("v1.6.0 · MIT", 12, Build.Res("Muted"), FontWeights.SemiBold);
 		verText.VerticalAlignment = VerticalAlignment.Center;
 		DockPanel.SetDock(verText, Dock.Right);
 		titleRow.Children.Add(verText);
@@ -338,6 +344,7 @@ public sealed class SettingsWindow : Window
 		_height.SelectedValue = d.HeightUnit;
 		_date.SelectedValue = d.DateFormat;
 		_attributes.SelectedValue = "20";
+		_roleWeights.SelectedValue = d.RoleWeightMode;
 		_readOnly.IsChecked = d.ReadOnlyMode;
 		_confirm.IsChecked = d.ConfirmBulkEdits;
 		_live.IsChecked = d.LiveRefresh;
@@ -361,10 +368,12 @@ public sealed class SettingsWindow : Window
 			return;
 		}
 		string theme = (string)_theme.SelectedValue, language = (string)_language.SelectedValue, accent = (string)_accent.SelectedValue;
-		NeedsRestart = language != _s.EffectiveLanguage;
+		string roleWeights = (string)_roleWeights.SelectedValue;
+		NeedsRestart = language != _s.EffectiveLanguage || roleWeights != _s.RoleWeightMode;
 		_s.UiTheme = theme;
 		_s.Language = language;
 		_s.Accent = accent;
+		_s.RoleWeightMode = roleWeights;
 		_s.UiScale = double.Parse((string)_scale.SelectedValue, CultureInfo.InvariantCulture);
 		_s.Compact = _compact.IsChecked == true;
 		_s.Currency = (string)_currency.SelectedValue;

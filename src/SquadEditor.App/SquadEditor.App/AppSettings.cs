@@ -45,6 +45,9 @@ public sealed class AppSettings
 	/// <summary>.NET date format used everywhere.</summary>
 	public string DateFormat { get; set; } = "dd.MM.yyyy";
 
+	/// <summary>Role rating weight profile: "classic" (FM role weights) or "meta" (Match Engine meta weights).</summary>
+	public string RoleWeightMode { get; set; } = "classic";
+
 	/// <summary>Look only: nothing is written to the game.</summary>
 	public bool ReadOnlyMode { get; set; }
 

@@ -50,20 +50,43 @@ public static class ScoutRating
 		new("TF", "Hedef Forvet (TF)", "Target Forward (TF)", new[] { 12 }, new[] { (Hea, 5), (Jum, 5), (Str, 5), (Bal, 4), (Bra, 4), (Fin, 4), (Fir, 4), (Otb, 4), (Tea, 4), (Cmp, 3), (Ant, 3) })
 	};
 
+	// Match Engine Meta weights (FM-Arena / Evidence-Based FM reality: Pace, Acceleration, Jumping Reach, Agility, Balance, Anticipation, Concentration, Dribbling carry highest real ME impact)
+	private static readonly RoleDef[] MetaRoles =
+	{
+		new("GK", "Kaleci (GK)", "Goalkeeper (GK)", new[] { 0 }, new[] { (Ref, 8), (Agi, 7), (Aer, 6), (Han, 5), (Ooo, 5), (Pos, 4), (Cnt, 4), (Ant, 4), (Cmd, 3), (Dec, 3) }),
+		new("BPD", "Pasör Stoper (BPD)", "Ball-Playing Defender (BPD)", new[] { 3 }, new[] { (Pac, 8), (Acc, 8), (Jum, 7), (Ant, 5), (Cnt, 5), (Bal, 4), (Agi, 4), (Pos, 4), (Mar, 4), (Tac, 4), (Pas, 3), (Cmp, 3) }),
+		new("CD", "Stoper (CD)", "Central Defender (CD)", new[] { 3 }, new[] { (Pac, 8), (Acc, 8), (Jum, 8), (Ant, 5), (Cnt, 5), (Str, 5), (Bal, 4), (Pos, 4), (Mar, 4), (Tac, 4), (Hea, 3) }),
+		new("WB", "Kanat Bek (WB)", "Wing-Back (WB)", new[] { 2, 4, 13, 14 }, new[] { (Pac, 9), (Acc, 9), (Sta, 6), (Agi, 5), (Bal, 5), (Dri, 5), (Ant, 4), (Cnt, 4), (Cro, 4), (Tac, 4), (Wor, 4) }),
+		new("DM", "Defansif Orta Saha (DM)", "Defensive Midfielder (DM)", new[] { 5 }, new[] { (Pac, 7), (Acc, 7), (Jum, 5), (Ant, 6), (Cnt, 5), (Bal, 5), (Agi, 5), (Sta, 5), (Pos, 4), (Tac, 4), (Wor, 4) }),
+		new("DLP", "Derin Oyun Kurucu (DLP)", "Deep-Lying Playmaker (DLP)", new[] { 5, 7 }, new[] { (Pac, 7), (Acc, 7), (Agi, 6), (Bal, 6), (Ant, 5), (Dri, 5), (Pas, 5), (Vis, 4), (Cnt, 4), (Cmp, 4), (Dec, 4) }),
+		new("BBM", "İki Yönlü Orta Saha (BBM)", "Box-to-Box Midfielder (BBM)", new[] { 7 }, new[] { (Pac, 8), (Acc, 8), (Sta, 6), (Agi, 5), (Bal, 5), (Dri, 5), (Ant, 5), (Wor, 5), (Jum, 4), (Cnt, 4), (Otb, 4) }),
+		new("MEZ", "Mezzala (MEZ)", "Mezzala (MEZ)", new[] { 7 }, new[] { (Pac, 8), (Acc, 8), (Dri, 6), (Agi, 6), (Bal, 5), (Ant, 5), (Otb, 5), (Sta, 5), (Pas, 4), (Cmp, 4), (Fin, 3) }),
+		new("AP", "Ofansif Oyun Kurucu (AP)", "Advanced Playmaker (AP)", new[] { 7, 10 }, new[] { (Pac, 8), (Acc, 8), (Dri, 6), (Agi, 6), (Bal, 6), (Ant, 5), (Pas, 5), (Vis, 4), (Cmp, 4), (Otb, 4), (Cnt, 4) }),
+		new("W", "Kanat (W)", "Winger (W)", new[] { 6, 8, 9, 11 }, new[] { (Pac, 9), (Acc, 9), (Dri, 7), (Agi, 6), (Bal, 6), (Ant, 4), (Otb, 4), (Cro, 4), (Sta, 4), (Cnt, 3) }),
+		new("IW", "Ters Ayaklı Kanat (IW)", "Inverted Winger (IW)", new[] { 9, 11 }, new[] { (Pac, 9), (Acc, 9), (Dri, 7), (Agi, 6), (Bal, 6), (Ant, 5), (Otb, 5), (Fin, 4), (Cmp, 4), (Sta, 4) }),
+		new("AF", "Yaratıcı Forvet (AF)", "Advanced Forward (AF)", new[] { 12 }, new[] { (Pac, 9), (Acc, 9), (Dri, 6), (Agi, 6), (Bal, 6), (Jum, 5), (Ant, 5), (Otb, 5), (Fin, 4), (Cmp, 4), (Cnt, 4) }),
+		new("PF", "Presçi Forvet (PF)", "Pressing Forward (PF)", new[] { 12 }, new[] { (Pac, 9), (Acc, 9), (Sta, 6), (Wor, 6), (Bal, 5), (Agi, 5), (Jum, 5), (Ant, 5), (Dri, 5), (Fin, 4), (Cmp, 4) }),
+		new("TF", "Hedef Forvet (TF)", "Target Forward (TF)", new[] { 12 }, new[] { (Jum, 9), (Pac, 7), (Acc, 7), (Str, 6), (Bal, 6), (Ant, 5), (Hea, 5), (Otb, 4), (Fin, 4), (Cmp, 4) })
+	};
+
+	private static RoleDef[] ActiveRoles =>
+		string.Equals(AppSettings.Current.RoleWeightMode, "meta", StringComparison.OrdinalIgnoreCase) ? MetaRoles : Roles;
+
 	public static IReadOnlyList<(string Code, string Label)> AllRoles() =>
-		Roles.Select(r => (r.Code, Build.T(r.Tr, r.En))).ToList();
+		ActiveRoles.Select(r => (r.Code, Build.T(r.Tr, r.En))).ToList();
 
 	/// <summary>Returns 2 for key role attributes, 1 for secondary attributes, 0 otherwise.</summary>
 	public static int HighlightLevel(string? roleCode, string fieldName)
 	{
 		if (string.IsNullOrEmpty(roleCode)) return 0;
-		RoleDef? role = Roles.FirstOrDefault(r => r.Code == roleCode);
+		RoleDef? role = ActiveRoles.FirstOrDefault(r => r.Code == roleCode);
 		if (role == null) return 0;
+		int keyThreshold = string.Equals(AppSettings.Current.RoleWeightMode, "meta", StringComparison.OrdinalIgnoreCase) ? 7 : 5;
 		foreach (var (attrIdx, w) in role.Weights)
 		{
 			if (AttrToField.TryGetValue(attrIdx, out string? name) && name == fieldName)
 			{
-				return w >= 5 ? 2 : 1;
+				return w >= keyThreshold ? 2 : 1;
 			}
 		}
 		return 0;
@@ -77,7 +100,7 @@ public static class ScoutRating
 		ReadOnlySpan<byte> pos = raw69[..15];
 		ReadOnlySpan<byte> attr = raw69.Slice(15, 54);
 
-		foreach (RoleDef role in Roles)
+		foreach (RoleDef role in ActiveRoles)
 		{
 			int bestPos = 0;
 			foreach (int pi in role.PosIndices)
