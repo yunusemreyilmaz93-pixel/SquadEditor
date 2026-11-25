@@ -577,6 +577,88 @@
       color: var(--ink-2);
       line-height: 1.55;
     }
+    .os-tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      margin-bottom: 22px;
+    }
+    .os-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 15px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--ink-2);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .os-tab svg { width: 15px; height: 15px; fill: currentColor; }
+    .os-tab:hover { color: var(--ink); }
+    .os-tab.active {
+      background: var(--ink);
+      color: var(--bg);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+    .steps-panel { display: none; }
+    .steps-panel.active { display: block; }
+    .mac-cmd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: var(--ink);
+      word-break: break-all;
+    }
+    .mac-copy {
+      flex-shrink: 0;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--sans);
+    }
+    .mac-copy:hover { border-color: var(--accent); color: var(--accent); }
+    .mac-path {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 5px 9px;
+      border-radius: 7px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .mac-note {
+      margin-top: 14px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      font-size: 13px;
+      color: var(--ink-2);
+      line-height: 1.55;
+    }
 
     /* 12 Languages with Official 4:3 SVG Flags */
     .lang-grid {
@@ -1056,30 +1138,77 @@
     <!-- 4-Step Quick Start -->
     <section id="howto">
       <div class="wrap">
-        <div class="sec-header">
+        <div class="sec-header" style="margin-bottom:24px;">
           <h2 data-i18n="how.h">Nasıl Kullanılır?</h2>
           <p data-i18n="how.p">Dört basit adımda kariyerinize bağlanıp güvenle kullanmaya başlayabilirsiniz.</p>
         </div>
-        <div class="steps-grid">
-          <div class="step-card">
-            <div class="step-badge">1</div>
-            <h3 data-i18n="st1.t">FM27'de kariyerinizi açın</h3>
-            <p data-i18n="st1.d">Önce Football Manager 27'yi başlatıp düzenlemek istediğiniz kariyer kaydını yükleyin.</p>
+
+        <div class="os-tabs" role="tablist" aria-label="Platform">
+          <button type="button" class="os-tab active" data-os="win" role="tab" aria-selected="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3.5h9.2v8.1H2V3.5zm10.8 0H22v8.1h-9.2V3.5zM2 12.9h9.2V21H2v-8.1zm10.8 0H22V21h-9.2v-8.1z"/></svg>
+            <span>Windows</span>
+          </button>
+          <button type="button" class="os-tab" data-os="mac" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>
+            <span>macOS (Apple Silicon)</span>
+          </button>
+        </div>
+
+        <div class="steps-panel active" id="panelWin">
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-badge">1</div>
+              <h3 data-i18n="st1.t">FM27'de kariyerinizi açın</h3>
+              <p data-i18n="st1.d">Önce Football Manager 27'yi başlatıp düzenlemek istediğiniz kariyer kaydını yükleyin.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">2</div>
+              <h3 data-i18n="st2.t">Squadeditor'ı çalıştırın</h3>
+              <p data-i18n="st2.d">İndirdiğiniz dosyayı açın; program açık olan FM27'yi otomatik algılayıp saniyeler içinde bağlanır.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">3</div>
+              <h3 data-i18n="st3.t">Tek tıkla yedeğinizi alın</h3>
+              <p data-i18n="st3.d">Büyük bir değişiklik yapmadan önce üst bardaki Yedek butonuna basarak kaydınızı güvenceye alın.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">4</div>
+              <h3 data-i18n="st4.t">Scout yapın veya düzenleyin</h3>
+              <p data-i18n="st4.d">Yaptığınız her işlem anında oyuna yansır; vazgeçerseniz Ctrl+Z ile anında geri alabilirsiniz.</p>
+            </div>
           </div>
-          <div class="step-card">
-            <div class="step-badge">2</div>
-            <h3 data-i18n="st2.t">Squadeditor'ı çalıştırın</h3>
-            <p data-i18n="st2.d">İndirdiğiniz dosyayı açın; program açık olan FM27'yi otomatik algılayıp saniyeler içinde bağlanır.</p>
+        </div>
+
+        <div class="steps-panel" id="panelMac">
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-badge">1</div>
+              <h3 data-i18n="mst1.t">Tek seferlik bellek izni</h3>
+              <p data-i18n="mst1.d">Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma moduna girin. Üst menüden İzlenceler → Terminal'i açıp şu komutu yazın ve yeniden başlatın:</p>
+              <div class="mac-cmd">
+                <code>csrutil enable --without debug</code>
+                <button type="button" class="mac-copy" id="copyCsrBtn" data-i18n="mac.copy">Kopyala</button>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">2</div>
+              <h3 data-i18n="mst2.t">İlk açılış uyarısını onaylayın</h3>
+              <p data-i18n="mst2.d">İndirdiğiniz .zip'i açıp SquadEditor.app'e çift tıklayın. macOS ilk kez güvenlik uyarısı verirse şu menüden onaylayın:</p>
+              <div class="mac-path" data-i18n="mst2.path">Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç</div>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">3</div>
+              <h3 data-i18n="mst3.t">FM27'yi açın ve save yükleyin</h3>
+              <p data-i18n="mst3.d">Football Manager 27'yi başlatıp incelemek veya düzenlemek istediğiniz kariyer kaydınızı yükleyin.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-badge">4</div>
+              <h3 data-i18n="mst4.t">SquadEditor.app'i çalıştırın</h3>
+              <p data-i18n="mst4.d">Mac şifrenizi girerek canlı bağlantıyı onaylayın. Masaüstü penceresi doğrudan açılır; ⌘Z ile her değişikliği geri alabilirsiniz.</p>
+            </div>
           </div>
-          <div class="step-card">
-            <div class="step-badge">3</div>
-            <h3 data-i18n="st3.t">Tek tıkla yedeğinizi alın</h3>
-            <p data-i18n="st3.d">Büyük bir değişiklik yapmadan önce üst bardaki Yedek butonuna basarak kaydınızı güvenceye alın.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-badge">4</div>
-            <h3 data-i18n="st4.t">Scout yapın veya düzenleyin</h3>
-            <p data-i18n="st4.d">Yaptığınız her işlem anında oyuna yansır; vazgeçerseniz Ctrl+Z ile anında geri alabilirsiniz.</p>
+          <div class="mac-note" data-i18n="mac.note">
+            Bilgi: 1. ve 2. adımlar sadece ilk kurulumda bir kez yapılır. "csrutil enable --without debug" komutu yalnızca uygulama belleği okuma iznini açar; diğer tüm macOS sistem korumaları aktif kalmaya devam eder.
           </div>
         </div>
       </div>
@@ -1157,7 +1286,7 @@
               <span data-i18n="q6.q">macOS (Apple Silicon) nasıl kurulur ve çalıştırılır?</span>
               <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </summary>
-            <p data-i18n="q6.a">macOS güvenlik gereği başka bir uygulamanın canlı belleğini okumayı varsayılan olarak engeller. Sadece bir kez şu 3 adımı yapmanız yeterlidir: (1) Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma (Recovery) modunu açın, üst menüden İzlenceler → Terminal'i açıp "csrutil enable --without debug" yazıp yeniden başlatın (diğer tüm sistem korumaları aktif kalır). (2) FM27'yi açıp save yükleyin. (3) İndirdiğiniz klasörde Terminal'i açıp "chmod +x Start-SquadEditor.command && ./Start-SquadEditor.command" çalıştırın; arayüz tarayıcınızda otomatik açılır.</p>
+            <p data-i18n="q6.a">macOS güvenlik gereği başka bir uygulamanın canlı belleğini okumayı varsayılan olarak engeller. Sadece bir kez Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma (Recovery) moduna girin, üst menüden İzlenceler → Terminal'i açıp "csrutil enable --without debug" yazıp yeniden başlatın (diğer tüm sistem korumaları aktif kalır). Ardından SquadEditor.app'e çift tıklayın; ilk açılışta macOS güvenlik uyarısı verirse Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç adımıyla onaylayıp şifrenizi girmeniz yeterlidir.</p>
           </details>
         </div>
       </div>
@@ -1304,6 +1433,13 @@
         "st2.t": "Squadeditor'ı çalıştırın", "st2.d": "İndirdiğiniz dosyayı açın; program açık olan FM27'yi otomatik algılayıp saniyeler içinde bağlanır.",
         "st3.t": "Tek tıkla yedeğinizi alın", "st3.d": "Büyük bir değişiklik yapmadan önce üst bardaki Yedek butonuna basarak kaydınızı güvenceye alın.",
         "st4.t": "Scout yapın veya düzenleyin", "st4.d": "Yaptığınız her işlem anında oyuna yansır; vazgeçerseniz Ctrl+Z ile anında geri alabilirsiniz.",
+        "mst1.t": "Tek seferlik bellek izni", "mst1.d": "Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma moduna girin. Üst menüden İzlenceler → Terminal'i açıp şu komutu yazın ve yeniden başlatın:",
+        "mst2.t": "İlk açılış uyarısını onaylayın", "mst2.d": "İndirdiğiniz .zip'i açıp SquadEditor.app'e çift tıklayın. macOS ilk kez güvenlik uyarısı verirse şu menüden onaylayın:",
+        "mst2.path": "Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç",
+        "mst3.t": "FM27'yi açın ve save yükleyin", "mst3.d": "Football Manager 27'yi başlatıp incelemek veya düzenlemek istediğiniz kariyer kaydınızı yükleyin.",
+        "mst4.t": "SquadEditor.app'i çalıştırın", "mst4.d": "Mac şifrenizi girerek canlı bağlantıyı onaylayın. Masaüstü penceresi doğrudan açılır; ⌘Z ile her değişikliği geri alabilirsiniz.",
+        "mac.copy": "Kopyala", "mac.copied": "Kopyalandı ✓",
+        "mac.note": "Bilgi: 1. ve 2. adımlar sadece ilk kurulumda bir kez yapılır. \"csrutil enable --without debug\" komutu yalnızca uygulama belleği okuma iznini açar; diğer tüm macOS sistem korumaları aktif kalmaya devam eder.",
         "lang.h": "12 Dil", "lang.p": "Ayarlardan dilediğiniz dili seçip kullanabilirsiniz.",
         "about.h": "Hakkında",
         "about.p1": "Squadeditor, Football Manager topluluğu için tamamen ücretsiz ve açık kaynaklı bir alternatif sunmak amacıyla geliştirildi. Karmaşık arayüzler ve ücretli duvarlar olmadan; hızlı çalışan, kayda zarar vermeyen ve gerçekten oyuncunun işini gören bir araç olmasını hedefledim.",
@@ -1314,7 +1450,7 @@
         "q3.q": "Kariyer kaydıma zarar verir mi? Dondurma (Freeze) nasıl çalışır?", "q3.a": "Oyuna herhangi bir DLL enjeksiyonu yapılmaz; tüm okumalar/yazmalar doğrulamalı bellek erişimiyle çalışır, Dondurma özelliği periyodik kontrolle değerleri korur ve tüm işlemler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce Yedek butonuyla kaydınızı yedeklemeniz önerilir.",
         "q4.q": "Hangi sürümle uyumlu? FM27'ye yeni yama gelirse ne olur?", "q4.a": "Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1 – 27.1.1) ile canlı doğrulanmıştır. Dinamik RTTI vtable taraması kullanıldığı için hem güncellenmemiş 27.0.1 hem de güncel 27.1.1 sürümleriyle tek dosyada tam uyumludur.",
         "q5.q": "Genie Scout ve FMRTE'nin yerini tek başına tutuyor mu?", "q5.a": "Evet. Klasik FM veya Maç Motoru (ME Meta) rol ağırlıkları, Potansiyel Reyting (PR %), salt okunur PA Zirve Önizleme, çift katmanlı radar, gerçek 5★ antrenörlük yıldız hesabı, kaydedilebilir özel filtreler ve Moneyball şablonlarıyla tam bir scout aracıdır; aynı zamanda lig ve filtre bazlı toplu işlemler, sponsorluk ve takım uyumu/taktik %100 ile tek ~2.2 MB uygulamada ikisini birleştirir.",
-        "q6.q": "macOS (Apple Silicon) nasıl kurulur ve çalıştırılır?", "q6.a": "macOS güvenlik gereği başka bir uygulamanın canlı belleğini okumayı varsayılan olarak engeller. Sadece bir kez Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma (Recovery) moduna girin, üst menüden İzlenceler → Terminal'i açıp \"csrutil enable --without debug\" yazıp yeniden başlatın (diğer tüm sistem korumaları aktif kalır). Ardından FM27'yi açın ve indirdiğiniz SquadEditor.app uygulamasına çift tıklayın (ilk açılışta Gatekeeper sorarsa sağ tık → Aç); şifrenizi girince uygulama doğrudan açılır.",
+        "q6.q": "macOS (Apple Silicon) nasıl kurulur ve çalıştırılır?", "q6.a": "macOS güvenlik gereği başka bir uygulamanın canlı belleğini okumayı varsayılan olarak engeller. Sadece bir kez Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma (Recovery) moduna girin, üst menüden İzlenceler → Terminal'i açıp \"csrutil enable --without debug\" yazıp yeniden başlatın (diğer tüm sistem korumaları aktif kalır). Ardından SquadEditor.app'e çift tıklayın; ilk açılışta macOS güvenlik uyarısı verirse Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç adımıyla onaylayıp şifrenizi girmeniz yeterlidir.",
         "cta.h": "Hemen indir.", "cta.p": "Windows için sadece ~2.2 MB tek dosya, kurulum gerektirmez ve tamamen ücretsiz.", "cta.btn": "Squadeditor İndir (Windows)",
         "dl.meta": "Sürüm v1.6.0 · FM27 27.0.1 – 27.1.1 · Windows 10/11 (64-bit) · Açık Kaynak (MIT)",
         "release.info": "v1.6.0 · FM27 27.1.1 · Açık Kaynak (MIT)",
@@ -1359,6 +1495,13 @@
         "st2.t": "Open Squadeditor", "st2.d": "Run the single executable — it detects FM27 automatically and indexes your database in seconds.",
         "st3.t": "Back up in one click", "st3.d": "Hit the Backup button in the top bar before making major edits for complete peace of mind.",
         "st4.t": "Scout or edit live", "st4.d": "Changes apply immediately in-game, and anything can be undone anytime with Ctrl+Z.",
+        "mst1.t": "One-time memory permission", "mst1.d": "Shut down your Mac and hold the Power button to enter Recovery. Open Utilities → Terminal from the top menu, run this command, and reboot:",
+        "mst2.t": "Approve first-launch notice", "mst2.d": "Unzip the download and double-click SquadEditor.app. If macOS shows a security warning on first launch, approve it here:",
+        "mst2.path": "System Settings → Privacy & Security → Open Anyway",
+        "mst3.t": "Open FM27 and load a save", "mst3.d": "Launch Football Manager 27 and load the career save you want to scout or edit.",
+        "mst4.t": "Launch SquadEditor.app", "mst4.d": "Enter your Mac password when prompted. The desktop window opens directly and connects live; press ⌘Z anytime to undo.",
+        "mac.copy": "Copy", "mac.copied": "Copied ✓",
+        "mac.note": "Note: Steps 1 and 2 are only needed once. \"csrutil enable --without debug\" only enables live memory inspection; all other macOS system protections remain active.",
         "lang.h": "12 Languages", "lang.p": "Pick any language from Settings whenever you like.",
         "about.h": "About",
         "about.p1": "Squadeditor was built to give the Football Manager community a genuinely free, open-source alternative — fast, clean, save-safe, and free of paywalls or clutter.",
@@ -1369,7 +1512,7 @@
         "q3.q": "Will it harm my save? How does Freezing work?", "q3.a": "No DLL injection is used — all reads and writes are validated memory operations, Freezing works via lightweight polling, and every edit is undoable with Ctrl+Z. Backing up your save with the built-in Backup button before major changes is still recommended.",
         "q4.q": "Which version is supported? What about FM27 patches?", "q4.a": "Live-verified on Windows 10/11 (64-bit) with Steam Football Manager 27 (27.0.1 – 27.1.1). Dynamic RTTI vtable scanning keeps a single build compatible across both unpatched 27.0.1 and the latest 27.1.1 update.",
         "q5.q": "Does it replace both Genie Scout and FMRTE?", "q5.a": "Yes. With switchable Classic FM vs. Match Engine Meta role weights, Potential Rating (PR %), read-only Peak PA Preview, dual-layer radar, a real 5★ coaching star calculator, saveable custom filter presets and Moneyball presets, it covers deep scouting — while adding league-wide mass actions, sponsorships and 100% cohesion/tactics in one ~2.2 MB file.",
-        "q6.q": "How do I install and run the macOS (Apple Silicon) version?", "q6.a": "By default, macOS blocks external apps from reading another app's live memory. As a one-time setup, shut down your Mac, hold the Power button to enter Recovery → Options → Continue, open Utilities → Terminal from the top menu, run \"csrutil enable --without debug\", and reboot (all other system protections stay enabled). After that, open FM27 and simply double-click SquadEditor.app (on first launch, right-click → Open if Gatekeeper asks) and approve the macOS password prompt.",
+        "q6.q": "How do I install and run the macOS (Apple Silicon) version?", "q6.a": "By default, macOS blocks external apps from reading another app's live memory. As a one-time setup, shut down your Mac, hold the Power button to enter Recovery → Options → Continue, open Utilities → Terminal from the top menu, run \"csrutil enable --without debug\", and reboot (all other system protections stay enabled). After that, double-click SquadEditor.app — if macOS shows a first-launch warning, approve it under System Settings → Privacy & Security → Open Anyway and enter your Mac password.",
         "cta.h": "Download now.", "cta.p": "Just a ~2.2 MB single file for Windows, no installer needed, completely free.", "cta.btn": "Download Squadeditor (Windows)",
         "dl.meta": "Version v1.6.0 · FM27 27.0.1 – 27.1.1 · Windows 10/11 (64-bit) · Open Source (MIT)",
         "release.info": "v1.6.0 · FM27 27.1.1 · Open Source (MIT)",
@@ -1542,6 +1685,28 @@
     applyTheme(theme);
     applyLang(lang);
     trackHit("view");
+
+    // How-To OS Switcher (auto-select macOS on Mac devices)
+    function selectHowtoOs(os) {
+      document.querySelectorAll(".os-tab").forEach(b => {
+        const on = b.dataset.os === os;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.getElementById("panelWin").classList.toggle("active", os === "win");
+      document.getElementById("panelMac").classList.toggle("active", os === "mac");
+    }
+    document.querySelectorAll(".os-tab").forEach(b => b.addEventListener("click", () => selectHowtoOs(b.dataset.os)));
+    if (/Mac|Macintosh/i.test(navigator.platform || navigator.userAgent || "")) selectHowtoOs("mac");
+
+    const copyCsrBtn = document.getElementById("copyCsrBtn");
+    if (copyCsrBtn) {
+      copyCsrBtn.addEventListener("click", () => {
+        navigator.clipboard?.writeText("csrutil enable --without debug").catch(() => {});
+        copyCsrBtn.textContent = I18N[lang]["mac.copied"] || "✓";
+        setTimeout(() => { copyCsrBtn.textContent = I18N[lang]["mac.copy"] || "Copy"; }, 1800);
+      });
+    }
   </script>
 </body>
 </html>

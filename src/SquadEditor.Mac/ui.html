@@ -1,225 +1,1092 @@
-<!DOCTYPE html>
-<html lang="tr" data-theme="dark">
+<!doctype html>
+<html lang="tr" data-theme="navy">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SquadEditor — macOS (Apple Silicon)</title>
-  <style>
-    :root, [data-theme="dark"] {
-      --bg: #0D1117; --surface: #141A23; --surface-2: #1B2330; --line: #263042;
-      --ink: #EEF2F7; --ink-2: #9AA6B8; --ink-3: #647287; --accent: #4F8CFF; --green: #22C55E; --warn: #F59E0B;
-    }
-    [data-theme="light"] {
-      --bg: #F6F5F1; --surface: #FFFFFF; --surface-2: #EFEEE9; --line: #E2E0D8;
-      --ink: #14161A; --ink-2: #505866; --ink-3: #7D8594; --accent: #2563EB; --green: #15803D; --warn: #D97706;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; background: var(--bg); color: var(--ink); font-size: 13.5px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-    header { height: 52px; padding: 0 18px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
-    .brand { font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 9px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-    .dot.off { background: #EF4444; }
-    .status { font-size: 12px; color: var(--ink-2); }
-    .tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 9px; border: 1px solid var(--line); }
-    .tab { border: 0; background: transparent; color: var(--ink-2); padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; }
-    .tab.active { background: var(--surface); color: var(--ink); }
-    .bar-right { display: flex; align-items: center; gap: 7px; }
-    .btn { height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font-size: 12.5px; font-weight: 600; cursor: pointer; }
-    .btn:hover { border-color: var(--accent); }
-    .btn-primary { background: var(--accent); color: #FFF; border-color: transparent; }
-    .btn-green { background: rgba(34,197,94,0.16); color: var(--green); border-color: rgba(34,197,94,0.35); }
-    .layout { flex: 1; display: grid; grid-template-columns: 430px 1fr; overflow: hidden; }
-    .left { border-right: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; background: var(--surface); }
-    .filters { padding: 10px 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
-    .input { width: 100%; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 13px; outline: none; }
-    .input:focus { border-color: var(--accent); }
-    .f-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
-    .list { flex: 1; overflow-y: auto; }
-    .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line); cursor: pointer; }
-    .row:hover { background: var(--surface-2); }
-    .row.active { background: rgba(79,140,255,0.14); }
-    .r-name { font-weight: 700; font-size: 13.5px; }
-    .r-sub { font-size: 11.5px; color: var(--ink-2); margin-top: 2px; }
-    .r-nums { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12.5px; }
-    .ca { color: var(--green); } .pa { color: var(--accent); }
-    .right { overflow-y: auto; padding: 20px 24px; }
-    .empty { height: 100%; display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-size: 14px; }
-    .ent-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-    .ent-title { font-size: 22px; font-weight: 800; }
-    .quick-bar { display: flex; gap: 7px; flex-wrap: wrap; }
-    .groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-    .card-h { padding: 9px 13px; border-bottom: 1px solid var(--line); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
-    .f-item { display: grid; grid-template-columns: 1fr 110px; align-items: center; gap: 8px; padding: 6px 13px; border-bottom: 1px solid var(--line); }
-    .f-item:last-child { border-bottom: 0; }
-    .f-item label { font-size: 12.5px; color: var(--ink-2); }
-    .f-item input { width: 100%; height: 28px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 12.5px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
-    .f-item input:disabled { opacity: 0.65; border-color: transparent; background: transparent; }
-    .toast { position: fixed; right: 18px; bottom: 18px; background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 9px; font-weight: 600; font-size: 12.5px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
-    .toast.show { opacity: 1; }
-    @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } .left { max-height: 44vh; border-right: 0; border-bottom: 1px solid var(--line); } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SquadEditor — FM27</title>
+<style>
+  :root, [data-theme="navy"] {
+    --bg: #0B1120;
+    --bg-elev: #111827;
+    --card: #161F33;
+    --card-2: #1C2740;
+    --border: rgba(148, 163, 184, 0.14);
+    --border-strong: rgba(148, 163, 184, 0.26);
+    --text: #F1F5F9;
+    --text-2: #CBD5E1;
+    --muted: #8B9BB4;
+    --accent: #3B82F6;
+    --accent-soft: rgba(59, 130, 246, 0.16);
+    --emerald: #10B981;
+    --emerald-soft: rgba(16, 185, 129, 0.15);
+    --gold: #F59E0B;
+    --gold-soft: rgba(245, 158, 11, 0.16);
+    --danger: #EF4444;
+    --attr-hi: #34D399;
+    --attr-mid: #38BDF8;
+    --attr-low: #CBD5E1;
+    --attr-dim: #64748B;
+    --row-hover: rgba(59, 130, 246, 0.10);
+    --row-active: rgba(59, 130, 246, 0.20);
+  }
+  [data-theme="oled"] {
+    --bg: #000000;
+    --bg-elev: #09090B;
+    --card: #111114;
+    --card-2: #18181C;
+    --border: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.22);
+    --text: #FAFAFA;
+    --text-2: #D4D4D8;
+    --muted: #71717A;
+    --accent: #22C55E;
+    --accent-soft: rgba(34, 197, 94, 0.15);
+    --emerald: #4ADE80;
+    --emerald-soft: rgba(74, 222, 128, 0.15);
+    --gold: #FBBF24;
+    --gold-soft: rgba(251, 191, 36, 0.16);
+    --danger: #F87171;
+    --attr-hi: #4ADE80;
+    --attr-mid: #38BDF8;
+    --attr-low: #D4D4D8;
+    --attr-dim: #52525B;
+    --row-hover: rgba(255, 255, 255, 0.05);
+    --row-active: rgba(34, 197, 94, 0.18);
+  }
+  [data-theme="wtcs"] {
+    --bg: #141416;
+    --bg-elev: #1B1B1F;
+    --card: #222227;
+    --card-2: #2A2A31;
+    --border: rgba(212, 175, 55, 0.16);
+    --border-strong: rgba(212, 175, 55, 0.34);
+    --text: #F8F7F4;
+    --text-2: #D6D3CD;
+    --muted: #9A958C;
+    --accent: #D4AF37;
+    --accent-soft: rgba(212, 175, 55, 0.18);
+    --emerald: #34D399;
+    --emerald-soft: rgba(52, 211, 153, 0.15);
+    --gold: #FBBF24;
+    --gold-soft: rgba(251, 191, 36, 0.18);
+    --danger: #F87171;
+    --attr-hi: #FCD34D;
+    --attr-mid: #6EE7B7;
+    --attr-low: #D6D3CD;
+    --attr-dim: #78716C;
+    --row-hover: rgba(212, 175, 55, 0.09);
+    --row-active: rgba(212, 175, 55, 0.20);
+  }
+  [data-theme="light"] {
+    --bg: #F4F5F7;
+    --bg-elev: #FFFFFF;
+    --card: #FFFFFF;
+    --card-2: #F1F5F9;
+    --border: rgba(15, 23, 42, 0.10);
+    --border-strong: rgba(15, 23, 42, 0.20);
+    --text: #0F172A;
+    --text-2: #334155;
+    --muted: #64748B;
+    --accent: #2563EB;
+    --accent-soft: rgba(37, 99, 235, 0.12);
+    --emerald: #059669;
+    --emerald-soft: rgba(5, 150, 105, 0.12);
+    --gold: #D97706;
+    --gold-soft: rgba(217, 119, 6, 0.12);
+    --danger: #DC2626;
+    --attr-hi: #059669;
+    --attr-mid: #0284C7;
+    --attr-low: #334155;
+    --attr-dim: #94A3B8;
+    --row-hover: rgba(37, 99, 235, 0.06);
+    --row-active: rgba(37, 99, 235, 0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; }
+
+  /* Layout */
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* Topbar */
+  .topbar {
+    height: 54px; flex: 0 0 54px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 0 16px; background: var(--bg-elev); border-bottom: 1px solid var(--border);
+    user-select: none;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-logo { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+  .brand-title { font-weight: 800; font-size: 15px; letter-spacing: -0.02em; }
+  .brand-ver { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); letter-spacing: 0.02em; }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+    background: var(--card); border: 1px solid var(--border); color: var(--text-2);
+    max-width: 340px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+  .status-dot.ok { background: var(--emerald); box-shadow: 0 0 0 3px var(--emerald-soft); }
+
+  .toolbar { display: flex; align-items: center; gap: 6px; }
+  .btn, select.ctrl {
+    height: 30px; padding: 0 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; transition: all .14s ease;
+    font-family: inherit;
+  }
+  .btn:hover, select.ctrl:hover { border-color: var(--border-strong); background: var(--card-2); }
+  .btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.emerald { background: var(--emerald-soft); border-color: rgba(16,185,129,.35); color: var(--emerald); }
+  .btn.gold { background: var(--gold-soft); border-color: rgba(245,158,11,.35); color: var(--gold); }
+  .btn.danger { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.35); color: var(--danger); }
+  .btn:disabled { opacity: .42; cursor: not-allowed; }
+  select.ctrl { padding-right: 22px; outline: none; }
+
+  /* Body Shell */
+  .shell { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+
+  /* Left Rail */
+  .rail {
+    width: 196px; flex: 0 0 196px;
+    background: var(--bg-elev); border-right: 1px solid var(--border);
+    padding: 12px 10px; display: flex; flex-direction: column; gap: 4px;
+    user-select: none;
+  }
+  .rail-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 10px 4px; }
+  .nav-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    color: var(--text-2); font-weight: 600; font-size: 12.5px; border: 1px solid transparent;
+    transition: all .12s ease;
+  }
+  .nav-item:hover { background: var(--row-hover); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); border-color: rgba(59,130,246,.30); color: var(--accent); }
+  .nav-left { display: flex; align-items: center; gap: 8px; }
+  .nav-count { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--card-2); color: var(--muted); }
+  .nav-item.active .nav-count { background: var(--accent); color: #fff; }
+
+  .rail-footer {
+    margin-top: auto; padding: 10px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border); font-size: 11px; color: var(--muted);
+    line-height: 1.45;
+  }
+  .rail-footer strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 11.5px; }
+
+  /* Workspace */
+  .workspace { flex: 1; display: flex; min-width: 0; min-height: 0; }
+
+  /* List Pane */
+  .list-pane {
+    width: 470px; flex: 0 0 470px;
+    display: flex; flex-direction: column; min-height: 0;
+    border-right: 1px solid var(--border); background: var(--bg);
+  }
+  .filters {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    background: var(--bg-elev); display: flex; flex-direction: column; gap: 8px;
+  }
+  .filter-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .input {
+    height: 30px; padding: 0 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    font-size: 12px; outline: none; font-family: inherit;
+  }
+  .input:focus { border-color: var(--accent); }
+  .input.search { flex: 1; min-width: 140px; }
+  .input.num { width: 64px; text-align: center; }
+
+  .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text-2);
+    cursor: pointer; transition: all .12s;
+  }
+  .chip:hover { border-color: var(--border-strong); color: var(--text); }
+  .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  .table-wrap { flex: 1; overflow: auto; }
+  table.grid { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.grid thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--bg-elev); color: var(--muted);
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  table.grid tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+  table.grid tbody tr:hover { background: var(--row-hover); }
+  table.grid tbody tr.active { background: var(--row-active); }
+  table.grid td { padding: 7px 8px; vertical-align: middle; }
+  .cell-name { font-weight: 700; color: var(--text); max-width: 155px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell-sub { font-size: 11px; color: var(--muted); max-width: 155px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pos-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; background: var(--card-2); color: var(--text-2); }
+  .ca-pill { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .pr-pill { font-size: 11px; font-weight: 700; padding: 2px 5px; border-radius: 5px; background: var(--emerald-soft); color: var(--emerald); font-variant-numeric: tabular-nums; }
+  .star-btn { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted); padding: 0 2px; }
+  .star-btn.on { color: var(--gold); }
+
+  /* Detail Pane */
+  .detail-pane { flex: 1; overflow: auto; padding: 16px 20px; background: var(--bg); min-width: 0; }
+  .empty-state {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 10px; color: var(--muted); padding: 40px;
+  }
+  .empty-state img { width: 56px; height: 56px; border-radius: 14px; opacity: .9; }
+  .empty-state h2 { color: var(--text); font-size: 18px; font-weight: 800; }
+
+  /* Entity Header Card */
+  .hero-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; margin-bottom: 14px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .hero-id { display: flex; align-items: center; gap: 13px; min-width: 0; }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px; color: #fff;
+    background: linear-gradient(135deg, var(--accent), #6366F1);
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  }
+  .hero-name { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+  .hero-meta { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .pill-strip { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat-pill {
+    padding: 6px 10px; border-radius: 9px; background: var(--card-2); border: 1px solid var(--border);
+    display: flex; flex-direction: column; min-width: 78px;
+  }
+  .stat-pill .k { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .stat-pill .v { font-size: 14px; font-weight: 800; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .stat-pill.accent .v { color: var(--accent); }
+  .stat-pill.emerald .v { color: var(--emerald); }
+  .stat-pill.gold .v { color: var(--gold); }
+
+  .action-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding-top: 4px; border-top: 1px solid var(--border); }
+
+  /* Player Overview Grid: Radar + Key Info */
+  .overview-row { display: grid; grid-template-columns: 270px 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 1120px) { .overview-row { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+  }
+  .panel-title {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* 3-Column FM Attribute Grid */
+  .attr-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  @media (max-width: 1060px) { .attr-cols { grid-template-columns: repeat(2, 1fr); } }
+  .attr-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 4px 6px; border-radius: 6px; transition: background .12s;
+  }
+  .attr-row:hover { background: var(--row-hover); }
+  .attr-name { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .attr-input {
+    width: 44px; height: 24px; text-align: center; font-weight: 800; font-size: 12.5px;
+    border-radius: 5px; border: 1px solid transparent; background: var(--card-2);
+    font-variant-numeric: tabular-nums; outline: none; font-family: inherit;
+  }
+  .attr-input:focus { border-color: var(--accent); background: var(--bg-elev); }
+  .attr-input.ro { opacity: .85; cursor: default; }
+  .a-hi { color: var(--attr-hi); }
+  .a-mid { color: var(--attr-mid); }
+  .a-low { color: var(--attr-low); }
+  .a-dim { color: var(--attr-dim); }
+  .attr-proj { font-size: 10px; font-weight: 700; color: var(--gold); margin-left: 3px; }
+
+  /* Generic Field Grid (Overview/Contract/Club/Staff/Comp) */
+  .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 14px; }
+  .field-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px; border-radius: 7px; background: var(--card-2); }
+  .field-item label { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .field-item input {
+    width: 130px; height: 25px; text-align: right; font-weight: 700; font-size: 12px;
+    border-radius: 5px; border: 1px solid transparent; background: var(--bg-elev); color: var(--text);
+    padding: 0 7px; outline: none; font-family: inherit;
+  }
+  .field-item input:focus { border-color: var(--accent); }
+
+  /* Club KPI & Facilities */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+  .kpi-card .k { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .kpi-card .v { font-size: 18px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+  .fac-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .fac-label { width: 150px; font-size: 12px; color: var(--text-2); font-weight: 600; }
+  .fac-bar { flex: 1; height: 8px; border-radius: 999px; background: var(--card-2); overflow: hidden; }
+  .fac-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--emerald)); transition: width .2s; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 18px; right: 20px; z-index: 99;
+    padding: 9px 14px; border-radius: 10px;
+    background: var(--bg-elev); border: 1px solid var(--border-strong); color: var(--text);
+    font-size: 12px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    opacity: 0; transform: translateY(8px); pointer-events: none; transition: all .18s ease;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.25); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,.42); }
+</style>
 </head>
 <body>
-  <header>
+<div class="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
     <div class="brand">
-      <span class="dot" id="connDot"></span>
-      <span>SquadEditor</span>
-      <span class="status" id="statusText">Connecting…</span>
+      <img src="/logo.png" class="brand-logo" alt="SquadEditor" />
+      <span class="brand-title">SquadEditor</span>
+      <span class="brand-ver">v1.6.0 · macOS</span>
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Bağlanıyor…</span>
+      </div>
     </div>
-    <div class="tabs">
-      <button class="tab active" data-t="Player">Players</button>
-      <button class="tab" data-t="Club">Clubs</button>
-      <button class="tab" data-t="Staff">Staff</button>
-      <button class="tab" data-t="Competition">Leagues</button>
-    </div>
-    <div class="bar-right">
-      <button class="btn" id="undoBtn">Undo (0)</button>
-      <button class="btn" id="reloadBtn">Reload</button>
-      <button class="btn" id="themeBtn">Theme</button>
+
+    <div class="toolbar">
+      <button class="btn" id="btnWeight" onclick="toggleWeightMode()" title="Rol Rating Ağırlık Modu">⚖️ Classic FM</button>
+      <button class="btn" id="btnRo" onclick="toggleReadOnly()">🔓 <span data-i18n="editable">Düzenlenebilir</span></button>
+      <select class="ctrl" id="selTheme" onchange="setTheme(this.value)">
+        <option value="navy">FM Night Navy</option>
+        <option value="oled">OLED Pure Black</option>
+        <option value="wtcs">WTCS Charcoal &amp; Gold</option>
+        <option value="light">Light Editorial</option>
+      </select>
+      <button class="btn" id="btnLang" onclick="toggleLang()">TR</button>
+      <button class="btn" id="btnUndo" onclick="doUndo()" disabled>↩ <span data-i18n="undo">Geri Al</span> (<span id="undoCount">0</span>)</button>
+      <button class="btn primary" onclick="reconnect()">↻ <span data-i18n="reload">Yenile</span></button>
     </div>
   </header>
 
-  <div class="layout">
-    <aside class="left">
-      <div class="filters">
-        <input class="input" id="q" placeholder="Search name, club, nation…" />
-        <div class="f-row" id="playerFilters">
-          <input class="input" id="minCa" type="number" placeholder="Min CA" />
-          <input class="input" id="minPa" type="number" placeholder="Min PA" />
-          <label style="font-size:12px;display:flex;align-items:center;gap:4px;white-space:nowrap;cursor:pointer;"><input type="checkbox" id="freeOnly" /> Free</label>
-        </div>
+  <!-- SHELL -->
+  <div class="shell">
+    <!-- LEFT RAIL -->
+    <aside class="rail">
+      <div class="rail-label" data-i18n="database">Veritabanı</div>
+      <div class="nav-item active" data-tab="players" onclick="switchTab('players')">
+        <span class="nav-left">⚽ <span data-i18n="players">Scout &amp; Oyuncular</span></span>
+        <span class="nav-count" id="cntPlayers">0</span>
       </div>
-      <div class="list" id="list"></div>
+      <div class="nav-item" data-tab="clubs" onclick="switchTab('clubs')">
+        <span class="nav-left">🏟️ <span data-i18n="clubs">Kulüpler</span></span>
+        <span class="nav-count" id="cntClubs">0</span>
+      </div>
+      <div class="nav-item" data-tab="staff" onclick="switchTab('staff')">
+        <span class="nav-left">📋 <span data-i18n="staff">Personel (5★)</span></span>
+        <span class="nav-count" id="cntStaff">0</span>
+      </div>
+      <div class="nav-item" data-tab="comps" onclick="switchTab('comps')">
+        <span class="nav-left">🏆 <span data-i18n="comps">Ligler</span></span>
+        <span class="nav-count" id="cntComps">0</span>
+      </div>
+
+      <div class="rail-footer">
+        <strong>SquadEditor Live</strong>
+        <span data-i18n="footerTip">Değişiklikler FM27 belleğine anında yazılır. ⌘Z ile geri alabilirsiniz.</span>
+      </div>
     </aside>
-    <main class="right" id="detail">
-      <div class="empty">Select a player, club, staff or league to inspect &amp; edit live.</div>
+
+    <!-- WORKSPACE -->
+    <main class="workspace">
+      <!-- LIST PANE -->
+      <section class="list-pane">
+        <div class="filters" id="filterBar"></div>
+        <div class="table-wrap">
+          <table class="grid">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DETAIL PANE -->
+      <section class="detail-pane" id="detailPane">
+        <div class="empty-state">
+          <img src="/logo.png" alt="SquadEditor" />
+          <h2 data-i18n="welcomeTitle">SquadEditor · FM27 Canlı Editör &amp; Scout</h2>
+          <p data-i18n="welcomeDesc">Soldaki listeden bir oyuncu, kulüp, personel veya lig seçerek anında inceleyip düzenleyebilirsiniz.</p>
+        </div>
+      </section>
     </main>
   </div>
-  <div class="toast" id="toast"></div>
+</div>
 
-  <script>
-    let curType = "Player", curAddr = null, curLabel = "", debounce = null;
-    const toast = m => { const t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2000); };
+<div class="toast" id="toast"></div>
 
-    async function refreshStatus() {
-      const s = await (await fetch("/api/status")).json();
-      document.getElementById("connDot").className = "dot" + (s.connected ? "" : " off");
-      document.getElementById("statusText").textContent = s.status;
-      document.getElementById("undoBtn").textContent = `Undo (${s.undoCount})`;
-    }
+<script>
+const I18N = {
+  tr: {
+    database: 'Veritabanı', players: 'Scout & Oyuncular', clubs: 'Kulüpler', staff: 'Personel (5★)', comps: 'Ligler',
+    editable: 'Düzenlenebilir', readonly: 'Salt Okunur', undo: 'Geri Al', reload: 'Yenile',
+    footerTip: 'Değişiklikler FM27 belleğine anında yazılır. ⌘Z ile geri alabilirsiniz.',
+    welcomeTitle: 'SquadEditor · FM27 Canlı Editör & Scout',
+    welcomeDesc: 'Soldaki listeden bir oyuncu, kulüp, personel veya lig seçerek anında inceleyip düzenleyebilirsiniz.',
+    searchPlayers: 'Oyuncu, kulüp veya ülke ara...', searchClubs: 'Kulüp ara...', searchStaff: 'Personel veya kulüp ara...', searchComps: 'Lig veya turnuva ara...',
+    allPos: 'Tüm Poz.', maxAge: 'Max Yaş', minCa: 'Min CA', minPa: 'Min PA', maxVal: 'Max M€',
+    sortCa: 'Sıra: CA', sortPa: 'Sıra: PA', sortRole: 'Sıra: Rol %', sortPr: 'Sıra: PR %', sortGrowth: 'Sıra: Gelişim', sortAge: 'Sıra: Yaş',
+    moneyball: '🔥 Moneyball', wonderkids: '⭐ Wonderkids', freeAgents: '🆓 Serbestler', shortlist: '★ Shortlist', reset: '↺ Sıfırla', csv: 'CSV',
+    colPlayer: 'Oyuncu', colPos: 'Poz', colAge: 'Yaş', colCaPa: 'CA/PA', colRole: 'Rol', colPr: 'PR%',
+    colClub: 'Kulüp', colRep: 'İtibar', colBal: 'Bakiye', colTb: 'Transfer',
+    colStaff: 'Personel', colStars: 'Yıldız', colComp: 'Lig / Turnuva',
+    maxFit: '⚡ Full Kondisyon & Moral', freeze: '❄️ Dondur', unfreeze: '🔥 Dondurmayı Kaldır', paPreview: '📈 PA Zirve Önizleme',
+    radarTitle: '8 Eksenli Oyuncu Radarı', radarSub: 'Mevcut vs. Zirve PA',
+    overview: 'Genel & Sözleşme', technical: 'Teknik', mental: 'Zihinsel', physical: 'Fiziksel', goalkeeping: 'Kalecilik', hidden: 'Gizli & Kişilik', other: 'Diğer',
+    bal: 'Bakiye', tb: 'Transfer Bütçesi', wb: 'Maaş Bütçesi', fac: 'Antrenman / Altyapı',
+    richClub: '💰 Zengin Kulüp', maxFac: '🏟️ Max Tesisler (20)', worldNo1: '🏆 Dünya #1 Ligi (Rep 200)',
+    facilities: 'Tesisler (1–20)', squad: 'Kulüp Kadrosu', saved: 'Kaydedildi', undone: 'Son işlem geri alındı', reconnected: 'FM27 bağlantısı yenilendi'
+  },
+  en: {
+    database: 'Database', players: 'Scout & Players', clubs: 'Clubs', staff: 'Staff (5★)', comps: 'Leagues',
+    editable: 'Editable', readonly: 'Read-Only', undo: 'Undo', reload: 'Reload',
+    footerTip: 'Edits write live to FM27 memory. Press ⌘Z anytime to undo.',
+    welcomeTitle: 'SquadEditor · FM27 Live Editor & Scout',
+    welcomeDesc: 'Select a player, club, staff member or competition on the left to inspect and edit live.',
+    searchPlayers: 'Search player, club, nation...', searchClubs: 'Search club...', searchStaff: 'Search staff or club...', searchComps: 'Search league or cup...',
+    allPos: 'All Pos', maxAge: 'Max Age', minCa: 'Min CA', minPa: 'Min PA', maxVal: 'Max M€',
+    sortCa: 'Sort: CA', sortPa: 'Sort: PA', sortRole: 'Sort: Role %', sortPr: 'Sort: PR %', sortGrowth: 'Sort: Growth', sortAge: 'Sort: Age',
+    moneyball: '🔥 Moneyball', wonderkids: '⭐ Wonderkids', freeAgents: '🆓 Free Agents', shortlist: '★ Shortlist', reset: '↺ Reset', csv: 'CSV',
+    colPlayer: 'Player', colPos: 'Pos', colAge: 'Age', colCaPa: 'CA/PA', colRole: 'Role', colPr: 'PR%',
+    colClub: 'Club', colRep: 'Rep', colBal: 'Balance', colTb: 'Transfer',
+    colStaff: 'Staff', colStars: 'Stars', colComp: 'Competition',
+    maxFit: '⚡ Max Fitness & Morale', freeze: '❄️ Freeze', unfreeze: '🔥 Unfreeze', paPreview: '📈 PA Peak Preview',
+    radarTitle: '8-Axis Player Radar', radarSub: 'Current vs. Peak PA',
+    overview: 'Overview & Contract', technical: 'Technical', mental: 'Mental', physical: 'Physical', goalkeeping: 'Goalkeeping', hidden: 'Hidden & Personality', other: 'Other',
+    bal: 'Balance', tb: 'Transfer Budget', wb: 'Wage Budget', fac: 'Training / Youth',
+    richClub: '💰 Rich Owner', maxFac: '🏟️ Max Facilities (20)', worldNo1: '🏆 World #1 League (Rep 200)',
+    facilities: 'Facilities (1–20)', squad: 'Club Squad', saved: 'Saved', undone: 'Last edit undone', reconnected: 'FM27 connection refreshed'
+  }
+};
 
-    async function loadList() {
-      const q = encodeURIComponent(document.getElementById("q").value.trim());
-      let url = curType === "Player"
-        ? `/api/players?q=${q}&minCa=${document.getElementById("minCa").value}&minPa=${document.getElementById("minPa").value}&free=${document.getElementById("freeOnly").checked ? 1 : 0}`
-        : curType === "Club" ? `/api/clubs?q=${q}`
-        : curType === "Staff" ? `/api/staff?q=${q}` : `/api/comps?q=${q}`;
-      const rows = await (await fetch(url)).json();
-      const el = document.getElementById("list");
-      el.innerHTML = rows.map(r => {
-        const sub = curType === "Player" ? `${r.club || "Free Agent"} · ${r.nation}`
-          : curType === "Club" ? `Rep ${r.rep} · Bal £${(r.balance/1e6).toFixed(1)}M`
-          : curType === "Staff" ? `${r.club || "Free"} · ${r.nation}` : `Rep ${r.rep}`;
-        const nums = (curType === "Player" || curType === "Staff")
-          ? `<span class="ca">${r.ca}</span> / <span class="pa">${r.pa}</span>`
-          : `<span>${r.rep}</span>`;
-        return `<div class="row ${curAddr === r.addr ? "active" : ""}" data-a="${r.addr}" data-n="${r.name.replace(/"/g,'&quot;')}">
-          <div><div class="r-name">${r.name}</div><div class="r-sub">${sub}</div></div>
-          <div class="r-nums">${nums}</div>
-        </div>`;
-      }).join("");
-      el.querySelectorAll(".row").forEach(r => r.onclick = () => openEntity(curType, r.dataset.a, r.dataset.n));
-    }
+let lang = localStorage.getItem('se_lang') || 'tr';
+let theme = localStorage.getItem('se_theme') || 'navy';
+let tab = 'players';
+let weightMode = 'classic';
+let readOnly = false;
+let currentRows = [];
+let selectedAddr = null;
+let selectedType = null;
+let currentEntity = null;
+let paPreview = false;
+let shortlistOnly = false;
+let activePreset = '';
+let staffMinStars = 0;
+let searchTimer = null;
+const shortlist = new Set(JSON.parse(localStorage.getItem('se_shortlist') || '[]'));
 
-    async function openEntity(type, addr, label) {
-      curAddr = addr; curLabel = label;
-      document.querySelectorAll(".row").forEach(r => r.classList.toggle("active", r.dataset.a === addr));
-      const data = await (await fetch(`/api/entity?type=${type}&addr=${addr}`)).json();
-      if (data.error) { toast(data.error); return; }
+const filterState = { q: '', pos: '', maxAge: '', minCa: '', minPa: '', maxValM: '', free: false, sort: 'ca' };
 
-      const grouped = {};
-      for (const f of data.fields) { (grouped[f.group] ||= []).push(f); }
+function t(k) { return (I18N[lang] && I18N[lang][k]) || k; }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fmtMoney(n) {
+  const v = Number(n || 0);
+  if (Math.abs(v) >= 1e9) return '€' + (v / 1e9).toFixed(2) + 'B';
+  if (Math.abs(v) >= 1e6) return '€' + (v / 1e6).toFixed(1) + 'M';
+  if (Math.abs(v) >= 1e3) return '€' + (v / 1e3).toFixed(0) + 'K';
+  return '€' + v;
+}
+function initials(name) {
+  const p = String(name || '?').trim().split(/\s+/);
+  return ((p[0]?.[0] || '') + (p[p.length - 1]?.[0] || '')).toUpperCase() || '?';
+}
+function attrClass(v) {
+  const n = Number(v);
+  if (n >= 16) return 'a-hi';
+  if (n >= 11) return 'a-mid';
+  if (n >= 6) return 'a-low';
+  return 'a-dim';
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
 
-      const quickBtns = type === "Player"
-        ? `<button class="btn btn-green" onclick="quick('max_fitness')">Max Fitness &amp; Morale</button>
-           <button class="btn" onclick="quick('toggle_freeze')">${data.frozen ? "Unfreeze" : "Freeze"}</button>`
-        : type === "Club"
-        ? `<button class="btn btn-green" onclick="quick('rich_club')">Rich Owner (+500M / +200M)</button>
-           <button class="btn" onclick="quick('max_facilities')">Max All Facilities (20)</button>` : "";
+function setTheme(v) {
+  theme = v;
+  document.documentElement.setAttribute('data-theme', v);
+  document.getElementById('selTheme').value = v;
+  localStorage.setItem('se_theme', v);
+}
+function applyI18n() {
+  document.getElementById('btnLang').textContent = lang.toUpperCase();
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  updateTopToggles();
+  renderFilterBar();
+  renderTable();
+  if (currentEntity) renderDetail(currentEntity);
+}
+function toggleLang() {
+  lang = lang === 'tr' ? 'en' : 'tr';
+  localStorage.setItem('se_lang', lang);
+  applyI18n();
+}
 
-      document.getElementById("detail").innerHTML = `
-        <div class="ent-head">
-          <div class="ent-title">${label}</div>
-          <div class="quick-bar">${quickBtns}</div>
-        </div>
-        <div class="groups">
-          ${Object.entries(grouped).map(([g, list]) => `
-            <div class="card">
-              <div class="card-h">${g}</div>
-              ${list.map(f => `
-                <div class="f-item">
-                  <label>${f.name}</label>
-                  <input value="${String(f.value).replace(/"/g,'&quot;')}" ${f.writable ? "" : "disabled"} data-fn="${f.name.replace(/"/g,'&quot;')}" />
-                </div>
-              `).join("")}
+function updateTopToggles() {
+  const bw = document.getElementById('btnWeight');
+  bw.textContent = weightMode === 'meta' ? '⚡ ME Meta' : '⚖️ Classic FM';
+  bw.classList.toggle('gold', weightMode === 'meta');
+  const bro = document.getElementById('btnRo');
+  bro.innerHTML = readOnly ? `🔒 <span>${t('readonly')}</span>` : `🔓 <span>${t('editable')}</span>`;
+  bro.classList.toggle('danger', readOnly);
+}
+
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  return await r.json();
+}
+
+async function refreshStatus() {
+  try {
+    const s = await api('/api/status');
+    document.getElementById('statusDot').classList.toggle('ok', !!s.connected);
+    document.getElementById('statusText').textContent = s.status || '';
+    document.getElementById('cntPlayers').textContent = (s.players || 0).toLocaleString();
+    document.getElementById('cntClubs').textContent = (s.clubs || 0).toLocaleString();
+    document.getElementById('cntStaff').textContent = (s.staff || 0).toLocaleString();
+    document.getElementById('cntComps').textContent = (s.comps || 0).toLocaleString();
+    document.getElementById('undoCount').textContent = s.undoCount || 0;
+    document.getElementById('btnUndo').disabled = !(s.undoCount > 0);
+    weightMode = s.weightMode || 'classic';
+    readOnly = !!s.readOnly;
+    updateTopToggles();
+  } catch (e) {}
+}
+
+async function toggleWeightMode() {
+  const next = weightMode === 'meta' ? 'classic' : 'meta';
+  toast(next === 'meta' ? 'ME Meta hesaplanıyor…' : 'Classic FM hesaplanıyor…');
+  const r = await api('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ weightMode: next }) });
+  weightMode = r.weightMode;
+  updateTopToggles();
+  await loadList();
+  if (selectedType === 'Player' && selectedAddr) await openEntity('Player', selectedAddr);
+  toast(weightMode === 'meta' ? '⚡ ME Meta aktif' : '⚖️ Classic FM aktif');
+}
+
+async function toggleReadOnly() {
+  const r = await api('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ readOnly: !readOnly }) });
+  readOnly = !!r.readOnly;
+  updateTopToggles();
+  if (selectedType && selectedAddr) await openEntity(selectedType, selectedAddr);
+  toast(readOnly ? '🔒 ' + t('readonly') : '🔓 ' + t('editable'));
+}
+
+async function reconnect() {
+  await api('/api/reconnect', { method: 'POST' });
+  await refreshStatus();
+  await loadList();
+  toast(t('reconnected'));
+}
+
+async function doUndo() {
+  const r = await api('/api/undo', { method: 'POST' });
+  document.getElementById('undoCount').textContent = r.undoCount || 0;
+  document.getElementById('btnUndo').disabled = !(r.undoCount > 0);
+  if (selectedType && selectedAddr) await openEntity(selectedType, selectedAddr);
+  toast(t('undone'));
+}
+
+function switchTab(next) {
+  tab = next;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === next));
+  filterState.q = '';
+  renderFilterBar();
+  loadList();
+}
+
+function renderFilterBar() {
+  const fb = document.getElementById('filterBar');
+  if (tab === 'players') {
+    fb.innerHTML = `
+      <div class="filter-row">
+        <input class="input search" id="fQ" placeholder="${t('searchPlayers')}" value="${esc(filterState.q)}" oninput="onFilterInput()" />
+        <select class="ctrl" id="fPos" onchange="onFilterInput()">
+          <option value="">${t('allPos')}</option>
+          ${['GK','DC','DL','DR','DM','MC','AMC','AML','AMR','ST'].map(p => `<option value="${p}" ${filterState.pos===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+        <select class="ctrl" id="fSort" onchange="onFilterInput()">
+          <option value="ca" ${filterState.sort==='ca'?'selected':''}>${t('sortCa')}</option>
+          <option value="pa" ${filterState.sort==='pa'?'selected':''}>${t('sortPa')}</option>
+          <option value="role" ${filterState.sort==='role'?'selected':''}>${t('sortRole')}</option>
+          <option value="pr" ${filterState.sort==='pr'?'selected':''}>${t('sortPr')}</option>
+          <option value="growth" ${filterState.sort==='growth'?'selected':''}>${t('sortGrowth')}</option>
+          <option value="age" ${filterState.sort==='age'?'selected':''}>${t('sortAge')}</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <input class="input num" id="fAge" type="number" placeholder="${t('maxAge')}" value="${esc(filterState.maxAge)}" oninput="onFilterInput()" />
+        <input class="input num" id="fCa" type="number" placeholder="${t('minCa')}" value="${esc(filterState.minCa)}" oninput="onFilterInput()" />
+        <input class="input num" id="fPa" type="number" placeholder="${t('minPa')}" value="${esc(filterState.minPa)}" oninput="onFilterInput()" />
+        <input class="input num" id="fVal" type="number" placeholder="${t('maxVal')}" value="${esc(filterState.maxValM)}" oninput="onFilterInput()" />
+        <button class="btn" style="margin-left:auto" onclick="exportCsv()">⬇ ${t('csv')}</button>
+      </div>
+      <div class="chips">
+        <span class="chip ${activePreset==='moneyball'?'active':''}" onclick="applyPreset('moneyball')">${t('moneyball')}</span>
+        <span class="chip ${activePreset==='wonderkids'?'active':''}" onclick="applyPreset('wonderkids')">${t('wonderkids')}</span>
+        <span class="chip ${activePreset==='free'?'active':''}" onclick="applyPreset('free')">${t('freeAgents')}</span>
+        <span class="chip ${shortlistOnly?'active':''}" onclick="toggleShortlistOnly()">${t('shortlist')} (${shortlist.size})</span>
+        <span class="chip" onclick="resetFilters()">${t('reset')}</span>
+      </div>`;
+  } else if (tab === 'staff') {
+    fb.innerHTML = `
+      <div class="filter-row">
+        <input class="input search" id="fQ" placeholder="${t('searchStaff')}" value="${esc(filterState.q)}" oninput="onFilterInput()" />
+      </div>
+      <div class="chips">
+        ${[0, 4.0, 4.5, 5.0].map(s => `<span class="chip ${staffMinStars===s?'active':''}" onclick="setStaffStars(${s})">${s===0 ? (lang==='tr'?'Tümü':'All') : s.toFixed(1)+'★+'}</span>`).join('')}
+      </div>`;
+  } else {
+    const ph = tab === 'clubs' ? t('searchClubs') : t('searchComps');
+    fb.innerHTML = `<div class="filter-row"><input class="input search" id="fQ" placeholder="${ph}" value="${esc(filterState.q)}" oninput="onFilterInput()" /></div>`;
+  }
+}
+
+function onFilterInput() {
+  const qEl = document.getElementById('fQ');
+  if (qEl) filterState.q = qEl.value;
+  if (tab === 'players') {
+    filterState.pos = document.getElementById('fPos')?.value || '';
+    filterState.sort = document.getElementById('fSort')?.value || 'ca';
+    filterState.maxAge = document.getElementById('fAge')?.value || '';
+    filterState.minCa = document.getElementById('fCa')?.value || '';
+    filterState.minPa = document.getElementById('fPa')?.value || '';
+    filterState.maxValM = document.getElementById('fVal')?.value || '';
+  }
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadList, 140);
+}
+
+function applyPreset(p) {
+  shortlistOnly = false;
+  activePreset = p;
+  filterState.free = false;
+  filterState.maxAge = ''; filterState.minCa = ''; filterState.minPa = ''; filterState.maxValM = '';
+  if (p === 'moneyball') { filterState.maxAge = '25'; filterState.maxValM = '15'; filterState.sort = 'pr'; }
+  else if (p === 'wonderkids') { filterState.maxAge = '20'; filterState.minPa = '155'; filterState.sort = 'pa'; }
+  else if (p === 'free') { filterState.free = true; filterState.sort = 'ca'; }
+  renderFilterBar();
+  loadList();
+}
+function toggleShortlistOnly() { shortlistOnly = !shortlistOnly; activePreset = ''; renderFilterBar(); renderTable(); }
+function resetFilters() {
+  shortlistOnly = false; activePreset = '';
+  Object.assign(filterState, { q: '', pos: '', maxAge: '', minCa: '', minPa: '', maxValM: '', free: false, sort: 'ca' });
+  renderFilterBar();
+  loadList();
+}
+function setStaffStars(s) { staffMinStars = s; renderFilterBar(); loadList(); }
+
+async function loadList() {
+  let url = '';
+  if (tab === 'players') {
+    const p = new URLSearchParams();
+    if (filterState.q) p.set('q', filterState.q);
+    if (filterState.pos) p.set('pos', filterState.pos);
+    if (filterState.maxAge) p.set('maxAge', filterState.maxAge);
+    if (filterState.minCa) p.set('minCa', filterState.minCa);
+    if (filterState.minPa) p.set('minPa', filterState.minPa);
+    if (filterState.maxValM) p.set('maxValM', filterState.maxValM);
+    if (filterState.free) p.set('free', '1');
+    p.set('sort', filterState.sort);
+    url = '/api/players?' + p.toString();
+  } else if (tab === 'clubs') {
+    url = '/api/clubs?q=' + encodeURIComponent(filterState.q);
+  } else if (tab === 'staff') {
+    url = `/api/staff?q=${encodeURIComponent(filterState.q)}&minStars=${staffMinStars}`;
+  } else {
+    url = '/api/comps?q=' + encodeURIComponent(filterState.q);
+  }
+  currentRows = await api(url);
+  renderTable();
+}
+
+function toggleShortlist(uid, ev) {
+  if (ev) ev.stopPropagation();
+  if (!uid) return;
+  if (shortlist.has(uid)) shortlist.delete(uid); else shortlist.add(uid);
+  localStorage.setItem('se_shortlist', JSON.stringify([...shortlist]));
+  renderFilterBar();
+  renderTable();
+  if (currentEntity) renderDetail(currentEntity);
+}
+
+function renderTable() {
+  const th = document.getElementById('tableHead');
+  const tb = document.getElementById('tableBody');
+  let rows = currentRows || [];
+  if (tab === 'players' && shortlistOnly) rows = rows.filter(r => shortlist.has(r.uid));
+
+  if (tab === 'players') {
+    th.innerHTML = `<tr><th></th><th>${t('colPlayer')}</th><th>${t('colPos')}</th><th>${t('colAge')}</th><th>${t('colCaPa')}</th><th>${t('colRole')}</th><th>${t('colPr')}</th></tr>`;
+    tb.innerHTML = rows.map(r => `
+      <tr class="${selectedType==='Player'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Player','${r.addr}')">
+        <td><button class="star-btn ${shortlist.has(r.uid)?'on':''}" onclick="toggleShortlist('${esc(r.uid)}',event)">★</button></td>
+        <td><div class="cell-name">${esc(r.name)}</div><div class="cell-sub">${esc(r.club || (lang==='tr'?'Serbest':'Free Agent'))} · ${esc(r.nation)}</div></td>
+        <td><span class="pos-tag">${esc(r.pos)}</span></td>
+        <td>${r.age || '-'}</td>
+        <td class="ca-pill">${r.ca}<span style="color:var(--muted);font-weight:600">/${r.pa}</span></td>
+        <td><span style="font-weight:700">${esc(r.bestRole)}</span> <span style="color:var(--muted);font-size:11px">${r.rolePct}%</span></td>
+        <td><span class="pr-pill">${r.prPct}%</span></td>
+      </tr>`).join('');
+  } else if (tab === 'clubs') {
+    th.innerHTML = `<tr><th>${t('colClub')}</th><th>${t('colRep')}</th><th>${t('colBal')}</th><th>${t('colTb')}</th></tr>`;
+    tb.innerHTML = rows.map(r => `
+      <tr class="${selectedType==='Club'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Club','${r.addr}')">
+        <td><div class="cell-name">${esc(r.name)}</div><div class="cell-sub">Tr ${r.trainingFac} · Yth ${r.youthFac}</div></td>
+        <td class="ca-pill">${r.rep}</td>
+        <td>${fmtMoney(r.balance)}</td>
+        <td style="color:var(--emerald);font-weight:700">${fmtMoney(r.transferBudget)}</td>
+      </tr>`).join('');
+  } else if (tab === 'staff') {
+    th.innerHTML = `<tr><th>${t('colStaff')}</th><th>${t('colStars')}</th><th>${t('colCaPa')}</th></tr>`;
+    tb.innerHTML = rows.map(r => `
+      <tr class="${selectedType==='Staff'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Staff','${r.addr}')">
+        <td><div class="cell-name">${esc(r.name)}</div><div class="cell-sub">${esc(r.club || '-')} · ${esc(r.nation)}</div></td>
+        <td><span class="pr-pill" style="background:var(--gold-soft);color:var(--gold)">${r.stars.toFixed(1)}★</span></td>
+        <td class="ca-pill">${r.ca}/${r.pa}</td>
+      </tr>`).join('');
+  } else {
+    th.innerHTML = `<tr><th>${t('colComp')}</th><th>${t('colRep')}</th></tr>`;
+    tb.innerHTML = rows.map(r => `
+      <tr class="${selectedType==='Competition'&&selectedAddr===r.addr?'active':''}" onclick="openEntity('Competition','${r.addr}')">
+        <td><div class="cell-name">${esc(r.name)}</div></td>
+        <td class="ca-pill">${r.rep}</td>
+      </tr>`).join('');
+  }
+}
+
+function exportCsv() {
+  if (!currentRows.length) return;
+  const cols = ['name','pos','age','club','nation','ca','pa','bestRole','rolePct','prPct','value','wage','contractEnd'];
+  const lines = [cols.join(',')].concat(currentRows.map(r => cols.map(c => `"${String(r[c]??'').replace(/"/g,'""')}"`).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'squadeditor-scout.csv';
+  a.click();
+}
+
+async function openEntity(type, addr) {
+  selectedType = type;
+  selectedAddr = addr;
+  renderTable();
+  const data = await api(`/api/entity?type=${encodeURIComponent(type)}&addr=${encodeURIComponent(addr)}`);
+  if (data.error) { toast(data.error); return; }
+  currentEntity = data;
+  renderDetail(data);
+}
+
+async function writeField(type, addr, field, val, label) {
+  if (readOnly) { toast('🔒 ' + t('readonly')); return; }
+  const r = await api('/api/write', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ type, addr, field, value: String(val), label })
+  });
+  if (r.error) { toast(r.error); return; }
+  document.getElementById('undoCount').textContent = r.undoCount || 0;
+  document.getElementById('btnUndo').disabled = !(r.undoCount > 0);
+  toast(`${t('saved')}: ${field} = ${val}`);
+}
+
+async function runQuick(type, addr, action, label) {
+  if (readOnly) { toast('🔒 ' + t('readonly')); return; }
+  const r = await api('/api/quick', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ type, addr, action, label })
+  });
+  if (r.error) { toast(r.error); return; }
+  document.getElementById('undoCount').textContent = r.undoCount || 0;
+  document.getElementById('btnUndo').disabled = !(r.undoCount > 0);
+  await openEntity(type, addr);
+  toast(t('saved'));
+}
+
+function buildRadarSvg(fieldsMap, ca, pa, isGk) {
+  const num = k => Number(fieldsMap[k] || 10);
+  const gain = Math.max(0, (pa - ca) * 0.42 / 5.0); // 1-20 scale gain
+  const axes = isGk ? [
+    ['Reflexes', num('Reflexes')], ['Handling', num('Handling')], ['Aerial', num('Aerial Reach')],
+    ['Command', num('Command of Area')], ['1v1', num('One on Ones')], ['Position', num('Positioning')],
+    ['Agility', num('Agility')], ['Mental', (num('Concentration') + num('Decisions')) / 2]
+  ] : [
+    ['Defending', (num('Marking') + num('Tackling') + num('Positioning')) / 3],
+    ['Physical', (num('Strength') + num('Stamina') + num('Balance')) / 3],
+    ['Speed', (num('Pace') + num('Acceleration') + num('Agility')) / 3],
+    ['Vision', (num('Vision') + num('Passing') + num('Flair')) / 3],
+    ['Attacking', (num('Finishing') + num('Off the Ball') + num('Composure')) / 3],
+    ['Technical', (num('Dribbling') + num('First Touch') + num('Technique')) / 3],
+    ['Aerial', (num('Jumping Reach') + num('Heading')) / 2],
+    ['Mental', (num('Anticipation') + num('Decisions') + num('Work Rate')) / 3]
+  ];
+
+  const cx = 120, cy = 112, R = 76;
+  const pt = (i, val) => {
+    const a = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
+    const r = (Math.min(20, Math.max(1, val)) / 20) * R;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  const poly = vals => vals.map((v, i) => pt(i, v).map(x => x.toFixed(1)).join(',')).join(' ');
+  const curVals = axes.map(x => x[1]);
+  const prVals = axes.map(x => Math.min(20, x[1] + gain));
+
+  const rings = [5, 10, 15, 20].map(v => `<polygon points="${poly(axes.map(() => v))}" fill="none" stroke="var(--border-strong)" stroke-width="1" />`).join('');
+  const spokes = axes.map((a, i) => {
+    const [x, y] = pt(i, 20);
+    const [lx, ly] = pt(i, 24.2);
+    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>
+            <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="var(--muted)" font-size="9.5" font-weight="700" text-anchor="middle" dominant-baseline="middle">${a[0]}</text>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 240 224" style="width:100%;max-width:240px;display:block;margin:0 auto">
+    ${rings}${spokes}
+    <polygon points="${poly(prVals)}" fill="rgba(245,158,11,0.14)" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="4 3" />
+    <polygon points="${poly(curVals)}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2" />
+  </svg>`;
+}
+
+function renderDetail(data) {
+  const dp = document.getElementById('detailPane');
+  const fields = data.fields || [];
+  const fmap = {};
+  fields.forEach(f => fmap[f.name] = f.value);
+  const name = fmap['Name'] || data.extra?.name || data.extra?.club?.name || data.addr;
+
+  if (data.type === 'Player') {
+    const p = data.extra || {};
+    const ca = Number(fmap['CA'] || p.ca || 0);
+    const pa = Number(fmap['PA'] || p.pa || 0);
+    const gain120 = Math.max(0, (pa - ca) * 0.42 / 5.0);
+    const isGk = (p.pos || '').startsWith('GK');
+
+    const byGroup = {};
+    fields.forEach(f => { (byGroup[f.group || 'Other'] ||= []).push(f); });
+
+    const renderAttrCol = (titleKey, groupNames) => {
+      const list = groupNames.flatMap(g => byGroup[g] || []);
+      if (!list.length) return '';
+      return `<div class="panel">
+        <div class="panel-title"><span>${t(titleKey)}</span><span>1–20</span></div>
+        ${list.map(f => {
+          const v = Number(f.value);
+          const proj = paPreview && !isNaN(v) && v >= 1 && v <= 20 ? Math.min(20, Math.round(v + gain120)) : null;
+          return `<div class="attr-row">
+            <span class="attr-name">${esc(f.name)}</span>
+            <div>
+              <input class="attr-input ${attrClass(v)} ${!f.writable?'ro':''}" value="${esc(f.value)}" ${!f.writable?'readonly':''}
+                onchange="writeField('Player','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
+              ${proj && proj > v ? `<span class="attr-proj">→${proj}</span>` : ''}
             </div>
-          `).join("")}
+          </div>`;
+        }).join('')}
+      </div>`;
+    };
+
+    const overviewList = [...(byGroup['Overview'] || []), ...(byGroup['Contract'] || []), ...(byGroup['Condition'] || [])].filter(f => f.name !== 'Name');
+    const hiddenList = [...(byGroup['Hidden'] || []), ...(byGroup['Personality'] || [])];
+
+    dp.innerHTML = `
+      <div class="hero-card">
+        <div class="hero-top">
+          <div class="hero-id">
+            <div class="avatar">${esc(initials(name))}</div>
+            <div>
+              <div class="hero-name">${esc(name)}</div>
+              <div class="hero-meta">
+                <span class="pos-tag">${esc(p.pos || '-')}</span>
+                <span>${esc(p.club || (lang==='tr'?'Serbest':'Free Agent'))}</span>
+                <span>·</span>
+                <span>${esc(p.nation || '-')}</span>
+                <span>·</span>
+                <span>${p.age ? p.age + (lang==='tr'?' yaş':' yrs') : ''} (${esc(p.dob || '-')})</span>
+                <span>·</span>
+                <span>UID ${esc(p.uid || '-')}</span>
+              </div>
+            </div>
+          </div>
+          <div class="pill-strip">
+            <div class="stat-pill accent"><span class="k">CA / PA</span><span class="v">${ca} / ${pa}</span></div>
+            <div class="stat-pill emerald"><span class="k">${esc(p.bestRole || 'ROLE')} / PR</span><span class="v">${p.rolePct || 0}% · ${p.prPct || 0}%</span></div>
+            <div class="stat-pill gold"><span class="k">${lang==='tr'?'Değer':'Value'}</span><span class="v">${fmtMoney(p.value)}</span></div>
+            <div class="stat-pill"><span class="k">${lang==='tr'?'Maaş':'Wage'}</span><span class="v">${fmtMoney(p.wage)}/w</span></div>
+            <div class="stat-pill"><span class="k">${lang==='tr'?'Sözleşme':'Contract'}</span><span class="v">${esc(p.contractEnd || '-')}</span></div>
+          </div>
         </div>
-      `;
+        <div class="action-bar">
+          <button class="btn emerald" onclick="runQuick('Player','${data.addr}','max_fitness','${esc(name)}')">${t('maxFit')}</button>
+          <button class="btn ${data.frozen?'gold':''}" onclick="runQuick('Player','${data.addr}','toggle_freeze','${esc(name)}')">${data.frozen ? t('unfreeze') : t('freeze')}</button>
+          <button class="btn ${shortlist.has(p.uid)?'gold':''}" onclick="toggleShortlist('${esc(p.uid)}')">${shortlist.has(p.uid)?'★':'☆'} Shortlist</button>
+          <button class="btn ${paPreview?'active':''}" onclick="paPreview=!paPreview;renderDetail(currentEntity)">${t('paPreview')}</button>
+        </div>
+      </div>
 
-      document.querySelectorAll("#detail input[data-fn]").forEach(inp => {
-        inp.onchange = async () => {
-          const res = await (await fetch("/api/write", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type, addr, field: inp.dataset.fn, value: inp.value, label })
-          })).json();
-          if (res.ok) { toast(`Saved ${inp.dataset.fn}`); refreshStatus(); }
-          else toast(res.error || "Write failed");
-        };
-      });
-    }
+      <div class="overview-row">
+        <div class="panel">
+          <div class="panel-title"><span>${t('radarTitle')}</span><span style="color:var(--gold)">${t('radarSub')}</span></div>
+          ${buildRadarSvg(fmap, ca, pa, isGk)}
+        </div>
+        <div class="panel">
+          <div class="panel-title"><span>${t('overview')}</span><span>${esc(weightMode === 'meta' ? 'ME Meta' : 'Classic FM')}</span></div>
+          <div class="field-grid">
+            ${overviewList.map(f => `<div class="field-item">
+              <label>${esc(f.name)}</label>
+              <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
+                onchange="writeField('Player','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
 
-    async function quick(action) {
-      const res = await (await fetch("/api/quick", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: curType, addr: curAddr, action, label: curLabel })
-      })).json();
-      if (res.ok) { toast("Applied!"); refreshStatus(); openEntity(curType, curAddr, curLabel); }
-      else toast(res.error || "Failed");
-    }
+      <div class="attr-cols">
+        ${isGk ? renderAttrCol('goalkeeping', ['Goalkeeping']) : renderAttrCol('technical', ['Technical'])}
+        ${renderAttrCol('mental', ['Mental'])}
+        ${renderAttrCol('physical', ['Physical'])}
+      </div>
 
-    document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
-      curType = b.dataset.t; curAddr = null;
-      document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === b));
-      document.getElementById("playerFilters").style.display = curType === "Player" ? "grid" : "none";
-      loadList();
-    });
+      ${hiddenList.length ? `<div class="panel">
+        <div class="panel-title"><span>${t('hidden')}</span></div>
+        <div class="field-grid">
+          ${hiddenList.map(f => `<div class="field-item">
+            <label>${esc(f.name)}</label>
+            <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
+              onchange="writeField('Player','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+    `;
+    return;
+  }
 
-    ["q", "minCa", "minPa", "freeOnly"].forEach(id => {
-      document.getElementById(id).addEventListener("input", () => { clearTimeout(debounce); debounce = setTimeout(loadList, 140); });
-    });
+  if (data.type === 'Club') {
+    const c = data.extra?.club || {};
+    const squad = data.extra?.squad || [];
+    const facNames = ['Training Facilities','Youth Facilities','Youth Coaching','Youth Recruitment','Corporate Facilities'];
+    const facFields = fields.filter(f => facNames.includes(f.name));
+    const otherFields = fields.filter(f => f.name !== 'Name' && !facNames.includes(f.name));
 
-    document.getElementById("undoBtn").onclick = async () => {
-      await fetch("/api/undo", { method: "POST" });
-      toast("Undone"); refreshStatus();
-      if (curAddr) openEntity(curType, curAddr, curLabel);
-    };
-    document.getElementById("reloadBtn").onclick = async () => {
-      toast("Reconnecting…");
-      await fetch("/api/reconnect", { method: "POST" });
-      await refreshStatus(); await loadList();
-      toast("Reloaded");
-    };
-    document.getElementById("themeBtn").onclick = () => {
-      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-    };
-    document.addEventListener("keydown", e => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); document.getElementById("undoBtn").click(); }
-    });
+    dp.innerHTML = `
+      <div class="hero-card">
+        <div class="hero-top">
+          <div class="hero-id">
+            <div class="avatar" style="background:linear-gradient(135deg,#059669,#0284C7)">${esc(initials(name))}</div>
+            <div>
+              <div class="hero-name">${esc(name)}</div>
+              <div class="hero-meta"><span>${t('colRep')}: <strong>${esc(fmap['Reputation'] || c.rep || '-')}</strong></span> · <span>${squad.length} ${lang==='tr'?'oyuncu':'players'}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="action-bar">
+          <button class="btn emerald" onclick="runQuick('Club','${data.addr}','bal_50','${esc(name)}')">+€50M ${t('bal')}</button>
+          <button class="btn emerald" onclick="runQuick('Club','${data.addr}','tb_50','${esc(name)}')">+€50M ${t('tb')}</button>
+          <button class="btn gold" onclick="runQuick('Club','${data.addr}','rich_club','${esc(name)}')">${t('richClub')}</button>
+          <button class="btn active" onclick="runQuick('Club','${data.addr}','max_facilities','${esc(name)}')">${t('maxFac')}</button>
+        </div>
+      </div>
 
-    refreshStatus().then(loadList);
-  </script>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="k">${t('bal')}</div><div class="v">${fmtMoney(fmap['Balance'])}</div></div>
+        <div class="kpi-card"><div class="k">${t('tb')}</div><div class="v" style="color:var(--emerald)">${fmtMoney(fmap['Transfer Budget'])}</div></div>
+        <div class="kpi-card"><div class="k">${t('wb')}</div><div class="v">${fmtMoney(fmap['Wage Budget'])}</div></div>
+        <div class="kpi-card"><div class="k">${t('fac')}</div><div class="v" style="color:var(--accent)">${esc(fmap['Training Facilities']||'-')} / ${esc(fmap['Youth Facilities']||'-')}</div></div>
+      </div>
+
+      <div class="overview-row" style="grid-template-columns:1fr 1fr">
+        <div class="panel">
+          <div class="panel-title"><span>${t('facilities')}</span></div>
+          ${facFields.map(f => {
+            const pct = Math.min(100, Math.max(0, Number(f.value || 0) * 5));
+            return `<div class="fac-row">
+              <span class="fac-label">${esc(f.name)}</span>
+              <div class="fac-bar"><div class="fac-fill" style="width:${pct}%"></div></div>
+              <input class="attr-input ${attrClass(f.value)}" value="${esc(f.value)}" ${!f.writable?'readonly':''}
+                onchange="writeField('Club','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="panel">
+          <div class="panel-title"><span>${t('overview')}</span></div>
+          <div class="field-grid" style="grid-template-columns:1fr">
+            ${otherFields.map(f => `<div class="field-item">
+              <label>${esc(f.name)}</label>
+              <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
+                onchange="writeField('Club','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      ${squad.length ? `<div class="panel">
+        <div class="panel-title"><span>${t('squad')} (${squad.length})</span></div>
+        <table class="grid">
+          <thead><tr><th>${t('colPlayer')}</th><th>${t('colPos')}</th><th>${t('colAge')}</th><th>${t('colCaPa')}</th><th>${t('colRole')}</th><th>${t('colPr')}</th></tr></thead>
+          <tbody>
+            ${squad.map(p => `<tr onclick="openEntity('Player','${p.addr}')">
+              <td><div class="cell-name">${esc(p.name)}</div></td>
+              <td><span class="pos-tag">${esc(p.pos)}</span></td>
+              <td>${p.age || '-'}</td>
+              <td class="ca-pill">${p.ca}/${p.pa}</td>
+              <td>${esc(p.bestRole)} ${p.rolePct}%</td>
+              <td><span class="pr-pill">${p.prPct}%</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+    `;
+    return;
+  }
+
+  // Staff & Competition
+  const isComp = data.type === 'Competition';
+  dp.innerHTML = `
+    <div class="hero-card">
+      <div class="hero-top">
+        <div class="hero-id">
+          <div class="avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">${esc(initials(name))}</div>
+          <div>
+            <div class="hero-name">${esc(name)}</div>
+            <div class="hero-meta"><span>${esc(fmap['Club'] || data.type)}</span>${fmap['CA'] ? ` · <span>CA ${esc(fmap['CA'])} / PA ${esc(fmap['PA'])}</span>` : ''}</div>
+          </div>
+        </div>
+      </div>
+      ${isComp ? `<div class="action-bar"><button class="btn gold" onclick="runQuick('Competition','${data.addr}','world_no1','${esc(name)}')">${t('worldNo1')}</button></div>` : ''}
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span>${t('overview')}</span></div>
+      <div class="field-grid">
+        ${fields.filter(f => f.name !== 'Name').map(f => `<div class="field-item">
+          <label>${esc(f.name)}</label>
+          <input value="${esc(f.value)}" ${!f.writable?'readonly':''}
+            onchange="writeField('${data.type}','${data.addr}','${esc(f.name)}',this.value,'${esc(name)}')" />
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+    if (document.activeElement?.tagName !== 'INPUT') { e.preventDefault(); doUndo(); }
+  }
+});
+
+setTheme(theme);
+applyI18n();
+refreshStatus().then(loadList);
+setInterval(refreshStatus, 5000);
+</script>
 </body>
 </html>

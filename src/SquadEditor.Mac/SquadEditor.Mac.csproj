@@ -9,6 +9,7 @@
     <PackageReference Include="Photino.NET" Version="4.0.16" />
     <ProjectReference Include="..\SquadEditor.Core\SquadEditor.Core.csproj" />
     <EmbeddedResource Include="..\..\layouts\fm27-mac.json" LogicalName="fm27-mac.json" />
+    <EmbeddedResource Include="..\..\website\assets\logo.png" LogicalName="logo.png" />
     <EmbeddedResource Include="ui.html" LogicalName="ui.html" />
   </ItemGroup>
 </Project>

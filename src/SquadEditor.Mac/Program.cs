@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -24,11 +24,13 @@ internal static class Program
 	private static IMemory? _mem;
 	private static GameSession? _session;
 	private static GameLayout? _layout;
-	private static List<PlayerSummary> _players = new();
-	private static List<ClubSummary> _clubs = new();
-	private static List<StaffSummary> _staff = new();
-	private static List<CompSummary> _comps = new();
-	private static string _status = "Not connected";
+	private static List<PlayerRow> _players = new();
+	private static List<ClubRow> _clubs = new();
+	private static List<StaffRow> _staff = new();
+	private static List<CompRow> _comps = new();
+	private static string _status = "Connecting…";
+	private static string _weightMode = "classic";
+	private static bool _readOnly;
 	private static Timer? _freezeTimer;
 
 	[STAThread]
@@ -65,9 +67,9 @@ internal static class Program
 
 		string url = $"http://127.0.0.1:{port}/";
 		var window = new PhotinoWindow()
-			.SetTitle("SquadEditor — FM27")
+			.SetTitle("SquadEditor v1.6.0 — FM27")
 			.SetUseOsDefaultSize(false)
-			.SetSize(1280, 820)
+			.SetSize(1340, 860)
 			.Center()
 			.SetDevToolsEnabled(false)
 			.Load(url);
@@ -79,18 +81,18 @@ internal static class Program
 
 	private static GameLayout LoadEmbeddedLayout()
 	{
-		using Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("fm27-mac.json")
-			?? throw new InvalidOperationException("Embedded fm27-mac.json missing.");
+		using Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("fm27-mac.json")!;
 		string tmp = Path.Combine(Path.GetTempPath(), "squadeditor-fm27-mac.json");
 		using (FileStream fs = File.Create(tmp)) s.CopyTo(fs);
 		return GameLayout.Load(tmp);
 	}
 
-	private static string ReadEmbeddedHtml()
+	private static byte[] ReadEmbeddedBytes(string name)
 	{
-		using Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("ui.html")!;
-		using var sr = new StreamReader(s, Encoding.UTF8);
-		return sr.ReadToEnd();
+		using Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream(name)!;
+		using var ms = new MemoryStream();
+		s.CopyTo(ms);
+		return ms.ToArray();
 	}
 
 	private static void TryAttachAndIndex()
@@ -103,106 +105,133 @@ internal static class Program
 				_mem = null;
 				_session = null;
 
-				if (OperatingSystem.IsMacOS())
-				{
-					_mem = MacProcessMemory.Attach(_layout!.ProcessName);
-				}
-				else if (OperatingSystem.IsWindows())
-				{
-					_mem = ProcessMemory.Attach(_layout!.ProcessName);
-				}
-				else
-				{
-					_status = "Unsupported OS";
-					return;
-				}
+				if (OperatingSystem.IsMacOS()) _mem = MacProcessMemory.Attach(_layout!.ProcessName);
+				else if (OperatingSystem.IsWindows()) _mem = ProcessMemory.Attach(_layout!.ProcessName);
+				else { _status = "Unsupported OS"; return; }
 
 				_session = new GameSession(_mem, _layout!);
 				IndexAll();
-				_status = $"Connected · {_players.Count:N0} players · {_clubs.Count:N0} clubs · {_staff.Count:N0} staff";
-				Console.WriteLine(_status);
+				_status = $"FM27 Connected · {_players.Count:N0} players · {_clubs.Count:N0} clubs";
 			}
 			catch (Exception ex)
 			{
 				_status = ex.Message;
-				Console.WriteLine("Connect error: " + ex.Message);
 			}
 		}
 	}
 
+	private static string SafeRead(GameSession s, ulong a, FieldDef? f)
+	{
+		if (f == null) return "";
+		try { return s.ReadField(a, f); } catch { return ""; }
+	}
+	private static int SafeInt(GameSession s, ulong a, FieldDef? f) => int.TryParse(SafeRead(s, a, f), out int v) ? v : 0;
+
 	private static void IndexAll()
 	{
-		var session = _session!;
-		var layout = _layout!;
+		var s = _session!;
+		var l = _layout!;
 
-		var pDef = layout.GetEntity("Player");
-		var pName = pDef.Fields.First(f => f.Name == "Name");
-		var pClub = pDef.Fields.First(f => f.Name == "Club");
-		var pNation = pDef.Fields.First(f => f.Name == "Nation");
-		var pCa = pDef.Fields.First(f => f.Name == "CA");
-		var pPa = pDef.Fields.First(f => f.Name == "PA");
-		var pWage = pDef.Fields.First(f => f.Name == "Wage");
-		var pVal = pDef.Fields.First(f => f.Name == "Value");
-		var pDob = pDef.Fields.First(f => f.Name == "Date of Birth");
-		var pUid = pDef.Fields.First(f => f.Name == "Unique ID");
+		var pDef = l.GetEntity("Player");
+		FieldDef? PF(string n) => pDef.Fields.FirstOrDefault(f => f.Name == n);
+		var pName = PF("Name"); var pClub = PF("Club"); var pNation = PF("Nation");
+		var pCa = PF("CA"); var pPa = PF("PA"); var pWage = PF("Wage"); var pVal = PF("Value");
+		var pDob = PF("Date of Birth"); var pExp = PF("Contract Expires"); var pUid = PF("Unique ID");
 
-		string SafeRead(ulong a, FieldDef f) { try { return session.ReadField(a, f); } catch { return ""; } }
-		int SafeInt(ulong a, FieldDef f) => int.TryParse(SafeRead(a, f), out int v) ? v : 0;
+		// On macOS ARM64, positions start at 0x150 - 0x8 = 0x148 (15 bytes) and 54 attributes at 0x15F - 0x8 = 0x157
+		ulong posOff = OperatingSystem.IsMacOS() ? 0x148UL : 0x150UL;
+		Span<byte> raw69 = stackalloc byte[69];
+		string[] posNames = { "GK", "SW", "DL", "DC", "DR", "DM", "ML", "MC", "MR", "AML", "AMC", "AMR", "ST", "WBL", "WBR" };
 
-		var plist = new List<PlayerSummary>();
-		foreach (ulong addr in session.GetCollectionItems("Players"))
+		var plist = new List<PlayerRow>();
+		foreach (ulong addr in s.GetCollectionItems("Players"))
 		{
-			string name = SafeRead(addr, pName);
+			string name = SafeRead(s, addr, pName);
 			if (string.IsNullOrWhiteSpace(name)) continue;
-			int ca = SafeInt(addr, pCa);
-			int pa = SafeInt(addr, pPa);
-			plist.Add(new PlayerSummary(
-				addr.ToString("X"), name, SafeRead(addr, pClub), SafeRead(addr, pNation),
-				ca, pa, SafeInt(addr, pWage), SafeInt(addr, pVal), SafeRead(addr, pDob), SafeRead(addr, pUid)));
+			int ca = SafeInt(s, addr, pCa);
+			int pa = SafeInt(s, addr, pPa);
+			string dob = SafeRead(s, addr, pDob);
+			int age = CalcAge(dob);
+			string exp = SafeRead(s, addr, pExp);
+
+			string posText = "";
+			string bestRole = "";
+			double rolePct = 0, prPct = 0;
+			if (s.Memory.TryRead(addr + posOff, raw69))
+			{
+				var nat = new List<string>();
+				for (int i = 0; i < 15; i++) if (raw69[i] >= 15) nat.Add(posNames[i]);
+				if (nat.Count == 0)
+				{
+					int bi = 0;
+					for (int i = 1; i < 15; i++) if (raw69[i] > raw69[bi]) bi = i;
+					nat.Add(posNames[bi]);
+				}
+				posText = string.Join(", ", nat.Take(3));
+				(bestRole, rolePct, prPct) = MacScoutMath.Evaluate(raw69, ca, pa, _weightMode == "meta");
+			}
+
+			plist.Add(new PlayerRow(
+				addr.ToString("X"), name, posText, age, SafeRead(s, addr, pClub), SafeRead(s, addr, pNation),
+				ca, pa, Math.Max(0, pa - ca), bestRole, rolePct, prPct,
+				SafeInt(s, addr, pWage), SafeInt(s, addr, pVal), dob, exp, SafeRead(s, addr, pUid)));
 		}
 		_players = plist.OrderByDescending(x => x.Ca).ThenByDescending(x => x.Pa).ToList();
 
-		var cDef = layout.GetEntity("Club");
-		var cName = cDef.Fields.First(f => f.Name == "Name");
-		var cRep = cDef.Fields.First(f => f.Name == "Reputation");
-		var cBal = cDef.Fields.First(f => f.Name == "Balance");
-		var cTb = cDef.Fields.First(f => f.Name == "Transfer Budget");
-		var cWb = cDef.Fields.First(f => f.Name == "Wage Budget");
-		var clist = new List<ClubSummary>();
-		foreach (ulong addr in session.GetCollectionItems("Clubs"))
+		var cDef = l.GetEntity("Club");
+		FieldDef? CF(string n) => cDef.Fields.FirstOrDefault(f => f.Name == n);
+		var cName = CF("Name"); var cRep = CF("Reputation"); var cBal = CF("Balance");
+		var cTb = CF("Transfer Budget"); var cWb = CF("Wage Budget"); var cTr = CF("Training Facilities"); var cYf = CF("Youth Facilities");
+		var clist = new List<ClubRow>();
+		foreach (ulong addr in s.GetCollectionItems("Clubs"))
 		{
-			string name = SafeRead(addr, cName);
+			string name = SafeRead(s, addr, cName);
 			if (string.IsNullOrWhiteSpace(name)) continue;
-			clist.Add(new ClubSummary(addr.ToString("X"), name, SafeInt(addr, cRep), SafeInt(addr, cBal), SafeInt(addr, cTb), SafeInt(addr, cWb)));
+			clist.Add(new ClubRow(addr.ToString("X"), name, SafeInt(s, addr, cRep), SafeInt(s, addr, cBal), SafeInt(s, addr, cTb), SafeInt(s, addr, cWb), SafeInt(s, addr, cTr), SafeInt(s, addr, cYf)));
 		}
 		_clubs = clist.OrderByDescending(x => x.Rep).ToList();
 
-		var sDef = layout.GetEntity("Staff");
-		var sName = sDef.Fields.First(f => f.Name == "Name");
-		var sClub = sDef.Fields.First(f => f.Name == "Club");
-		var sNation = sDef.Fields.First(f => f.Name == "Nation");
-		var sCa = sDef.Fields.First(f => f.Name == "CA");
-		var sPa = sDef.Fields.First(f => f.Name == "PA");
-		var slist = new List<StaffSummary>();
-		foreach (ulong addr in session.GetCollectionItems("Staff"))
+		var sDef = l.GetEntity("Staff");
+		FieldDef? SF(string n) => sDef.Fields.FirstOrDefault(f => f.Name == n);
+		var sName = SF("Name"); var sClub = SF("Club"); var sNation = SF("Nation");
+		var sCa = SF("CA"); var sPa = SF("PA");
+		var sDet = SF("Determination"); var sLod = SF("Level of Discipline"); var sMot = SF("Motivating");
+		var sAtt = SF("Attacking"); var sDefA = SF("Defending"); var sFit = SF("Fitness");
+		var sTac = SF("Tactical"); var sTec = SF("Technical"); var sGkS = SF("Goalkeepers");
+		var slist = new List<StaffRow>();
+		foreach (ulong addr in s.GetCollectionItems("Staff"))
 		{
-			string name = SafeRead(addr, sName);
+			string name = SafeRead(s, addr, sName);
 			if (string.IsNullOrWhiteSpace(name)) continue;
-			slist.Add(new StaffSummary(addr.ToString("X"), name, SafeRead(addr, sClub), SafeRead(addr, sNation), SafeInt(addr, sCa), SafeInt(addr, sPa)));
+			int ddm = SafeInt(s, addr, sDet) + SafeInt(s, addr, sLod) + SafeInt(s, addr, sMot);
+			double stars = MacScoutMath.BestCoachStars(
+				ddm, SafeInt(s, addr, sAtt), SafeInt(s, addr, sDefA), SafeInt(s, addr, sFit),
+				SafeInt(s, addr, sTac), SafeInt(s, addr, sTec), SafeInt(s, addr, sGkS));
+			slist.Add(new StaffRow(addr.ToString("X"), name, SafeRead(s, addr, sClub), SafeRead(s, addr, sNation), SafeInt(s, addr, sCa), SafeInt(s, addr, sPa), stars));
 		}
-		_staff = slist.OrderByDescending(x => x.Ca).ToList();
+		_staff = slist.OrderByDescending(x => x.Stars).ThenByDescending(x => x.Ca).ToList();
 
-		var coDef = layout.GetEntity("Competition");
-		var coName = coDef.Fields.First(f => f.Name == "Name");
-		var coRep = coDef.Fields.First(f => f.Name == "Reputation");
-		var colist = new List<CompSummary>();
-		foreach (ulong addr in session.GetCollectionItems("Competitions"))
+		var coDef = l.GetEntity("Competition");
+		var coName = coDef.Fields.FirstOrDefault(f => f.Name == "Name");
+		var coRep = coDef.Fields.FirstOrDefault(f => f.Name == "Reputation");
+		var colist = new List<CompRow>();
+		foreach (ulong addr in s.GetCollectionItems("Competitions"))
 		{
-			string name = SafeRead(addr, coName);
+			string name = SafeRead(s, addr, coName);
 			if (string.IsNullOrWhiteSpace(name)) continue;
-			colist.Add(new CompSummary(addr.ToString("X"), name, SafeInt(addr, coRep)));
+			colist.Add(new CompRow(addr.ToString("X"), name, SafeInt(s, addr, coRep)));
 		}
 		_comps = colist.OrderByDescending(x => x.Rep).ToList();
+	}
+
+	private static int CalcAge(string dob)
+	{
+		if (DateTime.TryParseExact(dob, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt))
+		{
+			int a = 2026 - dt.Year;
+			return Math.Clamp(a, 14, 55);
+		}
+		return 0;
 	}
 
 	private static void HandleRequest(HttpListenerContext ctx)
@@ -212,11 +241,9 @@ internal static class Program
 			string path = ctx.Request.Url?.AbsolutePath ?? "/";
 			string method = ctx.Request.HttpMethod;
 
-			if (path == "/" && method == "GET")
-			{
-				WriteText(ctx, ReadEmbeddedHtml(), "text/html; charset=utf-8");
-				return;
-			}
+			if (path == "/" && method == "GET") { WriteBytes(ctx, ReadEmbeddedBytes("ui.html"), "text/html; charset=utf-8"); return; }
+			if (path == "/logo.png" && method == "GET") { WriteBytes(ctx, ReadEmbeddedBytes("logo.png"), "image/png"); return; }
+
 			if (path == "/api/status")
 			{
 				lock (LockObj)
@@ -230,9 +257,29 @@ internal static class Program
 						staff = _staff.Count,
 						comps = _comps.Count,
 						undoCount = _session?.History.Batches.Count ?? 0,
-						frozenCount = _session?.Freezer.Entities.Count ?? 0
+						frozenCount = _session?.Freezer.Entities.Count ?? 0,
+						weightMode = _weightMode,
+						readOnly = _readOnly
 					});
 				}
+				return;
+			}
+			if (path == "/api/settings" && method == "POST")
+			{
+				using var sr = new StreamReader(ctx.Request.InputStream, Encoding.UTF8);
+				var body = JsonSerializer.Deserialize<SettingsReq>(sr.ReadToEnd(), JsonOpts)!;
+				bool reindex = false;
+				lock (LockObj)
+				{
+					if (!string.IsNullOrEmpty(body.WeightMode) && body.WeightMode != _weightMode)
+					{
+						_weightMode = body.WeightMode == "meta" ? "meta" : "classic";
+						reindex = true;
+					}
+					if (body.ReadOnly.HasValue) _readOnly = body.ReadOnly.Value;
+					if (reindex && _session != null) IndexAll();
+				}
+				WriteJson(ctx, new { ok = true, weightMode = _weightMode, readOnly = _readOnly });
 				return;
 			}
 			if (path == "/api/reconnect" && method == "POST")
@@ -245,17 +292,35 @@ internal static class Program
 			{
 				var qs = ctx.Request.QueryString;
 				string q = (qs["q"] ?? "").Trim();
+				string pos = (qs["pos"] ?? "").Trim();
 				int minCa = int.TryParse(qs["minCa"], out int a) ? a : 0;
 				int minPa = int.TryParse(qs["minPa"], out int b) ? b : 0;
+				int maxAge = int.TryParse(qs["maxAge"], out int c) ? c : 0;
+				int maxValM = int.TryParse(qs["maxValM"], out int d) ? d : 0;
 				bool freeOnly = qs["free"] == "1";
+				string sort = qs["sort"] ?? "ca";
+
 				lock (LockObj)
 				{
-					IEnumerable<PlayerSummary> res = _players;
+					IEnumerable<PlayerRow> res = _players;
 					if (q.Length > 0)
 						res = res.Where(p => p.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || p.Club.Contains(q, StringComparison.OrdinalIgnoreCase) || p.Nation.Contains(q, StringComparison.OrdinalIgnoreCase));
+					if (pos.Length > 0) res = res.Where(p => p.Pos.Contains(pos, StringComparison.OrdinalIgnoreCase));
 					if (minCa > 0) res = res.Where(p => p.Ca >= minCa);
 					if (minPa > 0) res = res.Where(p => p.Pa >= minPa);
+					if (maxAge > 0) res = res.Where(p => p.Age > 0 && p.Age <= maxAge);
+					if (maxValM > 0) res = res.Where(p => p.Value <= maxValM * 1_000_000);
 					if (freeOnly) res = res.Where(p => string.IsNullOrWhiteSpace(p.Club));
+
+					res = sort switch
+					{
+						"pa" => res.OrderByDescending(p => p.Pa).ThenByDescending(p => p.Ca),
+						"pr" => res.OrderByDescending(p => p.PrPct).ThenByDescending(p => p.RolePct),
+						"role" => res.OrderByDescending(p => p.RolePct),
+						"growth" => res.OrderByDescending(p => p.Growth),
+						"age" => res.OrderBy(p => p.Age == 0 ? 99 : p.Age).ThenByDescending(p => p.Pa),
+						_ => res.OrderByDescending(p => p.Ca).ThenByDescending(p => p.Pa)
+					};
 					WriteJson(ctx, res.Take(200).ToList());
 				}
 				return;
@@ -265,7 +330,7 @@ internal static class Program
 				string q = (ctx.Request.QueryString["q"] ?? "").Trim();
 				lock (LockObj)
 				{
-					IEnumerable<ClubSummary> res = _clubs;
+					IEnumerable<ClubRow> res = _clubs;
 					if (q.Length > 0) res = res.Where(c => c.Name.Contains(q, StringComparison.OrdinalIgnoreCase));
 					WriteJson(ctx, res.Take(150).ToList());
 				}
@@ -273,11 +338,14 @@ internal static class Program
 			}
 			if (path == "/api/staff")
 			{
-				string q = (ctx.Request.QueryString["q"] ?? "").Trim();
+				var qs = ctx.Request.QueryString;
+				string q = (qs["q"] ?? "").Trim();
+				double minStars = double.TryParse(qs["minStars"], NumberStyles.Float, CultureInfo.InvariantCulture, out double ms) ? ms : 0;
 				lock (LockObj)
 				{
-					IEnumerable<StaffSummary> res = _staff;
+					IEnumerable<StaffRow> res = _staff;
 					if (q.Length > 0) res = res.Where(s => s.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || s.Club.Contains(q, StringComparison.OrdinalIgnoreCase));
+					if (minStars > 0) res = res.Where(s => s.Stars >= minStars);
 					WriteJson(ctx, res.Take(150).ToList());
 				}
 				return;
@@ -287,7 +355,7 @@ internal static class Program
 				string q = (ctx.Request.QueryString["q"] ?? "").Trim();
 				lock (LockObj)
 				{
-					IEnumerable<CompSummary> res = _comps;
+					IEnumerable<CompRow> res = _comps;
 					if (q.Length > 0) res = res.Where(c => c.Name.Contains(q, StringComparison.OrdinalIgnoreCase));
 					WriteJson(ctx, res.Take(150).ToList());
 				}
@@ -306,14 +374,27 @@ internal static class Program
 					{
 						string val = "";
 						try { val = _session.ReadField(addr, f); } catch { continue; }
-						fields.Add(new { name = f.Name, group = f.GroupKey, value = val, writable = f.IsWritable, min = f.Min, max = f.Max });
+						fields.Add(new { name = f.Name, group = f.GroupKey, value = val, writable = f.IsWritable && !_readOnly, min = f.Min, max = f.Max });
 					}
-					WriteJson(ctx, new { type, addr = addr.ToString("X"), frozen = _session.Freezer.IsFrozen(addr), fields });
+					object? extra = null;
+					if (type == "Player")
+					{
+						var row = _players.FirstOrDefault(p => p.Addr == addr.ToString("X"));
+						extra = row;
+					}
+					else if (type == "Club")
+					{
+						var row = _clubs.FirstOrDefault(c => c.Addr == addr.ToString("X"));
+						var squad = row != null ? _players.Where(p => string.Equals(p.Club, row.Name, StringComparison.OrdinalIgnoreCase)).Take(45).ToList() : new List<PlayerRow>();
+						extra = new { club = row, squad };
+					}
+					WriteJson(ctx, new { type, addr = addr.ToString("X"), frozen = _session.Freezer.IsFrozen(addr), fields, extra });
 				}
 				return;
 			}
 			if (path == "/api/write" && method == "POST")
 			{
+				if (_readOnly) { WriteJson(ctx, new { error = "Read-Only mode is enabled" }, 403); return; }
 				using var sr = new StreamReader(ctx.Request.InputStream, Encoding.UTF8);
 				var body = JsonSerializer.Deserialize<WriteReq>(sr.ReadToEnd(), JsonOpts)!;
 				ulong addr = Convert.ToUInt64(body.Addr, 16);
@@ -329,18 +410,29 @@ internal static class Program
 			}
 			if (path == "/api/quick" && method == "POST")
 			{
+				if (_readOnly) { WriteJson(ctx, new { error = "Read-Only mode is enabled" }, 403); return; }
 				using var sr = new StreamReader(ctx.Request.InputStream, Encoding.UTF8);
 				var body = JsonSerializer.Deserialize<QuickReq>(sr.ReadToEnd(), JsonOpts)!;
 				ulong addr = Convert.ToUInt64(body.Addr, 16);
 				lock (LockObj)
 				{
-					if (_session == null) { WriteJson(ctx, new { error = "Not connected" }, 400); return; }
+					var sess = _session;
+					if (sess == null) { WriteJson(ctx, new { error = "Not connected" }, 400); return; }
 					var def = _layout!.GetEntity(body.Type);
 					void Set(string fn, string v)
 					{
 						var fd = def.Fields.FirstOrDefault(f => f.Name == fn);
-						if (fd != null && fd.IsWritable) { try { _session.WriteField(addr, fd, v, body.Label); } catch { } }
+						if (fd != null && fd.IsWritable) { try { sess.WriteField(addr, fd, v, body.Label); } catch { } }
 					}
+					void AddInt(string fn, int delta)
+					{
+						var fd = def.Fields.FirstOrDefault(f => f.Name == fn);
+						if (fd != null && fd.IsWritable && int.TryParse(SafeRead(sess, addr, fd), out int cur))
+						{
+							try { sess.WriteField(addr, fd, (cur + delta).ToString(), body.Label); } catch { }
+						}
+					}
+
 					if (body.Action == "toggle_freeze")
 					{
 						if (_session.Freezer.IsFrozen(addr)) _session.Freezer.Unfreeze(addr);
@@ -350,19 +442,15 @@ internal static class Program
 					{
 						using (_session.History.BeginBatch($"{body.Label}: {body.Action}"))
 						{
-							if (body.Action == "max_fitness")
-							{
-								Set("Condition", "100"); Set("Match Sharpness", "100"); Set("Morale", "20"); Set("Happiness", "100");
-							}
-							else if (body.Action == "rich_club")
-							{
-								Set("Balance", "500000000"); Set("Transfer Budget", "200000000"); Set("Wage Budget", "10000000");
-							}
+							if (body.Action == "max_fitness") { Set("Condition", "100"); Set("Match Sharpness", "100"); Set("Morale", "20"); Set("Happiness", "100"); }
+							else if (body.Action == "bal_50") AddInt("Balance", 50_000_000);
+							else if (body.Action == "tb_50") AddInt("Transfer Budget", 50_000_000);
+							else if (body.Action == "rich_club") { Set("Balance", "500000000"); Set("Transfer Budget", "200000000"); Set("Wage Budget", "10000000"); }
 							else if (body.Action == "max_facilities")
 							{
-								foreach (string fn in new[] { "Training Facilities", "Youth Facilities", "Youth Coaching", "Youth Recruitment", "Corporate Facilities" })
-									Set(fn, "20");
+								foreach (string fn in new[] { "Training Facilities", "Youth Facilities", "Youth Coaching", "Youth Recruitment", "Corporate Facilities" }) Set(fn, "20");
 							}
+							else if (body.Action == "world_no1") { Set("Reputation", "200"); Set("Reputation (10000)", "10000"); }
 						}
 					}
 					WriteJson(ctx, new { ok = true, frozen = _session.Freezer.IsFrozen(addr), undoCount = _session.History.Batches.Count });
@@ -388,9 +476,8 @@ internal static class Program
 		}
 	}
 
-	private static void WriteText(HttpListenerContext ctx, string content, string mime, int code = 200)
+	private static void WriteBytes(HttpListenerContext ctx, byte[] bytes, string mime, int code = 200)
 	{
-		byte[] bytes = Encoding.UTF8.GetBytes(content);
 		ctx.Response.StatusCode = code;
 		ctx.Response.ContentType = mime;
 		ctx.Response.ContentLength64 = bytes.Length;
@@ -399,12 +486,86 @@ internal static class Program
 	}
 
 	private static void WriteJson(HttpListenerContext ctx, object obj, int code = 200)
-		=> WriteText(ctx, JsonSerializer.Serialize(obj, JsonOpts), "application/json; charset=utf-8", code);
+		=> WriteBytes(ctx, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(obj, JsonOpts)), "application/json; charset=utf-8", code);
 
-	private sealed record PlayerSummary(string Addr, string Name, string Club, string Nation, int Ca, int Pa, int Wage, int Value, string Dob, string Uid);
-	private sealed record ClubSummary(string Addr, string Name, int Rep, int Balance, int TransferBudget, int WageBudget);
-	private sealed record StaffSummary(string Addr, string Name, string Club, string Nation, int Ca, int Pa);
-	private sealed record CompSummary(string Addr, string Name, int Rep);
+	private sealed record PlayerRow(string Addr, string Name, string Pos, int Age, string Club, string Nation, int Ca, int Pa, int Growth, string BestRole, double RolePct, double PrPct, int Wage, int Value, string Dob, string ContractEnd, string Uid);
+	private sealed record ClubRow(string Addr, string Name, int Rep, int Balance, int TransferBudget, int WageBudget, int TrainingFac, int YouthFac);
+	private sealed record StaffRow(string Addr, string Name, string Club, string Nation, int Ca, int Pa, double Stars);
+	private sealed record CompRow(string Addr, string Name, int Rep);
 	private sealed record WriteReq(string Type, string Addr, string Field, string Value, string? Label);
 	private sealed record QuickReq(string Type, string Addr, string Action, string? Label);
+	private sealed record SettingsReq(string? WeightMode, bool? ReadOnly);
+}
+
+internal static class MacScoutMath
+{
+	private const int Cro = 0, Dri = 1, Fin = 2, Hea = 3, Mar = 5, Otb = 6, Pas = 7, Tac = 9, Vis = 10;
+	private const int Han = 11, Aer = 12, Cmd = 13, Ooo = 19, Pos = 20, Ref = 21;
+	private const int Ant = 17, Dec = 18, Fir = 22, Tec = 23, Fla = 26, Tea = 28, Wor = 29;
+	private const int Acc = 34, Str = 36, Sta = 37, Pac = 38, Jum = 39, Bal = 42, Agi = 46, Cmp = 52, Cnt = 53;
+
+	private static readonly (string Code, int[] Pos, (int A, int W)[] Classic, (int A, int W)[] Meta)[] Roles =
+	{
+		("GK", new[]{0}, new[]{(Ref,5),(Han,4),(Aer,4),(Ooo,4),(Pos,4),(Cnt,3),(Agi,3),(Cmd,3)}, new[]{(Ref,8),(Agi,7),(Aer,6),(Han,5),(Ooo,5),(Pos,4),(Cnt,4),(Ant,4)}),
+		("CD", new[]{3}, new[]{(Mar,5),(Tac,5),(Pos,5),(Hea,5),(Jum,5),(Str,5),(Cnt,4),(Dec,4),(Pac,3)}, new[]{(Pac,8),(Acc,8),(Jum,8),(Ant,5),(Cnt,5),(Str,5),(Bal,4),(Pos,4),(Mar,4),(Tac,4)}),
+		("WB", new[]{2,4,13,14}, new[]{(Pac,5),(Acc,5),(Sta,5),(Cro,4),(Tac,4),(Wor,4),(Otb,3),(Dri,3),(Pos,3)}, new[]{(Pac,9),(Acc,9),(Sta,6),(Agi,5),(Bal,5),(Dri,5),(Ant,4),(Cro,4),(Tac,4)}),
+		("DM", new[]{5}, new[]{(Tac,5),(Pos,5),(Mar,4),(Ant,4),(Cnt,4),(Dec,4),(Wor,4),(Tea,4),(Sta,4)}, new[]{(Pac,7),(Acc,7),(Jum,5),(Ant,6),(Cnt,5),(Bal,5),(Agi,5),(Sta,5),(Tac,4)}),
+		("DLP", new[]{5,7}, new[]{(Pas,5),(Vis,5),(Fir,5),(Tec,4),(Dec,5),(Cmp,4),(Tea,4),(Ant,3)}, new[]{(Pac,7),(Acc,7),(Agi,6),(Bal,6),(Ant,5),(Dri,5),(Pas,5),(Vis,4),(Cmp,4)}),
+		("BBM", new[]{7}, new[]{(Sta,5),(Wor,5),(Pas,4),(Tac,4),(Otb,4),(Dec,4),(Tea,4),(Pac,3),(Str,3)}, new[]{(Pac,8),(Acc,8),(Sta,6),(Agi,5),(Bal,5),(Dri,5),(Ant,5),(Wor,5),(Jum,4)}),
+		("AP", new[]{7,10}, new[]{(Vis,5),(Pas,5),(Fir,5),(Tec,5),(Dec,5),(Fla,4),(Otb,4),(Cmp,4)}, new[]{(Pac,8),(Acc,8),(Dri,6),(Agi,6),(Bal,6),(Ant,5),(Pas,5),(Vis,4),(Cmp,4)}),
+		("IW", new[]{6,8,9,11}, new[]{(Acc,5),(Pac,5),(Dri,5),(Fin,4),(Otb,5),(Fir,4),(Tec,4),(Pas,4),(Agi,4)}, new[]{(Pac,9),(Acc,9),(Dri,7),(Agi,6),(Bal,6),(Ant,5),(Otb,5),(Fin,4),(Cmp,4)}),
+		("AF", new[]{12}, new[]{(Fin,5),(Otb,5),(Acc,5),(Pac,5),(Cmp,5),(Fir,4),(Dri,4),(Ant,4)}, new[]{(Pac,9),(Acc,9),(Dri,6),(Agi,6),(Bal,6),(Jum,5),(Ant,5),(Otb,5),(Fin,4),(Cmp,4)})
+	};
+
+	public static (string Role, double Pct, double PrPct) Evaluate(ReadOnlySpan<byte> raw69, int ca, int pa, bool meta)
+	{
+		ReadOnlySpan<byte> pos = raw69[..15];
+		ReadOnlySpan<byte> attr = raw69.Slice(15, 54);
+		double gain = Math.Max(0, pa - ca) * 0.42;
+
+		string bestCode = "";
+		double bestCur = 0, bestPr = 0;
+
+		foreach (var r in Roles)
+		{
+			int bp = 0;
+			foreach (int pi in r.Pos) if (pos[pi] > bp) bp = pos[pi];
+			if (bp < 10) continue;
+			double pf = bp >= 18 ? 1.0 : 0.88 + (bp - 10) * 0.015;
+			var weights = meta ? r.Meta : r.Classic;
+			double sCur = 0, sPr = 0, tw = 0;
+			foreach (var (a, w) in weights)
+			{
+				sCur += attr[a] * w;
+				sPr += Math.Min(100.0, attr[a] + gain) * w;
+				tw += w;
+			}
+			double cur = Math.Round((sCur / tw) * pf, 1);
+			double pr = Math.Round((sPr / tw) * pf, 1);
+			if (cur > bestCur) { bestCur = cur; bestPr = pr; bestCode = r.Code; }
+		}
+		return (bestCode, bestCur, bestPr);
+	}
+
+	public static double BestCoachStars(int ddm, int att, int def, int fit, int tac, int tec, int gk)
+	{
+		double Calc(int main, int sec)
+		{
+			double pts = main * 6 + sec * 3 + ddm * 2;
+			if (pts >= 270) return 5.0;
+			if (pts >= 240) return 4.5;
+			if (pts >= 210) return 4.0;
+			if (pts >= 180) return 3.5;
+			if (pts >= 150) return 3.0;
+			if (pts >= 120) return 2.5;
+			if (pts >= 90) return 2.0;
+			return 1.5;
+		}
+		return new[]
+		{
+			Calc(fit, 0), Calc(gk, tac), Calc(gk, tec),
+			Calc(def, tac), Calc(def, tec), Calc(att, tac), Calc(att, tec),
+			Calc(tac, tec), Calc(tec, att)
+		}.Max();
+	}
 }
