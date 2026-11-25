@@ -3,9 +3,10 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <AssemblyName>SquadEditor</AssemblyName>
+    <AssemblyName>SquadEditorCore</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Photino.NET" Version="4.0.16" />
     <ProjectReference Include="..\SquadEditor.Core\SquadEditor.Core.csproj" />
     <EmbeddedResource Include="..\..\layouts\fm27-mac.json" LogicalName="fm27-mac.json" />
     <EmbeddedResource Include="ui.html" LogicalName="ui.html" />

@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Photino.NET;
 using SquadEditor.Core;
 using SquadEditor.Core.Layout;
 using SquadEditor.Core.Memory;
@@ -30,12 +31,10 @@ internal static class Program
 	private static string _status = "Not connected";
 	private static Timer? _freezeTimer;
 
-	public static async Task<int> Main(string[] args)
+	[STAThread]
+	public static int Main(string[] args)
 	{
 		int port = 47270;
-		Console.WriteLine("SquadEditor v1.6.0 for macOS (Apple Silicon)");
-		Console.WriteLine("============================================");
-
 		_layout = LoadEmbeddedLayout();
 		TryAttachAndIndex();
 
@@ -51,20 +50,31 @@ internal static class Program
 		listener.Prefixes.Add($"http://127.0.0.1:{port}/");
 		listener.Start();
 
+		_ = Task.Run(async () =>
+		{
+			while (listener.IsListening)
+			{
+				try
+				{
+					HttpListenerContext ctx = await listener.GetContextAsync();
+					_ = Task.Run(() => HandleRequest(ctx));
+				}
+				catch { break; }
+			}
+		});
+
 		string url = $"http://127.0.0.1:{port}/";
-		Console.WriteLine($"UI running at: {url}");
-		Console.WriteLine("Keep this window open while using SquadEditor. Press Ctrl+C to quit.");
+		var window = new PhotinoWindow()
+			.SetTitle("SquadEditor — FM27")
+			.SetUseOsDefaultSize(false)
+			.SetSize(1280, 820)
+			.Center()
+			.SetDevToolsEnabled(false)
+			.Load(url);
 
-		if (OperatingSystem.IsMacOS())
-		{
-			try { Process.Start("open", url); } catch { }
-		}
-
-		while (true)
-		{
-			HttpListenerContext ctx = await listener.GetContextAsync();
-			_ = Task.Run(() => HandleRequest(ctx));
-		}
+		window.WaitForClose();
+		listener.Stop();
+		return 0;
 	}
 
 	private static GameLayout LoadEmbeddedLayout()
