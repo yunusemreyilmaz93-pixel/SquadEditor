@@ -153,29 +153,114 @@
       border-color: var(--line-strong);
       color: var(--ink);
     }
-    .lang-toggle {
-      display: inline-flex;
+    .lang-dd {
+      position: relative;
+    }
+    .lang-trigger {
+      height: 34px;
+      padding: 0 10px 0 9px;
+      border-radius: 8px;
       border: 1px solid var(--line);
       background: var(--surface);
-      border-radius: 8px;
-      padding: 2px;
-    }
-    .lang-toggle button {
-      background: transparent;
-      border: 0;
-      color: var(--ink-3);
+      color: var(--ink);
       font-family: var(--sans);
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 600;
-      padding: 4px 9px;
-      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: border-color 0.15s, background 0.15s;
     }
-    .lang-toggle button.active {
+    .lang-trigger:hover, .lang-dd.open .lang-trigger {
+      border-color: var(--line-strong);
+      background: var(--surface-soft);
+    }
+    .lang-trigger img.dd-flag {
+      width: 18px;
+      height: 13.5px;
+      border-radius: 2.5px;
+      object-fit: cover;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      display: block;
+    }
+    .lang-trigger svg.dd-chev {
+      width: 13px;
+      height: 13px;
+      color: var(--ink-3);
+      transition: transform 0.18s var(--ease);
+    }
+    .lang-dd.open .lang-trigger svg.dd-chev {
+      transform: rotate(180deg);
+      color: var(--ink);
+    }
+    .lang-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 316px;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px) scale(0.98);
+      transform-origin: top right;
+      transition: opacity 0.16s var(--ease), transform 0.16s var(--ease), visibility 0.16s;
+      z-index: 60;
+    }
+    .lang-dd.open .lang-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+    .lang-opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--ink-2);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .lang-opt:hover {
       background: var(--surface-soft);
       color: var(--ink);
     }
+    .lang-opt.active {
+      background: color-mix(in srgb, var(--accent) 11%, transparent);
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .lang-opt img {
+      width: 18px;
+      height: 13.5px;
+      border-radius: 2.5px;
+      object-fit: cover;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      flex-shrink: 0;
+    }
+    .lang-opt .lang-chk {
+      margin-left: auto;
+      width: 14px;
+      height: 14px;
+      color: var(--accent);
+      opacity: 0;
+    }
+    .lang-opt.active .lang-chk { opacity: 1; }
 
     /* Buttons */
     .btn {
@@ -732,39 +817,134 @@
     }
     .about-sign strong { color: var(--ink); font-weight: 600; }
 
-    .faq-stack {
-      border-top: 1px solid var(--line);
+    /* Redesigned FAQ Grid Cards */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
     }
-    details.faq {
-      border-bottom: 1px solid var(--line);
-      padding: 17px 0;
+    .faq-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: border-color 0.18s var(--ease);
     }
-    details.faq summary {
-      cursor: pointer;
+    .faq-card:hover {
+      border-color: var(--line-strong);
+    }
+    .faq-card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .faq-ic {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: color-mix(in srgb, var(--accent) 11%, transparent);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .faq-ic svg.ic { width: 17px; height: 17px; }
+    .faq-card h3 {
+      font-size: 15.5px;
+      font-weight: 700;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      padding-top: 4px;
+    }
+    .faq-bullets {
       list-style: none;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      font-weight: 600;
-      font-size: 15px;
+      flex-direction: column;
+      gap: 9px;
     }
-    details.faq summary::-webkit-details-marker { display: none; }
-    details.faq summary svg.ic {
-      width: 16px;
-      height: 16px;
-      color: var(--ink-3);
-      transition: transform 0.18s var(--ease);
-    }
-    details.faq[open] summary svg.ic { transform: rotate(45deg); color: var(--ink); }
-    details.faq p {
-      margin-top: 10px;
+    .faq-bullets li {
+      position: relative;
+      padding-left: 16px;
+      font-size: 13.5px;
+      line-height: 1.58;
       color: var(--ink-2);
-      font-size: 14px;
-      line-height: 1.65;
-      overflow-wrap: anywhere;
-      word-break: break-word;
     }
+    .faq-bullets li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .faq-tools {
+      margin-top: 2px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .faq-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      font-size: 12px;
+      color: var(--ink);
+      text-decoration: none;
+      max-width: 100%;
+    }
+    .faq-chip code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink);
+      word-break: break-all;
+    }
+    .faq-copy-btn {
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.12s;
+    }
+    .faq-copy-btn:hover { background: var(--line); }
+    .faq-link-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.12s;
+    }
+    .faq-link-pill:hover { background: var(--surface-soft); }
+    .faq-link-pill svg.ic { width: 13px; height: 13px; color: var(--accent); }
+    .lang-card { cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .lang-card:hover { border-color: var(--line-strong); background: var(--surface-soft); }
+    .lang-card.active { border-color: var(--accent); }
 
     /* Final Download Band */
     .dl-band {
@@ -845,7 +1025,7 @@
     }
 
     @media (max-width: 920px) {
-      .feat-groups, .split-2 { grid-template-columns: 1fr; }
+      .feat-groups, .split-2, .faq-grid { grid-template-columns: 1fr; }
       .steps-grid { grid-template-columns: repeat(2, 1fr); }
       .lang-grid { grid-template-columns: repeat(2, 1fr); }
       nav { display: none; }
@@ -859,7 +1039,8 @@
       .brand img { width: 25px; height: 25px; }
       .bar-right { gap: 6px; }
       .icon-btn { width: 32px; height: 32px; }
-      .lang-toggle button { padding: 4px 7px; font-size: 11.5px; }
+      .lang-trigger { height: 32px; padding: 0 8px; font-size: 12px; gap: 5px; }
+      .lang-menu { width: min(296px, calc(100vw - 24px)); right: -42px; }
       #navDl { padding: 6px 11px; font-size: 12.5px; gap: 5px; }
       #navDl svg.ic { width: 14px; height: 14px; }
 
@@ -905,8 +1086,8 @@
       .split-2 { gap: 28px; }
       .about-card { padding: 22px 18px; }
       .about-card h3 { font-size: 21px; }
-      details.faq { padding: 14px 0; }
-      details.faq summary { font-size: 14.5px; gap: 12px; }
+      .faq-card { padding: 18px; }
+      .faq-card h3 { font-size: 14.5px; }
 
       .dl-band { padding: 42px 0; }
       .dl-box { padding: 24px 18px; gap: 18px; border-radius: 14px; }
@@ -942,9 +1123,13 @@
         <button type="button" class="icon-btn" id="themeToggle" aria-label="Tema değiştir" title="Açık / Koyu Tema">
           <svg class="ic" id="themeIcon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
         </button>
-        <div class="lang-toggle" role="group" aria-label="Language">
-          <button class="active" data-lang="tr">TR</button>
-          <button data-lang="en">EN</button>
+        <div class="lang-dd" id="langDd">
+          <button type="button" class="lang-trigger" id="langTrigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
+            <img class="dd-flag" id="langFlag" src="./assets/flags/tr.svg" alt="" />
+            <span id="langCode">TR</span>
+            <svg class="ic dd-chev" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="lang-menu" id="langMenu" role="listbox" aria-label="Language"></div>
         </div>
         <a id="navDl" href="#download" class="btn btn-primary btn-sm">
           <svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1224,9 +1409,9 @@
       </div>
     </section>
 
-    <!-- About + FAQ (Separate Anchors) -->
+    <!-- About -->
     <section id="about">
-      <div class="wrap split-2">
+      <div class="wrap">
         <div class="about-card">
           <h3 data-i18n="about.h">Hakkında</h3>
           <p data-i18n="about.p1">
@@ -1243,50 +1428,104 @@
             </a>
           </div>
         </div>
+      </div>
+    </section>
 
-        <div id="faq" class="faq-stack">
-          <details class="faq" open>
-            <summary>
-              <span data-i18n="q1.q">Tamamen ücretsiz mi?</span>
-              <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </summary>
-            <p data-i18n="q1.a">Evet. Squadeditor MIT lisansı altında tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.</p>
-          </details>
-          <details class="faq">
-            <summary>
-              <span data-i18n="q2.q">Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?</span>
-              <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </summary>
-            <p data-i18n="q2.a">Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. "Ek bilgi → Yine de çalıştır" adımıyla güvenle açabilir, dilerseniz GitHub üzerinden tüm kaynak kodunu inceleyebilirsiniz.</p>
-          </details>
-          <details class="faq">
-            <summary>
-              <span data-i18n="q3.q">Kariyer kaydıma zarar verir mi? Dondurma (Freeze) nasıl çalışır?</span>
-              <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </summary>
-            <p data-i18n="q3.a">Oyuna herhangi bir DLL enjeksiyonu yapılmaz; tüm okumalar/yazmalar doğrulamalı bellek erişimiyle çalışır, Dondurma özelliği periyodik kontrolle değerleri korur ve tüm işlemler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce Yedek butonuyla kaydınızı yedeklemeniz önerilir.</p>
-          </details>
-          <details class="faq">
-            <summary>
-              <span data-i18n="q4.q">Hangi sürümle uyumlu? FM27'ye yeni yama gelirse ne olur?</span>
-              <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </summary>
-            <p data-i18n="q4.a">Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1) ile doğrulanmıştır. Bellek adresleri kod içine gömülü değildir; harici JSON düzeni ve dinamik tarama kullanıldığı için yeni FM27 yamalarında hızlıca güncellenir.</p>
-          </details>
-          <details class="faq">
-            <summary>
-              <span data-i18n="q5.q">Genie Scout ve FMRTE'nin yerini tek başına tutuyor mu?</span>
-              <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </summary>
-            <p data-i18n="q5.a">Evet. Potansiyel Reyting (PR %), salt okunur PA Zirve Önizleme, çift katmanlı radar, gerçek 5★ antrenörlük yıldız hesabı, gizli özellik filtreleri ve Moneyball şablonlarıyla tam bir scout aracıdır; aynı zamanda canlı düzenleme, sponsorluk, takım uyumu/taktik %100 ve En İyi 11 akıllı transfer önericiyle tek 2.3 MB uygulamada ikisini birleştirir.</p>
-          </details>
-          <details class="faq">
-            <summary>
-              <span data-i18n="q6.q">macOS (Apple Silicon) nasıl kurulur ve çalıştırılır?</span>
-              <svg class="ic" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </summary>
-            <p data-i18n="q6.a">macOS güvenlik gereği başka bir uygulamanın canlı belleğini okumayı varsayılan olarak engeller. Sadece bir kez Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma (Recovery) moduna girin, üst menüden İzlenceler → Terminal'i açıp "csrutil enable --without debug" yazıp yeniden başlatın (diğer tüm sistem korumaları aktif kalır). Ardından SquadEditor.app'e çift tıklayın; ilk açılışta macOS güvenlik uyarısı verirse Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç adımıyla onaylayıp şifrenizi girmeniz yeterlidir.</p>
-          </details>
+    <!-- FAQ (Structured 2-Column Bento Cards) -->
+    <section id="faq">
+      <div class="wrap">
+        <div class="sec-header">
+          <h2 data-i18n="faq.h">Sıkça Sorulan Sorular</h2>
+          <p data-i18n="faq.p">Güvenlik, kurulum, uyumluluk ve doğrulama hakkında bilmeniz gereken her şey.</p>
+        </div>
+        <div class="faq-grid">
+          <article class="faq-card">
+            <div class="faq-card-head">
+              <span class="faq-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg></span>
+              <h3 data-i18n="q1.q">Tamamen ücretsiz mi?</h3>
+            </div>
+            <ul class="faq-bullets">
+              <li data-i18n="q1.b1">MIT lisansı altında %100 ücretsiz ve açık kaynaklıdır.</li>
+              <li data-i18n="q1.b2">Lisans anahtarı, abonelik, reklam veya kilitli özellik yoktur.</li>
+              <li data-i18n="q1.b3">Tüm kaynak kodunu GitHub üzerinden dilediğiniz gibi inceleyebilirsiniz.</li>
+            </ul>
+          </article>
+
+          <article class="faq-card">
+            <div class="faq-card-head">
+              <span class="faq-ic"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              <h3 data-i18n="q2.q">Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?</h3>
+            </div>
+            <ul class="faq-bullets">
+              <li data-i18n="q2.b1">Ücretli dijital imza sertifikası olmayan açık kaynaklı uygulamalarda ilk açılışta uyarı çıkması normaldir.</li>
+              <li data-i18n="q2.b2">Açmak için: Ek bilgi → Yine de çalıştır.</li>
+              <li data-i18n="q2.b3">Aşağıdaki SHA-256 özeti ve VirusTotal raporuyla dosyayı doğrulayabilirsiniz.</li>
+            </ul>
+            <div class="faq-tools">
+              <span class="faq-chip">
+                <code>SHA-256: 6B753F15…BFCB9B</code>
+                <button type="button" class="faq-copy-btn" data-copy="6B753F151603D7BC18F522A12FF35D35A056CE0FA65050D6C820E25725BFCB9B" data-i18n="mac.copy">Kopyala</button>
+              </span>
+              <a class="faq-link-pill" href="https://www.virustotal.com/gui/file/6b753f151603d7bc18f522a12ff35d35a056ce0fa65050d6c820e25725bfcb9b" target="_blank" rel="noopener">
+                <svg class="ic" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <span data-i18n="q2.vt">VirusTotal Raporu</span>
+              </a>
+            </div>
+          </article>
+
+          <article class="faq-card">
+            <div class="faq-card-head">
+              <span class="faq-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span>
+              <h3 data-i18n="q3.q">Kariyer kaydıma zarar verir mi? Dondurma nasıl çalışır?</h3>
+            </div>
+            <ul class="faq-bullets">
+              <li data-i18n="q3.b1">Oyuna DLL enjeksiyonu yapılmaz; tüm işlemler doğrulamalı bellek erişimiyle gerçekleşir.</li>
+              <li data-i18n="q3.b2">Dondurma (Freeze), hafif periyodik kontrolle seçtiğiniz değerlerin düşmesini engeller.</li>
+              <li data-i18n="q3.b3">Her değişiklik Ctrl+Z / ⌘Z ile geri alınabilir; üst bardan tek tıkla Kayıt Yedeği alınabilir.</li>
+            </ul>
+          </article>
+
+          <article class="faq-card">
+            <div class="faq-card-head">
+              <span class="faq-ic"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+              <h3 data-i18n="q4.q">Hangi sürümle uyumlu? Yeni yama gelirse ne olur?</h3>
+            </div>
+            <ul class="faq-bullets">
+              <li data-i18n="q4.b1">Windows 10/11 (64-bit) ve macOS Apple Silicon (M1–M4) üzerinde tam destek.</li>
+              <li data-i18n="q4.b2">Steam Football Manager 27 (27.0.1 – 27.1.1) ile canlı doğrulanmıştır.</li>
+              <li data-i18n="q4.b3">Dinamik RTTI vtable taraması sayesinde tek dosyada yeni yamalara hızlıca uyum sağlar.</li>
+            </ul>
+          </article>
+
+          <article class="faq-card">
+            <div class="faq-card-head">
+              <span class="faq-ic"><svg class="ic" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+              <h3 data-i18n="q5.q">Genie Scout ve FMRTE'nin yerini tek başına tutuyor mu?</h3>
+            </div>
+            <ul class="faq-bullets">
+              <li data-i18n="q5.b1">Scout: Klasik FM &amp; ME Meta rol ağırlıkları, PR %, PA Zirve Önizleme, çift katmanlı radar, 5★ antrenör ve Moneyball.</li>
+              <li data-i18n="q5.b2">Editör: Canlı düzenleme, sponsorluklar, Takım Uyumu/Taktik %100, toplu işlemler ve En İyi 11 transfer önerici.</li>
+              <li data-i18n="q5.b3">İki aracın tüm özelliklerini kurulumsuz tek masaüstü uygulamasında birleştirir.</li>
+            </ul>
+          </article>
+
+          <article class="faq-card">
+            <div class="faq-card-head">
+              <span class="faq-ic"><svg class="ic" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span>
+              <h3 data-i18n="q6.q">macOS (Apple Silicon) nasıl kurulur ve çalıştırılır?</h3>
+            </div>
+            <ul class="faq-bullets">
+              <li data-i18n="q6.b1">Tek seferlik: Mac'i Kurtarma (Recovery) modunda açın → İzlenceler → Terminal'de şu komutu çalıştırıp yeniden başlatın:</li>
+              <li data-i18n="q6.b2">İlk açılışta uyarı çıkarsa: Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç.</li>
+              <li data-i18n="q6.b3">Diğer tüm macOS sistem korumaları aktif kalır; sonraki açılışlarda doğrudan çalışır.</li>
+            </ul>
+            <div class="faq-tools">
+              <span class="faq-chip">
+                <code>csrutil enable --without debug</code>
+                <button type="button" class="faq-copy-btn" data-copy="csrutil enable --without debug" data-i18n="mac.copy">Kopyala</button>
+              </span>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -1341,6 +1580,7 @@
     <img id="lightboxImg" src="" alt="" />
   </div>
 
+  <script src="./i18n.js"></script>
   <script>
     // =========================================================================
     // TEK NOKTA AYAR BLOĞU — Yayınlarken doğrudan .exe/.zip linkini buraya koy
@@ -1364,160 +1604,33 @@
       github: `<svg class="ic" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>`
     };
 
-    const LANGUAGES = [
-      { flag: "tr", name: "Türkçe" },
-      { flag: "gb", name: "English" },
-      { flag: "es", name: "Español" },
-      { flag: "br", name: "Português" },
-      { flag: "fr", name: "Français" },
-      { flag: "de", name: "Deutsch" },
-      { flag: "it", name: "Italiano" },
-      { flag: "nl", name: "Nederlands" },
-      { flag: "pl", name: "Polski" },
-      { flag: "ru", name: "Русский" },
-      { flag: "jp", name: "日本語" },
-      { flag: "kr", name: "한국어" }
-    ];
+    const LANGUAGES = window.SITE_LANGS || [{ code: "en", flag: "gb", name: "English", short: "EN" }];
+    const I18N = window.SITE_I18N || {};
 
-    // 9 distinct high-res real screenshots in BOTH TR and EN (concise tab labels so all 9 fit cleanly on one row)
     const SLIDES = [
-      { id: "overview", srcTr: "./assets/shot_player_overview.png", srcEn: "./assets/shot_player_overview_en.png", tr: "Oyuncu", en: "Player", capTr: "Canlı oyuncu profili, PR %, PA Zirve Önizleme, Uyum %100 ve çift katmanlı radar", capEn: "Live player profile, PR %, Peak PA Preview, Max Cohesion & dual-layer radar" },
-      { id: "squad", srcTr: "./assets/shot_club_squad.png", srcEn: "./assets/shot_club_squad_en.png", tr: "Kadro", en: "Squad", capTr: "Tek tıkla Takım Uyumu & Taktik %100, Kadro Gelişim Takibi ve PR % sütunu", capEn: "1-click Max Cohesion & Tactics 100%, Squad Progress Tracker & PR % column" },
-      { id: "bestxi", srcTr: "./assets/shot_club_bestxi.png", srcEn: "./assets/shot_club_bestxi_en.png", tr: "En İyi 11", en: "Best XI", capTr: "10 hazır diziliş, Özel Taktik & Roller ve her mevki için Akıllı Transfer Önerici", capEn: "10 formations, Custom Tactic & Roles & Smart Transfer Finder per slot" },
-      { id: "finances", srcTr: "./assets/shot_club_finances.png", srcEn: "./assets/shot_club_finances_en.png", tr: "Finans", en: "Finances", capTr: "4 canlı KPI kartı, bütçe, bakiye ve Sponsorluk Anlaşmaları yönetimi", capEn: "4 live KPI cards, budgets, balance & Sponsorship Deals editor" },
-      { id: "home", srcTr: "./assets/shot_home_db.png", srcEn: "./assets/shot_home_db_en.png", tr: "Scout", en: "Scout", capTr: "2 sütunlu Genie Scout filtreleri, Moneyball, PR %, Regen ve Wonderkid taraması", capEn: "2-column Genie Scout filters, Moneyball, PR %, Regen & Wonderkid scouting" },
-      { id: "personal", srcTr: "./assets/shot_player_personal.png", srcEn: "./assets/shot_player_personal_en.png", tr: "Sözleşme", en: "Contract", capTr: "Sözleşme maddeleri, ikinci uyruk, diller ve tercih edilen hareketler", capEn: "Contract clauses, second nationalities, languages & player traits" },
-      { id: "relations", srcTr: "./assets/shot_club_relations.png", srcEn: "./assets/shot_club_relations_en.png", tr: "İlişkiler", en: "Relations", capTr: "Canlı rakip kulüpler, efsaneler, ikonlar ve sevilmeyen kişiler", capEn: "Live rival clubs, club legends, icons & disliked personnel" },
-      { id: "staffLight", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png", tr: "5★ Personel", en: "5★ Staff", capTr: "Açık tema · FM 5★ Antrenörlük Yıldız Hesaplayıcısı & TD Hariç filtresi", capEn: "Light theme · FM 5★ Coaching Star Calculator & Hide Managers filter" },
-      { id: "multilang", srcTr: "./assets/shot_ja.png", srcEn: "./assets/shot_de.png", tr: "12 Dil", en: "12 Langs", capTr: "12 dilde eksiksiz FM terminolojisi (Japonca örneği)", capEn: "Authentic FM terminology in 12 languages (German example)" }
+      { id: "overview", srcTr: "./assets/shot_player_overview.png", srcEn: "./assets/shot_player_overview_en.png" },
+      { id: "squad", srcTr: "./assets/shot_club_squad.png", srcEn: "./assets/shot_club_squad_en.png" },
+      { id: "bestxi", srcTr: "./assets/shot_club_bestxi.png", srcEn: "./assets/shot_club_bestxi_en.png" },
+      { id: "finances", srcTr: "./assets/shot_club_finances.png", srcEn: "./assets/shot_club_finances_en.png" },
+      { id: "home", srcTr: "./assets/shot_home_db.png", srcEn: "./assets/shot_home_db_en.png" },
+      { id: "personal", srcTr: "./assets/shot_player_personal.png", srcEn: "./assets/shot_player_personal_en.png" },
+      { id: "relations", srcTr: "./assets/shot_club_relations.png", srcEn: "./assets/shot_club_relations_en.png" },
+      { id: "staffLight", srcTr: "./assets/shot_light.png", srcEn: "./assets/shot_light_en.png" },
+      { id: "multilang", srcTr: "./assets/shot_ja.png", srcEn: "./assets/shot_de.png" }
     ];
 
-    const I18N = {
-      tr: {
-        "_title": "Squadeditor — FM27 için Hızlı ve Ücretsiz Gerçek Zamanlı Editör ve Scout",
-        "_desc": "Football Manager 27 için ücretsiz, hızlı ve açık kaynaklı gerçek zamanlı editör ve scout aracı. 12 dil, 4 canlı tema, gerçek regen ve 5 yıldızlı personel arama.",
-        "_themeTip": "Açık / Koyu Tema", "_prev": "Önceki", "_next": "Sonraki",
-        "nav.features": "Özellikler", "nav.howto": "Nasıl Kullanılır?", "nav.languages": "Diller", "nav.about": "Hakkında", "nav.faq": "SSS", "nav.dl": "İndir",
-        "hero.title": "FM27 için hızlı ve ücretsiz gerçek zamanlı editör ve scout.",
-        "hero.lead": "Oyun açıkken oyuncuları, personelleri, kulüpleri, sponsorları ve takım uyumunu anında düzenleyin; PR %, PA Zirve Önizleme, gerçek regen ve 5★ antrenör taramasıyla iki aracı tek uygulamada kullanın.",
-        "hero.dl": "Windows için İndir", "hero.dlSub": "Windows 10/11 (64-bit) · 2.2 MB", "hero.dlMac": "macOS için İndir", "hero.dlMacSub": "Apple Silicon (M1–M4) · 42.9 MB (.zip içi 111 MB)", "hero.explore": "Tüm Özelliklere Bak",
-        "hero.note": "Kurulum gerektirmez.",
-        "trust.source": "Kaynak Kodu (GitHub)", "trust.smartscreen": "İlk açılışta SmartScreen uyarısı normaldir",
-        "zoom.hint": "Büyüt",
-        "feat.h": "Bir editörden ve scout aracından beklediğiniz her şey.",
-        "feat.p": "Oyuncu aramadan personel transferine, kulüp tesislerinden canlı tema geçişine kadar tüm araçlar tek çatı altında.",
-        "g1.h": "Oyuncu Arama & Scout",
-        "g1.f1t": "Gerçek Regen, PR % & Moneyball Cevher", "g1.f1d": "Sadece oyunun ürettiği gerçek regenleri ayırır; Potansiyel Reyting (PR %), çift ayak, istenen bonservis ve tek tıkla Moneyball şablonuyla gizli cevherleri bulur.",
-        "g1.f2t": "2 Sütunlu Genie Scout Filtreleri & Şablonlar", "g1.f2d": "Uyruk, bölge, mevki, rol uygunluğu, sözleşme bitişi, CA/PA ve gizli özelliklerle (Profesyonellik, İstikrar, Önemli Maçlar, Sakatlık Eğilimi) detaylı tarama yapabilirsiniz.",
-        "g1.f3t": "PA Önizleme, Çift Katmanlı Radar & PNG Kart", "g1.f3d": "Oyuncunun PA zirvesindeki tahmini 1–20 özelliklerini belleğe yazmadan önizleyin, mevcut + zirve çift katmanlı radarı görün, iki oyuncuyu kıyaslayın veya PNG kart çıkarın.",
-        "g1.f4t": "Wonderkid Oluşturucu, Model Kişilik & Alışkanlıklar", "g1.f4d": "Tekrar zar atılabilen dengeli Wonderkid üretici, tek tıkla kişilik iyileştirme ve tüm oyuncu alışkanlıklarını (Traits) düzenleme imkanı sunar.",
-        "g2.h": "Personel & Transfer Yönetimi",
-        "g2.f1t": "FM 5★ Antrenörlük Yıldız Hesaplayıcısı & Filtresi", "g2.f1d": "9 antrenman kategorisinde gerçek 0.5★–5.0★ hesabı, tabloda ★ Yıldız sütunu, Min. ★ filtresi ve tek tıkla \"TD Hariç\" seçeneğiyle en iyi antrenörleri anında bulun.",
-        "g2.f2t": "Rol Seçerek Personel İşe Alma & Taşıma", "g2.f2d": "Boştaki veya sözleşmeli personeli istediğiniz göreve (Asistan Menajer, Kaleci Antrenörü, Gözlemci, Fizyoterapist vb.) atayarak kulübe ekleyebilirsiniz.",
-        "g2.f3t": "Hızlı Oyuncu Transferi & Kiralık İşlemleri", "g2.f3d": "Bedelsiz veya bonservisli anında kulüp değişimi, serbest oyuncu imzalatma, kiralık oyuncuyu geri çağırma veya kalıcı transfer yapabilirsiniz.",
-        "g2.f4t": "Sözleşme Maddeleri, İkinci Uyruk & Diller", "g2.f4d": "Serbest kalma bedeli ve bonus maddeleri ekleyip silebilir; oyuncunun ana uyruğunu, ikinci uyruklarını, konuştuğu dilleri ve favori kulüplerini düzenleyebilirsiniz.",
-        "g3.h": "Kulüp, Kadro, Sponsor & Lig",
-        "g3.f1t": "Maça Hazırlık & Takım Uyumu / Taktik %100", "g3.f1d": "Tek tıkla sakatlık/ceza temizliği, kondisyon/moral %100 ve tüm kadronun Takım Uyumunu + 6 taktik alan & diziliş yatkınlığını %100 yapın.",
-        "g3.f2t": "10 Diziliş, Özel Roller & Akıllı Transfer Önerici", "g3.f2d": "Kendi 11'ini ve FM oyuncu rollerini oluştur; her mevki için bütçene uygun transfer hedeflerini anında gör ve Kadro Gelişim Takibiyle sezon içi CA/değer artışını izle.",
-        "g3.f3t": "Sponsorluk Anlaşmaları, Finans & Lig Altın Çağı", "g3.f3d": "Kulübün sponsorluklarını düzenleyin, Süper Sponsor (+50M/yıl) ekleyin veya 2x yapın; bütçe/tesisleri ve lig itibarını (Lig Altın Çağı) tek tıkla yükseltin.",
-        "g3.f4t": "Toplu Düzenleme, Sözleşme Uzatma & Değer Sabitleme", "g3.f4d": "Birden fazla oyuncunun özelliklerini toplu değiştirebilir, tüm kadronun sözleşmesini uzatabilir veya seçtiğiniz değerlerin düşmemesi için dondurabilirsiniz.",
-        "g4.h": "Kullanım Rahatlığı & Güvenlik",
-        "g4.f1t": "4 Canlı Tema & Logo / Yüz Paketi Desteği", "g4.f1d": "Gece, OLED Siyah, Kömür & Altın ve Açık tema arasında anında geçiş yapabilirsiniz. Oyundaki logo ve yüz paketleriniz otomatik yüklenir.",
-        "g4.f2t": "Hızlı Arama, Kısayollar & Kısa Liste", "g4.f2d": "Oyuncu, kulüp, ülke ve liglerde anında arama yapabilir; fare tekeriyle sayıları hızla değiştirebilir; beğendiğiniz oyuncuları kısa listeye ekleyip dışa aktarabilirsiniz.",
-        "g4.f3t": "Otomatik Yazma Koruması & Geri Alma Geçmişi", "g4.f3d": "Her değişiklik öncesinde doğrulama yapılır, yapılan tüm işlemler geçmişe kaydedilir ve istediğiniz zaman tek tuşla geri alınabilir.",
-        "g4.f4t": "Tek Tıkla Kayıt Yedekleme & Sadece İnceleme Modu", "g4.f4d": "Üst bardan tek tıkla güncel kariyer kaydınızın yedeğini alabilir; oyuna hiç dokunmadan sadece oyuncu aramak için Salt Okunur modu açabilirsiniz.",
-        "how.h": "Nasıl Kullanılır?", "how.p": "Dört basit adımda kariyerinize bağlanıp güvenle kullanmaya başlayabilirsiniz.",
-        "st1.t": "FM27'de kariyerinizi açın", "st1.d": "Önce Football Manager 27'yi başlatıp düzenlemek istediğiniz kariyer kaydını yükleyin.",
-        "st2.t": "Squadeditor'ı çalıştırın", "st2.d": "İndirdiğiniz dosyayı açın; program açık olan FM27'yi otomatik algılayıp saniyeler içinde bağlanır.",
-        "st3.t": "Tek tıkla yedeğinizi alın", "st3.d": "Büyük bir değişiklik yapmadan önce üst bardaki Yedek butonuna basarak kaydınızı güvenceye alın.",
-        "st4.t": "Scout yapın veya düzenleyin", "st4.d": "Yaptığınız her işlem anında oyuna yansır; vazgeçerseniz Ctrl+Z ile anında geri alabilirsiniz.",
-        "mst1.t": "Tek seferlik bellek izni", "mst1.d": "Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma moduna girin. Üst menüden İzlenceler → Terminal'i açıp şu komutu yazın ve yeniden başlatın:",
-        "mst2.t": "İlk açılış uyarısını onaylayın", "mst2.d": "İndirdiğiniz .zip'i açıp SquadEditor.app'e çift tıklayın. macOS ilk kez güvenlik uyarısı verirse şu menüden onaylayın:",
-        "mst2.path": "Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç",
-        "mst3.t": "FM27'yi açın ve save yükleyin", "mst3.d": "Football Manager 27'yi başlatıp incelemek veya düzenlemek istediğiniz kariyer kaydınızı yükleyin.",
-        "mst4.t": "SquadEditor.app'i çalıştırın", "mst4.d": "Mac şifrenizi girerek canlı bağlantıyı onaylayın. Masaüstü penceresi doğrudan açılır; ⌘Z ile her değişikliği geri alabilirsiniz.",
-        "mac.copy": "Kopyala", "mac.copied": "Kopyalandı ✓",
-        "mac.note": "Bilgi: 1. ve 2. adımlar sadece ilk kurulumda bir kez yapılır. \"csrutil enable --without debug\" komutu yalnızca uygulama belleği okuma iznini açar; diğer tüm macOS sistem korumaları aktif kalmaya devam eder.",
-        "lang.h": "12 Dil", "lang.p": "Ayarlardan dilediğiniz dili seçip kullanabilirsiniz.",
-        "about.h": "Hakkında",
-        "about.p1": "Squadeditor, Football Manager topluluğu için tamamen ücretsiz ve açık kaynaklı bir alternatif sunmak amacıyla geliştirildi. Karmaşık arayüzler ve ücretli duvarlar olmadan; hızlı çalışan, kayda zarar vermeyen ve gerçekten oyuncunun işini gören bir araç olmasını hedefledim.",
-        "about.p2": "Eklememi istediğiniz bir özellik, hoşunuza gitmeyen bir detay, öneri, şikayet veya memnuniyetiniz olursa sosyal medya hesaplarımdan ya da GitHub üzerinden bana doğrudan ulaşabilirsiniz.",
-        "about.by": "Geliştiren", "about.repo": "GitHub Deposu",
-        "q1.q": "Tamamen ücretsiz mi?", "q1.a": "Evet. Squadeditor MIT lisansı altında tamamen ücretsiz ve açık kaynaklıdır. Lisans anahtarı, abonelik veya kilitli özellik yoktur.",
-        "q2.q": "Windows SmartScreen uyarısı çıkarsa ne yapmalıyım?", "q2.a": "Bağımsız açık kaynaklı Windows uygulamalarında ücretli dijital imza sertifikası bulunmadığı için Windows ilk açılışta uyarı gösterebilir. \"Ek bilgi → Yine de çalıştır\" adımıyla güvenle açabilir, SHA-256 doğrulaması (6B753F151603D7BC18F522A12FF35D35A056CE0FA65050D6C820E25725BFCB9B) ve VirusTotal kaydıyla dosyayı kontrol edebilir ya da GitHub üzerinden tüm kaynak kodunu inceleyebilirsiniz.",
-        "q3.q": "Kariyer kaydıma zarar verir mi? Dondurma (Freeze) nasıl çalışır?", "q3.a": "Oyuna herhangi bir DLL enjeksiyonu yapılmaz; tüm okumalar/yazmalar doğrulamalı bellek erişimiyle çalışır, Dondurma özelliği periyodik kontrolle değerleri korur ve tüm işlemler Ctrl+Z ile geri alınabilir. Yine de büyük düzenlemelerden önce Yedek butonuyla kaydınızı yedeklemeniz önerilir.",
-        "q4.q": "Hangi sürümle uyumlu? FM27'ye yeni yama gelirse ne olur?", "q4.a": "Windows 10/11 (64-bit) üzerinde Steam Football Manager 27 (27.0.1 – 27.1.1) ile canlı doğrulanmıştır. Dinamik RTTI vtable taraması kullanıldığı için hem güncellenmemiş 27.0.1 hem de güncel 27.1.1 sürümleriyle tek dosyada tam uyumludur.",
-        "q5.q": "Genie Scout ve FMRTE'nin yerini tek başına tutuyor mu?", "q5.a": "Evet. Klasik FM veya Maç Motoru (ME Meta) rol ağırlıkları, Potansiyel Reyting (PR %), salt okunur PA Zirve Önizleme, çift katmanlı radar, gerçek 5★ antrenörlük yıldız hesabı, kaydedilebilir özel filtreler ve Moneyball şablonlarıyla tam bir scout aracıdır; aynı zamanda lig ve filtre bazlı toplu işlemler, sponsorluk ve takım uyumu/taktik %100 ile tek ~2.2 MB uygulamada ikisini birleştirir.",
-        "q6.q": "macOS (Apple Silicon) nasıl kurulur ve çalıştırılır?", "q6.a": "macOS güvenlik gereği başka bir uygulamanın canlı belleğini okumayı varsayılan olarak engeller. Sadece bir kez Mac'i kapatıp güç tuşuna basılı tutarak Kurtarma (Recovery) moduna girin, üst menüden İzlenceler → Terminal'i açıp \"csrutil enable --without debug\" yazıp yeniden başlatın (diğer tüm sistem korumaları aktif kalır). Ardından SquadEditor.app'e çift tıklayın; ilk açılışta macOS güvenlik uyarısı verirse Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç adımıyla onaylayıp şifrenizi girmeniz yeterlidir.",
-        "cta.h": "Hemen indir.", "cta.p": "Windows (~2.2 MB) ve macOS (42.9 MB .zip · 111 MB .app) için kurulum gerektirmez ve tamamen ücretsiz.", "cta.btn": "Squadeditor İndir (Windows)",
-        "dl.meta": "Sürüm v1.6.0 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Açık Kaynak (MIT)",
-        "release.info": "v1.6.0 · FM27 27.1.1 · Açık Kaynak (MIT)",
-        "foot.legal": "Squadeditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
-      },
-      en: {
-        "_title": "Squadeditor — Fast, Free Real-Time Editor and Scout for FM27",
-        "_desc": "Free, open-source real-time editor and scout for Football Manager 27 on Windows and macOS. 12 authentic FM languages, 4 live themes, true regen and 5-star coach finder.",
-        "_themeTip": "Light / Dark Theme", "_prev": "Previous", "_next": "Next",
-        "nav.features": "Features", "nav.howto": "How It Works", "nav.languages": "Languages", "nav.about": "About", "nav.faq": "FAQ", "nav.dl": "Download",
-        "hero.title": "A fast, free real-time editor and scout for FM27.",
-        "hero.lead": "Edit players, staff, clubs, sponsors and team cohesion live while FM27 runs — and scout with PR %, Peak PA Preview, true newgens and a real 5★ coach calculator, all in one fast desktop app.",
-        "hero.dl": "Download for Windows", "hero.dlSub": "Windows 10/11 (64-bit) · 2.2 MB", "hero.dlMac": "Download for macOS", "hero.dlMacSub": "Apple Silicon (M1–M4) · 42.9 MB (111 MB .app)", "hero.explore": "Explore All Features",
-        "hero.note": "No installer required.",
-        "trust.source": "Source Code (GitHub)", "trust.smartscreen": "SmartScreen notice on first run is normal",
-        "zoom.hint": "Zoom",
-        "feat.h": "Everything you expect from a real-time editor and scout.",
-        "feat.p": "From player scouting and role-based staff hiring to club facilities and live theme switching — all in one fast app.",
-        "g1.h": "Player Search & Scouting",
-        "g1.f1t": "True Regen, PR % & Moneyball Gems", "g1.f1d": "Isolates true game-generated newgens; scout with Potential Rating (PR %), both feet, asking price and 1-click Moneyball presets.",
-        "g1.f2t": "2-Column Genie Scout Filters & Presets", "g1.f2d": "Filter by nationality, region, position, role rating, expiring contracts, CA/PA and hidden attributes (Professionalism, Consistency, Important Matches, Injury Proneness).",
-        "g1.f3t": "PA Preview, Dual-Layer Radar & PNG Card", "g1.f3d": "Preview projected 1–20 peak PA attributes without touching memory, view dual-layer current + peak radar, compare players side by side, or export PNG cards.",
-        "g1.f4t": "Wonderkid Reroller, Model Personality & Player Traits", "g1.f4d": "Reroll balanced Wonderkids until you like the roll, max out personality traits, and toggle any player preferred move.",
-        "g2.h": "Staff & Transfers",
-        "g2.f1t": "FM 5★ Coaching Star Calculator & Search", "g2.f1d": "Real 0.5★–5.0★ calculator across all 9 training categories, ★ Stars column, Min ★ filter, and 1-click Hide Managers toggle.",
-        "g2.f2t": "Role-Based Staff Hiring & Transfers", "g2.f2d": "Pick the exact job (Assistant Manager, GK Coach, Fitness Coach, Scout, Physio, etc.) and matching club department when hiring or moving staff.",
-        "g2.f3t": "Instant Player Transfers & Loan Controls", "g2.f3d": "Move players with or without a transfer fee, sign free agents, recall loanees, or make loans permanent.",
-        "g2.f4t": "Contract Clauses, Second Nationalities & Languages", "g2.f4d": "Add or remove release clauses and bonuses; edit primary/second nationalities, spoken languages and favoured clubs.",
-        "g3.h": "Clubs, Squads, Sponsors & Leagues",
-        "g3.f1t": "Matchday Prep & Max Cohesion / Tactics 100%", "g3.f1d": "Heal injuries, lift bans, restore fitness/morale, and max Team Cohesion (100) + Tactical Familiarity (100%) across the entire squad in one click.",
-        "g3.f2t": "10 Formations, Custom Roles & Smart Transfer Finder", "g3.f2d": "Build custom role-based tactics, get budget-matched transfer targets for every Best XI slot, and track CA, value & attribute deltas via squad snapshots.",
-        "g3.f3t": "Sponsorship Deals, Finances & League Golden Age", "g3.f3d": "Edit club sponsorship deals, add Mega Sponsors (+50M/yr) or double payouts; max budgets, facilities and entire leagues (League Golden Age) in one click.",
-        "g3.f4t": "Mass Edit, Bulk Contract Extend & Freezing", "g3.f4d": "Bulk-edit attributes across selected players, extend contracts for the whole squad, or freeze values so the game never lowers them.",
-        "g4.h": "Craft & Safety",
-        "g4.f1t": "4 Live Themes & FM Graphics Support", "g4.f1d": "Switch live between Midnight, OLED Black, Charcoal & Gold, and Light themes. Automatically loads logos and faces from your FM graphics folder.",
-        "g4.f2t": "Command Palette, Global Search & Shortlists", "g4.f2d": "Search players, clubs, nations and leagues instantly; tweak numbers with the mouse wheel; manage shortlists and export to CSV.",
-        "g4.f3t": "Verified Writes & Full Undo History", "g4.f3d": "Every write is validated before committing, logged to session history, and reversible with Ctrl+Z.",
-        "g4.f4t": "1-Click Save Backup & Read-Only Mode", "g4.f4d": "Back up your latest career save from the top bar in one click, or enable Read-Only mode for pure scouting.",
-        "how.h": "How It Works", "how.p": "Connect to your live FM27 save safely in four simple steps.",
-        "st1.t": "Load your FM27 save", "st1.d": "Start Football Manager 27 and load the career save you want to scout or edit.",
-        "st2.t": "Open Squadeditor", "st2.d": "Run the single executable — it detects FM27 automatically and indexes your database in seconds.",
-        "st3.t": "Back up in one click", "st3.d": "Hit the Backup button in the top bar before making major edits for complete peace of mind.",
-        "st4.t": "Scout or edit live", "st4.d": "Changes apply immediately in-game, and anything can be undone anytime with Ctrl+Z.",
-        "mst1.t": "One-time memory permission", "mst1.d": "Shut down your Mac and hold the Power button to enter Recovery. Open Utilities → Terminal from the top menu, run this command, and reboot:",
-        "mst2.t": "Approve first-launch notice", "mst2.d": "Unzip the download and double-click SquadEditor.app. If macOS shows a security warning on first launch, approve it here:",
-        "mst2.path": "System Settings → Privacy & Security → Open Anyway",
-        "mst3.t": "Open FM27 and load a save", "mst3.d": "Launch Football Manager 27 and load the career save you want to scout or edit.",
-        "mst4.t": "Launch SquadEditor.app", "mst4.d": "Enter your Mac password when prompted. The desktop window opens directly and connects live; press ⌘Z anytime to undo.",
-        "mac.copy": "Copy", "mac.copied": "Copied ✓",
-        "mac.note": "Note: Steps 1 and 2 are only needed once. \"csrutil enable --without debug\" only enables live memory inspection; all other macOS system protections remain active.",
-        "lang.h": "12 Languages", "lang.p": "Pick any language from Settings whenever you like.",
-        "about.h": "About",
-        "about.p1": "Squadeditor was built to give the Football Manager community a genuinely free, open-source alternative — fast, clean, save-safe, and free of paywalls or clutter.",
-        "about.p2": "If there is a feature you would like added, anything you dislike, or any feedback and suggestions, feel free to reach out directly via my social channels or GitHub.",
-        "about.by": "Developed by", "about.repo": "GitHub Repository",
-        "q1.q": "Is it completely free?", "q1.a": "Yes. Squadeditor is completely free and open source under the MIT license — no license keys, subscriptions or locked features.",
-        "q2.q": "Why does Windows SmartScreen show a notice?", "q2.a": "Independent open-source Windows apps without a paid code-signing certificate trigger SmartScreen on first launch. Click \"More info → Run anyway\" to open safely, verify the SHA-256 checksum (6B753F151603D7BC18F522A12FF35D35A056CE0FA65050D6C820E25725BFCB9B) on VirusTotal, or audit the full source on GitHub.",
-        "q3.q": "Will it harm my save? How does Freezing work?", "q3.a": "No DLL injection is used — all reads and writes are validated memory operations, Freezing works via lightweight polling, and every edit is undoable with Ctrl+Z. Backing up your save with the built-in Backup button before major changes is still recommended.",
-        "q4.q": "Which version is supported? What about FM27 patches?", "q4.a": "Live-verified on Windows 10/11 (64-bit) with Steam Football Manager 27 (27.0.1 – 27.1.1). Dynamic RTTI vtable scanning keeps a single build compatible across both unpatched 27.0.1 and the latest 27.1.1 update.",
-        "q5.q": "Does it replace both Genie Scout and FMRTE?", "q5.a": "Yes. With switchable Classic FM vs. Match Engine Meta role weights, Potential Rating (PR %), read-only Peak PA Preview, dual-layer radar, a real 5★ coaching star calculator, saveable custom filter presets and Moneyball presets, it covers deep scouting — while adding league-wide mass actions, sponsorships and 100% cohesion/tactics in one ~2.2 MB file.",
-        "q6.q": "How do I install and run the macOS (Apple Silicon) version?", "q6.a": "By default, macOS blocks external apps from reading another app's live memory. As a one-time setup, shut down your Mac, hold the Power button to enter Recovery → Options → Continue, open Utilities → Terminal from the top menu, run \"csrutil enable --without debug\", and reboot (all other system protections stay enabled). After that, double-click SquadEditor.app — if macOS shows a first-launch warning, approve it under System Settings → Privacy & Security → Open Anyway and enter your Mac password.",
-        "cta.h": "Download now.", "cta.p": "No installer needed and completely free for Windows (~2.2 MB) and macOS (42.9 MB .zip · 111 MB .app).", "cta.btn": "Download Squadeditor (Windows)",
-        "dl.meta": "Version v1.6.0 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-        "release.info": "v1.6.0 · FM27 27.1.1 · Open Source (MIT)",
-        "foot.legal": "Squadeditor is an independent, free community tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
+    function detectBrowserLang() {
+      const supported = new Set(LANGUAGES.map(l => l.code));
+      const list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];
+      for (const raw of list) {
+        const code = String(raw || "").toLowerCase().split("-")[0];
+        if (supported.has(code)) return code;
       }
-    };
+      return "en";
+    }
 
-    let lang = localStorage.getItem("se_lang") || ((navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en");
+    const savedLang = localStorage.getItem("se_lang");
+    let lang = (savedLang && I18N[savedLang]) ? savedLang : detectBrowserLang();
     let theme = localStorage.getItem("se_site_theme") || "light";
     let slideIdx = 0;
     let paused = false;
@@ -1535,18 +1648,18 @@
 
     let slideToken = 0;
     let fadeTimer = null;
-    // Preload all slide images in background so transitions never flicker or double-refresh
     SLIDES.forEach(s => { new Image().src = s.srcTr; new Image().src = s.srcEn; });
 
     function renderSlides() {
+      const dict = I18N[lang] || I18N.en;
       const tabs = document.getElementById("slideTabs");
       tabs.innerHTML = SLIDES.map((s, i) =>
-        `<button type="button" class="slide-tab ${i === slideIdx ? "active" : ""}" data-idx="${i}">${lang === "tr" ? s.tr : s.en}</button>`
+        `<button type="button" class="slide-tab ${i === slideIdx ? "active" : ""}" data-idx="${i}">${dict[`s${i}.t`] || I18N.en[`s${i}.t`]}</button>`
       ).join("");
       tabs.querySelectorAll(".slide-tab").forEach(b => b.addEventListener("click", () => goSlide(Number(b.dataset.idx))));
       const cur = SLIDES[slideIdx];
-      const nextSrc = lang === "tr" ? cur.srcTr : cur.srcEn;
-      const nextAlt = lang === "tr" ? cur.capTr : cur.capEn;
+      const nextSrc = (lang === "tr" || (slideIdx === 8 && lang === "ja")) ? cur.srcTr : cur.srcEn;
+      const nextAlt = dict[`s${slideIdx}.c`] || I18N.en[`s${slideIdx}.c`];
       document.getElementById("slideCount").textContent = `${slideIdx + 1} / ${SLIDES.length}`;
       document.getElementById("slideCaption").textContent = nextAlt;
       const img = document.getElementById("slideImg");
@@ -1577,34 +1690,78 @@
       }
     }
 
-    function applyLang(next) {
-      lang = next;
-      localStorage.setItem("se_lang", lang);
+    // Sleek 12-Language Dropdown
+    const langDd = document.getElementById("langDd");
+    const langTrigger = document.getElementById("langTrigger");
+    const langMenu = document.getElementById("langMenu");
+    langMenu.innerHTML = LANGUAGES.map(l => `
+      <button type="button" class="lang-opt" role="option" data-lang="${l.code}">
+        <img src="./assets/flags/${l.flag}.svg" alt="${l.name}" />
+        <span>${l.name}</span>
+        <svg class="ic lang-chk" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>`).join("");
+
+    function setLangMenuOpen(open) {
+      langDd.classList.toggle("open", open);
+      langTrigger.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    langTrigger.addEventListener("click", e => {
+      e.stopPropagation();
+      setLangMenuOpen(!langDd.classList.contains("open"));
+    });
+    langMenu.querySelectorAll(".lang-opt").forEach(btn => {
+      btn.addEventListener("click", () => {
+        applyLang(btn.dataset.lang, true);
+        setLangMenuOpen(false);
+      });
+    });
+    document.addEventListener("click", e => { if (!langDd.contains(e.target)) setLangMenuOpen(false); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") setLangMenuOpen(false); });
+
+    function applyLang(next, persist) {
+      lang = I18N[next] ? next : "en";
+      if (persist) localStorage.setItem("se_lang", lang);
       document.documentElement.lang = lang;
-      document.querySelectorAll(".lang-toggle button").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
-      const dict = I18N[lang];
-      document.title = dict["_title"];
+      const meta = LANGUAGES.find(l => l.code === lang) || LANGUAGES[1];
+      document.getElementById("langFlag").src = `./assets/flags/${meta.flag}.svg`;
+      document.getElementById("langFlag").alt = meta.name;
+      document.getElementById("langCode").textContent = meta.short;
+      langMenu.querySelectorAll(".lang-opt").forEach(b => {
+        const on = b.dataset.lang === lang;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.querySelectorAll("#langGrid .lang-card").forEach(c => c.classList.toggle("active", c.dataset.lang === lang));
+      const dict = I18N[lang] || I18N.en;
+      const fallback = I18N.en;
+      document.title = dict["_title"] || fallback["_title"];
       const desc = document.querySelector('meta[name="description"]');
-      if (desc) desc.setAttribute("content", dict["_desc"]);
-      document.getElementById("themeToggle").title = dict["_themeTip"];
-      document.getElementById("themeToggle").setAttribute("aria-label", dict["_themeTip"]);
-      document.getElementById("prevSlide").setAttribute("aria-label", dict["_prev"]);
-      document.getElementById("nextSlide").setAttribute("aria-label", dict["_next"]);
-      document.getElementById("dlMeta").textContent = dict["dl.meta"];
-      document.getElementById("releaseInfo").textContent = dict["release.info"];
+      if (desc) desc.setAttribute("content", dict["_desc"] || fallback["_desc"]);
+      document.getElementById("themeToggle").title = dict["_themeTip"] || fallback["_themeTip"];
+      document.getElementById("themeToggle").setAttribute("aria-label", dict["_themeTip"] || fallback["_themeTip"]);
+      langTrigger.title = dict["_langTip"] || fallback["_langTip"];
+      document.getElementById("prevSlide").setAttribute("aria-label", dict["_prev"] || fallback["_prev"]);
+      document.getElementById("nextSlide").setAttribute("aria-label", dict["_next"] || fallback["_next"]);
+      document.getElementById("dlMeta").textContent = dict["dl.meta"] || fallback["dl.meta"];
+      document.getElementById("releaseInfo").textContent = dict["release.info"] || fallback["release.info"];
       document.querySelectorAll("[data-i18n]").forEach(el => {
         const k = el.getAttribute("data-i18n");
-        if (dict[k]) el.textContent = dict[k];
+        const val = dict[k] || fallback[k];
+        if (val) el.textContent = val;
       });
       renderSlides();
     }
 
-    // 12 languages with official 4:3 SVG flags
+    // 12 languages with official 4:3 SVG flags (clicking switches site language too)
     document.getElementById("langGrid").innerHTML = LANGUAGES.map(l => `
-      <div class="lang-card">
+      <div class="lang-card" data-lang="${l.code}" role="button" tabindex="0">
         <img class="flag" src="./assets/flags/${l.flag}.svg" alt="${l.name}" />
         <strong>${l.name}</strong>
       </div>`).join("");
+    document.querySelectorAll("#langGrid .lang-card").forEach(card => {
+      card.addEventListener("click", () => applyLang(card.dataset.lang, true));
+      card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); applyLang(card.dataset.lang, true); } });
+    });
 
     // Links & socials
     function trackHit(ev) {
@@ -1665,7 +1822,6 @@
 
     // Controls
     document.getElementById("themeToggle").addEventListener("click", () => applyTheme(theme === "dark" ? "light" : "dark"));
-    document.querySelectorAll(".lang-toggle button").forEach(b => b.addEventListener("click", () => applyLang(b.dataset.lang)));
     document.getElementById("prevSlide").addEventListener("click", () => goSlide(slideIdx - 1));
     document.getElementById("nextSlide").addEventListener("click", () => goSlide(slideIdx + 1));
     const sc = document.getElementById("showcase");
@@ -1680,7 +1836,7 @@
     }, 100);
 
     applyTheme(theme);
-    applyLang(lang);
+    applyLang(lang, false);
     trackHit("view");
 
     // How-To OS Switcher (auto-select macOS on Mac devices)
@@ -1696,14 +1852,18 @@
     document.querySelectorAll(".os-tab").forEach(b => b.addEventListener("click", () => selectHowtoOs(b.dataset.os)));
     if (/Mac|Macintosh/i.test(navigator.platform || navigator.userAgent || "")) selectHowtoOs("mac");
 
-    const copyCsrBtn = document.getElementById("copyCsrBtn");
-    if (copyCsrBtn) {
-      copyCsrBtn.addEventListener("click", () => {
-        navigator.clipboard?.writeText("csrutil enable --without debug").catch(() => {});
-        copyCsrBtn.textContent = I18N[lang]["mac.copied"] || "✓";
-        setTimeout(() => { copyCsrBtn.textContent = I18N[lang]["mac.copy"] || "Copy"; }, 1800);
+    // Copy buttons (How-To Mac command + FAQ SHA-256 & csrutil chips)
+    function bindCopyBtn(btn, text) {
+      btn.addEventListener("click", () => {
+        navigator.clipboard?.writeText(text).catch(() => {});
+        const dict = I18N[lang] || I18N.en;
+        btn.textContent = dict["mac.copied"] || "Copied ✓";
+        setTimeout(() => { btn.textContent = (I18N[lang] || I18N.en)["mac.copy"] || "Copy"; }, 1800);
       });
     }
+    const copyCsrBtn = document.getElementById("copyCsrBtn");
+    if (copyCsrBtn) bindCopyBtn(copyCsrBtn, "csrutil enable --without debug");
+    document.querySelectorAll("[data-copy]").forEach(btn => bindCopyBtn(btn, btn.getAttribute("data-copy")));
   </script>
 </body>
 </html>
