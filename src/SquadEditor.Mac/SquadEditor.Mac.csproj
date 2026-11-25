@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SquadEditor</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SquadEditor.Core\SquadEditor.Core.csproj" />
+    <EmbeddedResource Include="..\..\layouts\fm27-mac.json" LogicalName="fm27-mac.json" />
+    <EmbeddedResource Include="ui.html" LogicalName="ui.html" />
+  </ItemGroup>
+</Project>

@@ -10,6 +10,10 @@ public static class Rtti
 {
 	public static ulong? FindVtable(IMemory memory, MemoryRegion module, string typeName, uint colOffset = 0)
 	{
+		if (OperatingSystem.IsMacOS())
+		{
+			return ItaniumRtti.FindVtable(memory, module, typeName, colOffset);
+		}
 		List<MemoryRegion> regions = PatternScanner.Clip(memory.GetRegions(), module).ToList();
 		byte[] name = Encoding.ASCII.GetBytes(typeName + "\0");
 		foreach (ulong hit in PatternScanner.Scan(memory, regions, Pattern.Parse(Hex(name)), 16))
