@@ -1095,3 +1095,95 @@ window.SITE_I18N = {
     "foot.legal": "Squadeditor는 독립적인 무료 커뮤니티 도구이며 Sports Interactive 또는 SEGA와 무관합니다. Football Manager는 해당 소유자의 상표입니다."
   }
 };
+
+(function () {
+  const FB = {
+    tr: {
+      "fb.btn": "Hata / Öneri Bildir", "fb.title": "Hata Bildir veya Öneri Gönder", "fb.sub": "Hesap gerekmez — doğrudan geliştiriciye ulaşır.",
+      "fb.bug": "Hata", "fb.feature": "Özellik Önerisi", "fb.other": "Yorum",
+      "fb.msgPh": "Yaşadığınız sorunu, önerinizi veya düşüncenizi kısaca yazın…", "fb.contactPh": "İsteğe bağlı: X (@kullanici) veya e-posta",
+      "fb.send": "Gönder", "fb.sending": "Gönderiliyor…", "fb.ok": "Teşekkürler! Bildiriminiz ulaştı.",
+      "fb.errShort": "Lütfen en az 5 karakter yazın.", "fb.errFail": "Gönderilemedi, lütfen tekrar deneyin."
+    },
+    en: {
+      "fb.btn": "Report Bug / Feedback", "fb.title": "Report a Bug or Send Feedback", "fb.sub": "No account needed — goes straight to the developer.",
+      "fb.bug": "Bug", "fb.feature": "Feature Idea", "fb.other": "Comment",
+      "fb.msgPh": "Briefly describe the issue, suggestion, or feedback…", "fb.contactPh": "Optional: X (@handle) or email",
+      "fb.send": "Send", "fb.sending": "Sending…", "fb.ok": "Thanks! Your message has been received.",
+      "fb.errShort": "Please enter at least 5 characters.", "fb.errFail": "Could not send, please try again."
+    },
+    es: {
+      "fb.btn": "Reportar error / Sugerencia", "fb.title": "Reportar error o enviar sugerencia", "fb.sub": "Sin cuenta — llega directo al desarrollador.",
+      "fb.bug": "Error", "fb.feature": "Sugerencia", "fb.other": "Comentario",
+      "fb.msgPh": "Describe brevemente el problema o tu sugerencia…", "fb.contactPh": "Opcional: X (@usuario) o correo",
+      "fb.send": "Enviar", "fb.sending": "Enviando…", "fb.ok": "¡Gracias! Tu mensaje ha sido recibido.",
+      "fb.errShort": "Escribe al menos 5 caracteres.", "fb.errFail": "No se pudo enviar, inténtalo de nuevo."
+    },
+    pt: {
+      "fb.btn": "Relatar erro / Sugestão", "fb.title": "Relatar erro ou enviar sugestão", "fb.sub": "Sem conta — vai direto para o desenvolvedor.",
+      "fb.bug": "Erro", "fb.feature": "Sugestão", "fb.other": "Comentário",
+      "fb.msgPh": "Descreva brevemente o problema ou sua sugestão…", "fb.contactPh": "Opcional: X (@usuario) ou e-mail",
+      "fb.send": "Enviar", "fb.sending": "Enviando…", "fb.ok": "Obrigado! Sua mensagem foi recebida.",
+      "fb.errShort": "Digite pelo menos 5 caracteres.", "fb.errFail": "Não foi possível enviar, tente novamente."
+    },
+    fr: {
+      "fb.btn": "Signaler un bug / Avis", "fb.title": "Signaler un bug ou envoyer un avis", "fb.sub": "Sans compte — envoyé directement au développeur.",
+      "fb.bug": "Bug", "fb.feature": "Suggestion", "fb.other": "Commentaire",
+      "fb.msgPh": "Décrivez brièvement le problème ou votre idée…", "fb.contactPh": "Optionnel : X (@pseudo) ou e-mail",
+      "fb.send": "Envoyer", "fb.sending": "Envoi…", "fb.ok": "Merci ! Votre message a bien été reçu.",
+      "fb.errShort": "Veuillez saisir au moins 5 caractères.", "fb.errFail": "Échec de l'envoi, veuillez réessayer."
+    },
+    de: {
+      "fb.btn": "Fehler / Feedback", "fb.title": "Fehler melden oder Feedback senden", "fb.sub": "Kein Konto nötig — geht direkt an den Entwickler.",
+      "fb.bug": "Fehler", "fb.feature": "Feature-Idee", "fb.other": "Kommentar",
+      "fb.msgPh": "Beschreibe kurz das Problem oder deinen Vorschlag…", "fb.contactPh": "Optional: X (@name) oder E-Mail",
+      "fb.send": "Senden", "fb.sending": "Wird gesendet…", "fb.ok": "Danke! Deine Nachricht ist angekommen.",
+      "fb.errShort": "Bitte mindestens 5 Zeichen eingeben.", "fb.errFail": "Senden fehlgeschlagen, bitte erneut versuchen."
+    },
+    it: {
+      "fb.btn": "Segnala bug / Feedback", "fb.title": "Segnala un bug o invia feedback", "fb.sub": "Nessun account richiesto — arriva diretto allo sviluppatore.",
+      "fb.bug": "Bug", "fb.feature": "Suggerimento", "fb.other": "Commento",
+      "fb.msgPh": "Descrivi brevemente il problema o la tua idea…", "fb.contactPh": "Opzionale: X (@utente) o email",
+      "fb.send": "Invia", "fb.sending": "Invio…", "fb.ok": "Grazie! Il tuo messaggio è stato ricevuto.",
+      "fb.errShort": "Inserisci almeno 5 caratteri.", "fb.errFail": "Invio fallito, riprova."
+    },
+    nl: {
+      "fb.btn": "Bug melden / Feedback", "fb.title": "Bug melden of feedback sturen", "fb.sub": "Geen account nodig — gaat direct naar de ontwikkelaar.",
+      "fb.bug": "Bug", "fb.feature": "Idee", "fb.other": "Opmerking",
+      "fb.msgPh": "Beschrijf kort het probleem of je suggestie…", "fb.contactPh": "Optioneel: X (@naam) of e-mail",
+      "fb.send": "Versturen", "fb.sending": "Verzenden…", "fb.ok": "Bedankt! Je bericht is ontvangen.",
+      "fb.errShort": "Vul minimaal 5 tekens in.", "fb.errFail": "Verzenden mislukt, probeer opnieuw."
+    },
+    pl: {
+      "fb.btn": "Zgłoś błąd / Opinia", "fb.title": "Zgłoś błąd lub wyślij sugestię", "fb.sub": "Bez konta — trafia prosto do autora.",
+      "fb.bug": "Błąd", "fb.feature": "Pomysł", "fb.other": "Komentarz",
+      "fb.msgPh": "Opisz krótko problem lub swoją propozycję…", "fb.contactPh": "Opcjonalnie: X (@nick) lub e-mail",
+      "fb.send": "Wyślij", "fb.sending": "Wysyłanie…", "fb.ok": "Dzięki! Wiadomość została odebrana.",
+      "fb.errShort": "Wpisz co najmniej 5 znaków.", "fb.errFail": "Nie udało się wysłać, spróbuj ponownie."
+    },
+    ru: {
+      "fb.btn": "Сообщить об ошибке", "fb.title": "Сообщить об ошибке или предложить идею", "fb.sub": "Аккаунт не нужен — сообщение придёт напрямую автору.",
+      "fb.bug": "Ошибка", "fb.feature": "Идея", "fb.other": "Отзыв",
+      "fb.msgPh": "Кратко опишите проблему или предложение…", "fb.contactPh": "Необязательно: X (@ник) или email",
+      "fb.send": "Отправить", "fb.sending": "Отправка…", "fb.ok": "Спасибо! Сообщение получено.",
+      "fb.errShort": "Введите минимум 5 символов.", "fb.errFail": "Не удалось отправить, попробуйте снова."
+    },
+    ja: {
+      "fb.btn": "バグ報告・ご要望", "fb.title": "バグ報告・ご意見を送る", "fb.sub": "アカウント不要・開発者へ直接届きます。",
+      "fb.bug": "バグ", "fb.feature": "機能要望", "fb.other": "コメント",
+      "fb.msgPh": "不具合の内容やご要望を簡潔にご記入ください…", "fb.contactPh": "任意：X (@ID) またはメール",
+      "fb.send": "送信", "fb.sending": "送信中…", "fb.ok": "ありがとうございます！送信されました。",
+      "fb.errShort": "5文字以上入力してください。", "fb.errFail": "送信に失敗しました。もう一度お試しください。"
+    },
+    ko: {
+      "fb.btn": "버그 신고 / 건의", "fb.title": "버그 신고 또는 의견 보내기", "fb.sub": "로그인 없이 개발자에게 바로 전달됩니다.",
+      "fb.bug": "버그", "fb.feature": "기능 제안", "fb.other": "의견",
+      "fb.msgPh": "문제 상황이나 건의 사항을 간단히 적어주세요…", "fb.contactPh": "선택: X (@아이디) 또는 이메일",
+      "fb.send": "보내기", "fb.sending": "전송 중…", "fb.ok": "감사합니다! 정상적으로 접수되었습니다.",
+      "fb.errShort": "최소 5자 이상 입력해 주세요.", "fb.errFail": "전송에 실패했습니다. 다시 시도해 주세요."
+    }
+  };
+  Object.keys(FB).forEach(code => {
+    if (window.SITE_I18N && window.SITE_I18N[code]) Object.assign(window.SITE_I18N[code], FB[code]);
+  });
+})();

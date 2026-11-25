@@ -946,6 +946,110 @@
     .lang-card:hover { border-color: var(--line-strong); background: var(--surface-soft); }
     .lang-card.active { border-color: var(--accent); }
 
+    /* Floating Feedback Button & Modal */
+    .fb-fab {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 45;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 15px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.15s var(--ease), border-color 0.15s, background 0.15s;
+    }
+    .fb-fab:hover { transform: translateY(-2px); background: var(--surface-soft); }
+    .fb-fab svg.ic { width: 16px; height: 16px; color: var(--accent); }
+    .fb-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      background: rgba(10, 12, 16, 0.62);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .fb-overlay.open { display: flex; }
+    .fb-dialog {
+      width: 100%;
+      max-width: 470px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .fb-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .fb-head h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.015em; }
+    .fb-head p { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+    .fb-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .fb-pill {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      color: var(--ink-2);
+      font-family: var(--sans);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.14s;
+    }
+    .fb-pill.active {
+      background: color-mix(in srgb, var(--accent) 13%, transparent);
+      border-color: var(--accent);
+      color: var(--ink);
+    }
+    .fb-field {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 13.5px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .fb-field:focus { border-color: var(--accent); }
+    textarea.fb-field { min-height: 112px; resize: vertical; line-height: 1.5; }
+    .fb-hp { position: absolute; left: -9999px; opacity: 0; pointer-events: none; }
+    .fb-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .fb-status { font-size: 12.5px; font-weight: 500; min-height: 18px; }
+    .fb-status.ok { color: var(--accent); }
+    .fb-status.err { color: #dc2626; }
+    .about-btns { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
     /* Final Download Band */
     .dl-band {
       padding: 64px 0;
@@ -1422,10 +1526,16 @@
           </p>
           <div class="about-sign">
             <span><span data-i18n="about.by">Geliştiren</span> <strong>Yunus Emre Yılmaz</strong></span>
-            <a id="aboutGh" href="https://github.com/yunusemreyilmaz93-pixel/SquadEditor" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
-              <svg class="ic" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-              <span data-i18n="about.repo">GitHub Deposu</span>
-            </a>
+            <div class="about-btns">
+              <button type="button" id="aboutFbBtn" class="btn btn-outline btn-sm">
+                <svg class="ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span data-i18n="fb.btn">Hata / Öneri Bildir</span>
+              </button>
+              <a id="aboutGh" href="https://github.com/yunusemreyilmaz93-pixel/SquadEditor" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+                <svg class="ic" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                <span data-i18n="about.repo">GitHub Deposu</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -1578,6 +1688,42 @@
   <!-- Fullscreen Image Lightbox -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
     <img id="lightboxImg" src="" alt="" />
+  </div>
+
+  <!-- Floating Feedback Trigger + Modal -->
+  <button type="button" class="fb-fab" id="fbFab">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span data-i18n="fb.btn">Hata / Öneri Bildir</span>
+  </button>
+
+  <div class="fb-overlay" id="fbOverlay" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+    <form class="fb-dialog" id="fbForm" novalidate>
+      <div class="fb-head">
+        <div>
+          <h3 id="fbTitle" data-i18n="fb.title">Hata Bildir veya Öneri Gönder</h3>
+          <p data-i18n="fb.sub">Hesap gerekmez — doğrudan geliştiriciye ulaşır.</p>
+        </div>
+        <button type="button" class="icon-btn" id="fbClose" aria-label="Close">
+          <svg class="ic" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="fb-pills" id="fbKindGroup">
+        <button type="button" class="fb-pill active" data-kind="bug">🐞 <span data-i18n="fb.bug">Hata</span></button>
+        <button type="button" class="fb-pill" data-kind="feature">💡 <span data-i18n="fb.feature">Özellik Önerisi</span></button>
+        <button type="button" class="fb-pill" data-kind="other">💬 <span data-i18n="fb.other">Yorum</span></button>
+      </div>
+      <div class="fb-pills" id="fbPlatGroup">
+        <button type="button" class="fb-pill active" data-plat="win">Windows</button>
+        <button type="button" class="fb-pill" data-plat="mac">macOS (Apple Silicon)</button>
+      </div>
+      <input type="text" class="fb-hp" id="fbHp" tabindex="-1" autocomplete="off" />
+      <textarea class="fb-field" id="fbMsg" maxlength="2000" data-i18n-ph="fb.msgPh" placeholder="Yaşadığınız sorunu, önerinizi veya düşüncenizi kısaca yazın…"></textarea>
+      <input type="text" class="fb-field" id="fbContact" maxlength="120" data-i18n-ph="fb.contactPh" placeholder="İsteğe bağlı: X (@kullanici) veya e-posta" />
+      <div class="fb-foot">
+        <span class="fb-status" id="fbStatus"></span>
+        <button type="submit" class="btn btn-primary btn-sm" id="fbSubmit" data-i18n="fb.send">Gönder</button>
+      </div>
+    </form>
   </div>
 
   <script src="./i18n.js"></script>
@@ -1749,6 +1895,11 @@
         const val = dict[k] || fallback[k];
         if (val) el.textContent = val;
       });
+      document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+        const k = el.getAttribute("data-i18n-ph");
+        const val = dict[k] || fallback[k];
+        if (val) el.setAttribute("placeholder", val);
+      });
       renderSlides();
     }
 
@@ -1864,6 +2015,78 @@
     const copyCsrBtn = document.getElementById("copyCsrBtn");
     if (copyCsrBtn) bindCopyBtn(copyCsrBtn, "csrutil enable --without debug");
     document.querySelectorAll("[data-copy]").forEach(btn => bindCopyBtn(btn, btn.getAttribute("data-copy")));
+
+    // Feedback modal
+    const fbOverlay = document.getElementById("fbOverlay");
+    const fbForm = document.getElementById("fbForm");
+    const fbMsg = document.getElementById("fbMsg");
+    const fbContact = document.getElementById("fbContact");
+    const fbStatus = document.getElementById("fbStatus");
+    const fbSubmit = document.getElementById("fbSubmit");
+    let fbKind = "bug";
+    let fbPlat = /Mac|Macintosh/i.test(navigator.platform || navigator.userAgent || "") ? "mac" : "win";
+    document.querySelectorAll("#fbPlatGroup .fb-pill").forEach(b => b.classList.toggle("active", b.dataset.plat === fbPlat));
+    document.querySelectorAll("#fbKindGroup .fb-pill").forEach(b => b.addEventListener("click", () => {
+      fbKind = b.dataset.kind;
+      document.querySelectorAll("#fbKindGroup .fb-pill").forEach(x => x.classList.toggle("active", x === b));
+    }));
+    document.querySelectorAll("#fbPlatGroup .fb-pill").forEach(b => b.addEventListener("click", () => {
+      fbPlat = b.dataset.plat;
+      document.querySelectorAll("#fbPlatGroup .fb-pill").forEach(x => x.classList.toggle("active", x === b));
+    }));
+    function openFb() {
+      fbStatus.textContent = "";
+      fbStatus.className = "fb-status";
+      fbOverlay.classList.add("open");
+      setTimeout(() => fbMsg.focus(), 40);
+    }
+    function closeFb() { fbOverlay.classList.remove("open"); }
+    document.getElementById("fbFab").addEventListener("click", openFb);
+    document.getElementById("aboutFbBtn").addEventListener("click", openFb);
+    document.getElementById("fbClose").addEventListener("click", closeFb);
+    fbOverlay.addEventListener("click", e => { if (e.target === fbOverlay) closeFb(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && fbOverlay.classList.contains("open")) closeFb(); });
+    fbForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const dict = I18N[lang] || I18N.en;
+      const msg = fbMsg.value.trim();
+      if (msg.length < 5) {
+        fbStatus.className = "fb-status err";
+        fbStatus.textContent = dict["fb.errShort"] || "Please enter at least 5 characters.";
+        return;
+      }
+      fbSubmit.disabled = true;
+      fbSubmit.textContent = dict["fb.sending"] || "Sending…";
+      fbStatus.textContent = "";
+      try {
+        const res = await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source: "web",
+            kind: fbKind,
+            platform: fbPlat,
+            version: SITE_CONFIG.version,
+            lang: lang,
+            contact: fbContact.value.trim(),
+            message: msg,
+            hp: document.getElementById("fbHp").value
+          })
+        });
+        if (!res.ok) throw new Error("http_" + res.status);
+        fbStatus.className = "fb-status ok";
+        fbStatus.textContent = dict["fb.ok"] || "Thanks! Received.";
+        fbMsg.value = "";
+        fbContact.value = "";
+        setTimeout(closeFb, 1400);
+      } catch {
+        fbStatus.className = "fb-status err";
+        fbStatus.textContent = dict["fb.errFail"] || "Could not send.";
+      } finally {
+        fbSubmit.disabled = false;
+        fbSubmit.textContent = dict["fb.send"] || "Send";
+      }
+    });
   </script>
 </body>
 </html>

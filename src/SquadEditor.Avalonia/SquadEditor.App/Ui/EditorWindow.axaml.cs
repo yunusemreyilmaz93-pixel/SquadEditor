@@ -64,6 +64,7 @@ public partial class EditorWindow : Window, INavigator
 		BackupText.Text = Build.T("💾 Yedek", "💾 Backup");
 		ToolTip.SetTip(BackupButton, Build.T("En güncel FM kaydının yedeğini al", "Back up your latest FM save file"));
 		ToolTip.SetTip(HistoryButton, Build.T("Değişiklik geçmişini aç", "Open change history"));
+		ToolTip.SetTip(FeedbackButton, FeedbackDialog.TooltipText);
 		ToolTip.SetTip(SettingsButton, Build.T("Ayarlar", "Settings"));
 
 		TopSearch.AddHandler(InputElement.KeyDownEvent, TopSearch_PreviewKeyDown, RoutingStrategies.Tunnel);
@@ -925,6 +926,11 @@ public partial class EditorWindow : Window, INavigator
 		catch
 		{
 		}
+	}
+
+	private async void Feedback_Click(object? sender, RoutedEventArgs e)
+	{
+		await FeedbackDialog.ShowAsync(this, _data != null);
 	}
 
 	private async void Update_Click(object? sender, RoutedEventArgs e)
