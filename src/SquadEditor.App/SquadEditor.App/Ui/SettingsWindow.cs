@@ -52,7 +52,7 @@ public sealed class SettingsWindow : Window
 			("charcoal", Build.T("WTCS Kömür & Altın", "WTCS Charcoal & Gold")),
 			("light", Build.T("Açık Editorial", "Light Editorial"))
 		}, _s.UiTheme);
-		Fill(_language, new[] { ("tr", "Türkçe"), ("en", "English") }, _s.EffectiveLanguage);
+		Fill(_language, Loc.Languages.Select(l => (l.Code, l.Name)).ToArray(), _s.EffectiveLanguage);
 		Fill(_accent, Accents.Select(a => (a.Hex, "●  " + Build.T(a.Tr, a.En))).ToArray(), _s.Accent);
 		string origTheme = _s.UiTheme, origAccent = _s.Accent;
 		void PreviewTheme()
@@ -267,7 +267,7 @@ public sealed class SettingsWindow : Window
 		// Brand & version header card
 		var head = new StackPanel { Margin = new Thickness(14, 6, 14, 12) };
 		var titleRow = new DockPanel();
-		var verText = Build.Text("v1.6.0 · MIT", 12, Build.Res("Muted"), FontWeights.SemiBold);
+		var verText = Build.Text("v1.6.1 · MIT", 12, Build.Res("Muted"), FontWeights.SemiBold);
 		verText.VerticalAlignment = VerticalAlignment.Center;
 		DockPanel.SetDock(verText, Dock.Right);
 		titleRow.Children.Add(verText);

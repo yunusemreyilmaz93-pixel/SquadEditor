@@ -125,6 +125,12 @@
               <TextBlock x:Name="UndoText" Text="Geri al" FontSize="12"/>
             </StackPanel>
           </Button>
+          <Button x:Name="UpdateButton" Margin="6,0,0,0" Padding="9,4" Background="{DynamicResource Green}" Foreground="White" BorderThickness="0" Click="Update_Click" Visibility="Collapsed">
+            <TextBlock x:Name="UpdateText" Text="↑ Güncelle" FontSize="11.5" FontWeight="SemiBold" Foreground="White"/>
+          </Button>
+          <Button x:Name="FeedbackButton" Style="{StaticResource GhostButton}" Margin="4,0,0,0" Padding="8,4" Click="Feedback_Click" ToolTip="Hata bildir veya öneri gönder">
+            <TextBlock Text="💬" FontSize="14"/>
+          </Button>
           <Button x:Name="SettingsButton" Style="{StaticResource GhostButton}" Margin="2,0,0,0" Padding="8,4" Click="Settings_Click" ToolTip="Ayarlar">
             <TextBlock Text="⚙" FontSize="15"/>
           </Button>

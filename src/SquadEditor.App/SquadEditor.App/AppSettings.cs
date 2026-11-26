@@ -114,16 +114,15 @@ public sealed class AppSettings
 	{
 		get
 		{
-			string? text = Language;
-			if (text == null)
+			if (!string.IsNullOrEmpty(Language))
 			{
-				if (!(CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "tr"))
-				{
-					return "en";
-				}
-				text = "tr";
+				foreach (var l in Loc.Languages)
+					if (l.Code == Language) return Language;
 			}
-			return text;
+			string sys = CultureInfo.InstalledUICulture.TwoLetterISOLanguageName.ToLowerInvariant();
+			foreach (var l in Loc.Languages)
+				if (l.Code == sys) return sys;
+			return "en";
 		}
 	}
 

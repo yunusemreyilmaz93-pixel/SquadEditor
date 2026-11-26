@@ -39,6 +39,7 @@ public partial class EditorWindow : Window, INavigator
 	private IPage? _current;
 	private bool _connecting;
 	private int _failedPid;
+	private UpdateInfo? _pendingUpdate;
 
 	public EditorWindow()
 	{
@@ -60,6 +61,7 @@ public partial class EditorWindow : Window, INavigator
 		BackupText.Text = Build.T("💾 Yedek", "💾 Backup");
 		BackupButton.ToolTip = Build.T("En güncel FM kaydının yedeğini al", "Back up your latest FM save file");
 		HistoryButton.ToolTip = Build.T("Değişiklik geçmişini aç", "Open change history");
+		FeedbackButton.ToolTip = FeedbackDialog.TooltipText;
 		SettingsButton.ToolTip = Build.T("Ayarlar", "Settings");
 		_graphics = ReloadGraphicsAsync();
 		ApplyPreferences();
@@ -81,6 +83,7 @@ public partial class EditorWindow : Window, INavigator
 				TryConnect();
 				_connectTimer.Start();
 			}
+			_ = CheckForUpdatesAsync();
 		};
 		Closed += (_, _) =>
 		{
@@ -874,6 +877,41 @@ public partial class EditorWindow : Window, INavigator
 		ApplyPreferences();
 		UpdateCounts();
 		SetStatus(Build.T("Ayarlar kaydedildi.", "Settings saved."));
+	}
+
+	private async Task CheckForUpdatesAsync()
+	{
+		try
+		{
+			await Task.Delay(2500).ConfigureAwait(false);
+			UpdateInfo? info = await AppUpdater.CheckAsync().ConfigureAwait(false);
+			if (info == null) return;
+			Dispatcher.Invoke(() =>
+			{
+				_pendingUpdate = info;
+				UpdateText.Text = AppUpdater.BadgeText(info);
+				UpdateButton.ToolTip = AppUpdater.BadgeTooltip(info);
+				UpdateButton.Visibility = Visibility.Visible;
+			});
+		}
+		catch
+		{
+		}
+	}
+
+	private void Feedback_Click(object sender, RoutedEventArgs e)
+	{
+		FeedbackDialog.Show(this, _data != null);
+	}
+
+	private void Update_Click(object sender, RoutedEventArgs e)
+	{
+		if (_pendingUpdate == null) return;
+		if (AppUpdater.ShowUpdateDialog(this, _pendingUpdate))
+		{
+			Close();
+			Application.Current.Shutdown();
+		}
 	}
 
 	private void DarkTitleBar()
