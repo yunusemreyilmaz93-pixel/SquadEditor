@@ -16,9 +16,13 @@ public static class Layouts
 		System.Reflection.Assembly assembly = typeof(Layouts).Assembly;
 		foreach (string resource in assembly.GetManifestResourceNames().Where(n => n.StartsWith(Prefix) && n.EndsWith(".json")))
 		{
+			string name = resource.Substring(Prefix.Length, resource.Length - Prefix.Length - 5);
+			if (name.EndsWith("-mac", StringComparison.OrdinalIgnoreCase))
+			{
+				continue;
+			}
 			using Stream stream = assembly.GetManifestResourceStream(resource)!;
 			using var reader = new StreamReader(stream);
-			string name = resource.Substring(Prefix.Length, resource.Length - Prefix.Length - 5);
 			byName[name] = new LayoutFile(name, null, reader.ReadToEnd());
 		}
 		string folder = Path.Combine(AppContext.BaseDirectory, "layouts");
@@ -27,7 +31,10 @@ public static class Layouts
 			foreach (string file in Directory.GetFiles(folder, "*.json"))
 			{
 				string name = Path.GetFileNameWithoutExtension(file);
-				byName[name] = new LayoutFile(name, file);
+				if (!name.EndsWith("-mac", StringComparison.OrdinalIgnoreCase))
+				{
+					byName[name] = new LayoutFile(name, file);
+				}
 			}
 		}
 		return byName.Values.OrderByDescending(l => l.Name).ToList();

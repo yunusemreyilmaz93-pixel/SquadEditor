@@ -100,8 +100,8 @@ window.SITE_I18N = {
     "q6.b2": "İlk açılışta uyarı çıkarsa: Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç.",
     "q6.b3": "Diğer tüm macOS sistem korumaları aktif kalır; sonraki açılışlarda doğrudan çalışır.",
     "cta.h": "Hemen indir.", "cta.p": "Windows (~2.5 MB) ve macOS (42.9 MB .zip · 111 MB .app) için kurulum gerektirmez ve tamamen ücretsiz.",
-    "dl.meta": "Sürüm v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Açık Kaynak (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Açık Kaynak (MIT)",
+    "dl.meta": "Sürüm v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Açık Kaynak (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Açık Kaynak (MIT)",
     "foot.legal": "Squadeditor bağımsız ve ücretsiz bir topluluk aracıdır. Sports Interactive veya SEGA ile resmi bir bağlantısı yoktur. Football Manager ilgili sahiplerinin tescilli markasıdır."
   },
   en: {
@@ -190,8 +190,8 @@ window.SITE_I18N = {
     "q6.b2": "If macOS shows a first-launch prompt: System Settings → Privacy & Security → Open Anyway.",
     "q6.b3": "All other macOS protections remain active; future launches work directly.",
     "cta.h": "Download now.", "cta.p": "No installer needed and completely free for Windows (~2.5 MB) and macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Version v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Open Source (MIT)",
+    "dl.meta": "Version v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Open Source (MIT)",
     "foot.legal": "Squadeditor is an independent, free community tool and is not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of its respective owners."
   },
   es: {
@@ -280,8 +280,8 @@ window.SITE_I18N = {
     "q6.b2": "En el primer inicio: Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente.",
     "q6.b3": "Todas las demás protecciones de macOS siguen activas; luego abre directamente.",
     "cta.h": "Descárgalo ahora.", "cta.p": "Sin instalador y totalmente gratis para Windows (~2.5 MB) y macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Versión v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Código Abierto (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Código Abierto (MIT)",
+    "dl.meta": "Versión v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Código Abierto (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Código Abierto (MIT)",
     "foot.legal": "Squadeditor es una herramienta comunitaria independiente y gratuita, sin afiliación con Sports Interactive o SEGA. Football Manager es marca registrada de sus propietarios."
   },
   pt: {
@@ -370,8 +370,8 @@ window.SITE_I18N = {
     "q6.b2": "Na primeira abertura: Ajustes do Sistema → Privacidade e Segurança → Abrir Mesmo Assim.",
     "q6.b3": "Todas as outras proteções do macOS continuam ativas; depois abre direto.",
     "cta.h": "Baixe agora.", "cta.p": "Sem instalador e totalmente grátis para Windows (~2.5 MB) e macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Versão v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Código Aberto (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Código Aberto (MIT)",
+    "dl.meta": "Versão v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Código Aberto (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Código Aberto (MIT)",
     "foot.legal": "Squadeditor é uma ferramenta comunitária independente e gratuita, sem vínculo com Sports Interactive ou SEGA. Football Manager é marca registrada de seus proprietários."
   },
   fr: {
@@ -460,8 +460,8 @@ window.SITE_I18N = {
     "q6.b2": "Au premier lancement : Réglages Système → Confidentialité et sécurité → Ouvrir quand même.",
     "q6.b3": "Toutes les autres protections macOS restent actives ; ensuite le lancement est direct.",
     "cta.h": "Télécharger maintenant.", "cta.p": "Sans installation et 100% gratuit pour Windows (~2.5 MB) et macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Version v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Open Source (MIT)",
+    "dl.meta": "Version v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Open Source (MIT)",
     "foot.legal": "Squadeditor est un outil communautaire indépendant et gratuit, non affilié à Sports Interactive ou SEGA. Football Manager est une marque déposée de ses propriétaires."
   },
   de: {
@@ -550,8 +550,8 @@ window.SITE_I18N = {
     "q6.b2": "Beim ersten Start: Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen.",
     "q6.b3": "Alle anderen macOS-Schutzfunktionen bleiben aktiv; danach direkter Start.",
     "cta.h": "Jetzt herunterladen.", "cta.p": "Ohne Installation und kostenlos für Windows (~2.5 MB) und macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Version v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Open Source (MIT)",
+    "dl.meta": "Version v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Open Source (MIT)",
     "foot.legal": "Squadeditor ist ein unabhängiges, kostenloses Community-Tool ohne Verbindung zu Sports Interactive oder SEGA. Football Manager ist eine Marke der jeweiligen Eigentümer."
   },
   it: {
@@ -640,8 +640,8 @@ window.SITE_I18N = {
     "q6.b2": "Al primo avvio: Impostazioni di Sistema → Privacy e sicurezza → Apri comunque.",
     "q6.b3": "Tutte le altre protezioni macOS restano attive; poi si avvia direttamente.",
     "cta.h": "Scarica ora.", "cta.p": "Senza installazione e gratuito per Windows (~2.5 MB) e macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Versione v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Open Source (MIT)",
+    "dl.meta": "Versione v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Open Source (MIT)",
     "foot.legal": "Squadeditor è uno strumento indipendente e gratuito della community, non affiliato a Sports Interactive o SEGA. Football Manager è un marchio dei rispettivi proprietari."
   },
   nl: {
@@ -730,8 +730,8 @@ window.SITE_I18N = {
     "q6.b2": "Bij eerste start: Systeeminstellingen → Privacy en beveiliging → Open toch.",
     "q6.b3": "Alle andere macOS-beveiligingen blijven actief; daarna start de app direct.",
     "cta.h": "Nu downloaden.", "cta.p": "Geen installatie nodig en helemaal gratis voor Windows (~2.5 MB) en macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Versie v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Open Source (MIT)",
+    "dl.meta": "Versie v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Open Source (MIT)",
     "foot.legal": "Squadeditor is een onafhankelijke, gratis community-tool zonder banden met Sports Interactive of SEGA. Football Manager is een handelsmerk van de respectieve eigenaren."
   },
   pl: {
@@ -820,8 +820,8 @@ window.SITE_I18N = {
     "q6.b2": "Przy pierwszym starcie: Ustawienia systemowe → Prywatność i ochrona → Otwórz mimo to.",
     "q6.b3": "Pozostałe zabezpieczenia macOS pozostają aktywne; kolejne uruchomienia są bezpośrednie.",
     "cta.h": "Pobierz teraz.", "cta.p": "Bez instalacji i całkowicie za darmo dla Windows (~2.5 MB) i macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Wersja v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Open Source (MIT)",
+    "dl.meta": "Wersja v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Open Source (MIT)",
     "foot.legal": "Squadeditor to niezależne, darmowe narzędzie społecznościowe, niezwiązane ze Sports Interactive ani SEGA. Football Manager jest znakiem towarowym odpowiednich właścicieli."
   },
   ru: {
@@ -910,8 +910,8 @@ window.SITE_I18N = {
     "q6.b2": "При первом запуске: Системные настройки → Конфиденциальность и безопасность → Подтвердить вход.",
     "q6.b3": "Все остальные защиты macOS остаются активны; далее запуск работает напрямую.",
     "cta.h": "Скачать сейчас.", "cta.p": "Без установки и полностью бесплатно для Windows (~2.5 MB) и macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "Версия v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · Open Source (MIT)",
+    "dl.meta": "Версия v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · Open Source (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · Open Source (MIT)",
     "foot.legal": "Squadeditor — независимый бесплатный инструмент сообщества, не связанный со Sports Interactive или SEGA. Football Manager является товарным знаком соответствующих владельцев."
   },
   ja: {
@@ -1000,8 +1000,8 @@ window.SITE_I18N = {
     "q6.b2": "初回起動の警告時：システム設定 → プライバシーとセキュリティ → このまま開く。",
     "q6.b3": "他のmacOS保護機能はすべて有効のまま、次回からは直接起動できます。",
     "cta.h": "今すぐダウンロード。", "cta.p": "インストール不要・完全無料。Windows (~2.5 MB) & macOS (42.9 MB .zip · 111 MB .app)。",
-    "dl.meta": "バージョン v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · オープンソース (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · オープンソース (MIT)",
+    "dl.meta": "バージョン v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · オープンソース (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · オープンソース (MIT)",
     "foot.legal": "Squadeditorは独立した無料コミュニティツールであり、Sports InteractiveまたはSEGAとは関係ありません。Football Managerは各所有者の登録商標です。"
   },
   ko: {
@@ -1090,8 +1090,8 @@ window.SITE_I18N = {
     "q6.b2": "첫 실행 경고 시: 시스템 설정 → 개인정보 보호 및 보안 → 확인 없이 열기.",
     "q6.b3": "나머지 macOS 보안 기능은 모두 유지되며 이후에는 바로 실행됩니다.",
     "cta.h": "지금 다운로드.", "cta.p": "설치 없이 완전 무료 — Windows (~2.5 MB) & macOS (42.9 MB .zip · 111 MB .app).",
-    "dl.meta": "버전 v1.6.1 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · 오픈소스 (MIT)",
-    "release.info": "v1.6.1 · FM27 27.1.1 · 오픈소스 (MIT)",
+    "dl.meta": "버전 v1.6.2 · FM27 27.0.1 – 27.1.1 · Windows 10/11 & macOS (M1–M4) · 오픈소스 (MIT)",
+    "release.info": "v1.6.2 · FM27 27.1.1 · 오픈소스 (MIT)",
     "foot.legal": "Squadeditor는 독립적인 무료 커뮤니티 도구이며 Sports Interactive 또는 SEGA와 무관합니다. Football Manager는 해당 소유자의 상표입니다."
   }
 };

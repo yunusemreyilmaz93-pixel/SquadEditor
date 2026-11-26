@@ -27,7 +27,7 @@ public static class AppUpdater
 {
 	private const string LatestReleaseApi = "https://api.github.com/repos/yunusemreyilmaz93-pixel/SquadEditor/releases/latest";
 
-	public static Version CurrentVersion { get; } = new Version(1, 6, 1);
+	public static Version CurrentVersion { get; } = new Version(1, 6, 2);
 
 	public static string CurrentVersionText => $"{CurrentVersion.Major}.{CurrentVersion.Minor}.{CurrentVersion.Build}";
 

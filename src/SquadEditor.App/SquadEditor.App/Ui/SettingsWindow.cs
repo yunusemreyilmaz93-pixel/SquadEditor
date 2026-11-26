@@ -267,7 +267,7 @@ public sealed class SettingsWindow : Window
 		// Brand & version header card
 		var head = new StackPanel { Margin = new Thickness(14, 6, 14, 12) };
 		var titleRow = new DockPanel();
-		var verText = Build.Text("v1.6.1 · MIT", 12, Build.Res("Muted"), FontWeights.SemiBold);
+		var verText = Build.Text("v1.6.2 · MIT", 12, Build.Res("Muted"), FontWeights.SemiBold);
 		verText.VerticalAlignment = VerticalAlignment.Center;
 		DockPanel.SetDock(verText, Dock.Right);
 		titleRow.Children.Add(verText);
